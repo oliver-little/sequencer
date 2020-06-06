@@ -1,10 +1,12 @@
 /**
- * Array with an insert method that maintains a sorted state of the list.
+ *
  *
  * @export
  * @class SortedArray
+ * @extends {Array}
+ * @template T The type of the array elements
  */
-export default class SortedArray extends Array{
+export default class SortedArray<T> extends Array{
     private _comparator : Function;
 
     /**
@@ -17,13 +19,13 @@ export default class SortedArray extends Array{
         this._comparator = comparator;
     }
 
-    public insert(value: any) : void {
-        let index = this._binarySearch(value, true);
+    public insert(value: T) : void {
+        let index = this.binarySearch(value, true);
         this.splice(index, 0, value);
     }
 
-    public remove(value: any) : void {
-        let index = this._binarySearch(value);
+    public remove(value: T) : void {
+        let index = this.binarySearch(value);
         if (index === -1) {
             throw new Error("Element doesn't exist");
         }
@@ -32,8 +34,17 @@ export default class SortedArray extends Array{
         }
     }
 
-    public exists(value: any) : boolean {
-        let index = this._binarySearch(value);
+    public removeAt(index: number) : T {
+        if (index < 0 || index >= this.length) {
+            throw new RangeError("Index out of range.");
+        }
+        let elementRemoved = this[index];
+        this.splice(index, 1);
+        return elementRemoved;
+    }
+
+    public exists(value: T) : boolean {
+        let index = this.binarySearch(value);
 
         if (index === -1) {
             return false;
@@ -43,8 +54,8 @@ export default class SortedArray extends Array{
         }
     }
 
-    public elementAfter(value: any) : any {
-        let index = this._binarySearch(value, true);
+    public elementAfter(value: T) : T {
+        let index = this.binarySearch(value, true);
         return this[index+1];
     }
 
@@ -57,8 +68,7 @@ export default class SortedArray extends Array{
      * @returns The index of the element
      * @memberof SortedArray
      */
-    private _binarySearch(value: any, closest = false) {
-        
+    public binarySearch(value: T, closest = false) {
         let left = 0;
         let right = this.length - 1;
         let mid = 0;
