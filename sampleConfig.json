@@ -1,0 +1,53 @@
+{
+    "oscillator": {
+        "type": "sine",
+        "gain": 100,
+        "detune": 0
+    },
+    "envelope": {
+        "attack": 0,
+        "decay": 0,
+        "sustain": 0,
+        "release": 0
+    },
+    "chains": [
+        {
+            "filters": [
+                {
+                    "type": "filter",
+                    "filterType": "Delay",
+                    "properties": {
+                        "...": "."
+                    }
+                },
+                {
+                    "type": "tuna",
+                    "filterType": "Chorus",
+                    "properties": {
+                        "...": "."
+                    }
+                }
+            ],
+            "gain": 100
+        },
+        {
+            "filters": [
+                {
+                    "type": "filter",
+                    "filterType": "Delay",
+                    "properties": {
+                        "...": "."
+                    }
+                },
+                {
+                    "type": "tuna",
+                    "filterType": "Chorus",
+                    "properties": {
+                        "...": "."
+                    }
+                }
+            ],
+            "gain": 100
+        }
+    ]
+}
