@@ -43,6 +43,11 @@ export default class SortedArray extends Array{
         }
     }
 
+    public elementAfter(value: any) : any {
+        let index = this._binarySearch(value, true);
+        return this[index+1];
+    }
+
     /**
      * Searches for a value in the sorted array, returns -1 if not found (or the index of the closest element if closest = True)
      *

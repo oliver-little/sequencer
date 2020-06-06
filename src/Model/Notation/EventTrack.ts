@@ -1,5 +1,5 @@
 import SortedArray from "../../HelperModules/SortedArray.js";
-import {BaseEvent, NoteEvent, MetadataEvent} from "./SongTrackEvent.js";
+import {BaseEvent, NoteEvent, MetadataEvent} from "./Events.js";
 import SongMetadata from "../SongManagement/SongMetadata.js";
 
 /**
@@ -7,7 +7,7 @@ import SongMetadata from "../SongManagement/SongMetadata.js";
  *
  * @class Track
  */
-class Track {
+export class EventTrack {
 
     public metadata : SongMetadata;
 
@@ -32,5 +32,9 @@ class Track {
 
     public removeEvent(note: BaseEvent) : void {
         this._events.remove(note);
+    }
+
+    public getNextEvent(time: number) : BaseEvent {
+        return this._events.elementAfter(time);
     }
 }
