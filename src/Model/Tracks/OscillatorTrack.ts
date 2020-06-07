@@ -93,8 +93,8 @@ let context = new AudioContext();
 let jsonString = `{
     "source": {
         "type": "oscillator",
-        "oscillatorType": "sine",
-        "gain": 0.5,
+        "oscillatorType": "triangle",
+        "gain": 0.3,
         "detune": 0
     },
     "envelopeEnabled" : true,

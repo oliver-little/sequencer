@@ -74,11 +74,11 @@ export class OscillatorInstrument extends BaseInstrument {
                 break;
             }
         };
+        // TODO: check this works right when two notes start at exactly the same time
         // No free source found, make a new one.
         if (sourceToUse === null) {
             sourceToUse = OscillatorInstrument.newOscillator(this._context, this.settings);
             this._sources.push(sourceToUse);
-            console.log("new source");
         }
         // Push the time this source is being used for to the list
         sourceToUse.usage.push([time, time + duration]);
@@ -90,8 +90,16 @@ export class OscillatorInstrument extends BaseInstrument {
         this.stopNote(time + duration);
     }
 
+    /**
+     * Stops playback on all sources immediately
+     *
+     * @memberof OscillatorInstrument
+     */
     public stop() {
-
+        this._sources.forEach(element => {
+            element.gain.gain.cancelAndHoldAtTime(0);
+            element.gain.gain.linearRampToValueAtTime(0, this.settings.envelope.release);
+        });
     }
 
 

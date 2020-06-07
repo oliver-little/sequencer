@@ -52,12 +52,12 @@ export abstract class BaseTrack {
     /**
      * Begins playback, override by subclasses to determine how to handle the timeline
      *
-     * @param {number} audioContextTime The **AudioContext** time at which the playback was started
-     * @param {number} startPosition The position **in quarter notes** where playback was started from
+     * @param {number} startPosition The position **in quarter notes** where playback should start from
      * @memberof BaseTrack
      */
     public start(startPosition) : void {
-        this._startTime = this._context.currentTime - startPosition;
+        // Derive effective start time from difference between current audiocontext time and startposition converted to seconds
+        this._startTime = this._context.currentTime - this.fromQuarterNoteTime(startPosition);
         this._playing = true;
 
         // FIXME: Possible bug here, are callbacks different between class instances.
@@ -85,8 +85,10 @@ export abstract class BaseTrack {
      */
     public scheduleSongEvents() {
         if (this._playing) {
+            // Calculate the number of quarter notes that have passed since playback began.
             this._timeDifference = this.toQuarterNoteTime(this._context.currentTime - this._startTime);
-            // This calculation works out the amount of time that has passed since playback began, adds the lookahead buffer, then converts it into number of quarter notes.
+
+            // Add the lookahead time
             let quarterNoteTime = this._timeDifference + this.toQuarterNoteTime(this.lookaheadTime);
             let events = this.timeline.getEventsUntilTime(quarterNoteTime);
             events.forEach(event => {
@@ -95,8 +97,28 @@ export abstract class BaseTrack {
         }
     }
 
+    /**
+     * Converts a seconds value to quarter notes
+     *
+     * @protected
+     * @param {number} value The value in seconds
+     * @returns {number} The value in quarter notes
+     * @memberof BaseTrack
+     */
     protected toQuarterNoteTime(value: number) : number {
         return (value / this._metadata.secondsPerBeat) / this._metadata.quarterNoteMultiplier;
+    }
+
+    /**
+     * Converts a quarter note value to seconds.
+     *
+     * @protected
+     * @param {number} value The value in quarter notes
+     * @returns {number} The value in seconds
+     * @memberof BaseTrack
+     */
+    protected fromQuarterNoteTime(value: number) : number {
+        return (value * this._metadata.quarterNoteMultiplier * this._metadata.secondsPerBeat);
     }
 
     /**
