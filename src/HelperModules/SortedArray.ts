@@ -53,12 +53,6 @@ export default class SortedArray<T> extends Array{
             return true;
         }
     }
-
-    public elementAfter(value: T) : T {
-        let index = this.binarySearch(value, true);
-        return this[index+1];
-    }
-
     /**
      * Searches for a value in the sorted array, returns -1 if not found (or the index of the closest element if closest = True)
      *
@@ -87,6 +81,7 @@ export default class SortedArray<T> extends Array{
         }
 
         if (closest) {
+            // Left will always point to the higher of the values so move it back one
             return left;
         }
         else {

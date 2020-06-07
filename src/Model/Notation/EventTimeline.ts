@@ -17,6 +17,7 @@ export class EventTimeline {
 
     public addEvent(note: BaseEvent) : void {
         this._events.insert(note);
+        console.log(this.events);
     }
 
     public removeEvent(note: BaseEvent) : void {
@@ -31,7 +32,7 @@ export class EventTimeline {
      */
     public start(time: number) : void {
         let index = this._events.binarySearch(new BaseEvent(time), true);
-        this._eventPosition = index;
+        this._eventPosition = Math.max(0, index - 1); // The event returned is always the next event to play, go back one to the event currently playing.
     }
 
 
@@ -44,7 +45,7 @@ export class EventTimeline {
      */
     public getEventsUntilTime(time: number) : BaseEvent[] {
         let eventsToSchedule = []
-        while(this._events.length > this._eventPosition && this._events[this._eventPosition].startPosition < time) {
+        while(this._eventPosition < this._events.length && this._events[this._eventPosition].startPosition < time) {
             eventsToSchedule.push(this._events[this._eventPosition]);
             this._eventPosition += 1;
         }

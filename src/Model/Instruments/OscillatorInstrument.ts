@@ -1,14 +1,5 @@
-import SongMetadata from "../SongManagement/SongMetadata.js";
-
-/**
- * Interface representing an instrument that can be played
- *
- * @interface IInstrument
- */
-interface IInstrument { // Common functions between instruments 
-    triggerAttack(time : number) : void;
-    triggerRelease(time : number) : void;
-}
+import {BaseInstrument} from "./BaseInstrument.js";
+import { IOscillatorSettings } from "../SongManagement/IInstrumentSettings.js";
 
 /**
  * Implements an instrument based on the OscillatorNode class
@@ -16,23 +7,20 @@ interface IInstrument { // Common functions between instruments
  * @export
  * @class OscillatorInstrument
  */
-export class OscillatorInstrument {
+export class OscillatorInstrument extends BaseInstrument {
 
-    private _context : AudioContext;
-    private _oscillator : OscillatorNode;
-    private _oscillatorGain : GainNode;
+    public settings : IOscillatorSettings;
 
-    constructor(context : AudioContext, settings : Map<String, String>) {
-        this._oscillator = context.createOscillator();
-        this._oscillatorGain = context.createGain();
-        this._oscillatorGain.gain.setValueAtTime(0, 0);
-        this._oscillator.connect(this._oscillatorGain);
-        this._oscillatorGain.connect(context.destination);
-        this._oscillator.start();
+    protected _source : OscillatorNode;
 
-        this._context = context;
+    constructor(context : AudioContext, settings : IOscillatorSettings) {
+        let oscillator = context.createOscillator();
 
-        // TODO: Unpack settings to adjust oscillator settings
+        super(context, settings, oscillator);
+        this._source = oscillator;
+        this._source.start();
+
+        this._source.type = this.settings.source.oscillatorType as OscillatorType;
 
     }
 
@@ -41,22 +29,13 @@ export class OscillatorInstrument {
      *
      * @param {number} frequency The frequency to play at
      * @param {number} time The AudioContext time to start at
+     * @param {number} [volume=1] Optional volume parameter for this note only.
      * @memberof OscillatorInstrument
      */
-    public start(frequency : number, time : number) : void {
-        this._oscillator.frequency.setValueAtTime(frequency, time);
-        this._oscillatorGain.gain.setValueAtTime(0.5, time);
-    }
-
     
-    /**
-     * Stops the oscillator instrument at a given time with a given frequency
-     *
-     * @param {number} time
-     * @memberof OscillatorInstrument
-     */
-    public stop(time : number) : void {
-        this._oscillatorGain.gain.setValueAtTime(0, time);
+    public startNote(frequency : number, time : number, volume = 1) : void {
+        super.startNote(time, volume);
+        this._source.frequency.setValueAtTime(frequency, time);
     }
 
     /**
@@ -68,7 +47,7 @@ export class OscillatorInstrument {
      * @memberof OscillatorInstrument
      */
     public playNote(frequency : number, time : number, duration : number) : void {
-        this.start(frequency, time);
-        this.stop(time + duration);
+        this.startNote(frequency, time);
+        this.stopNote(time + duration);
     }
 }

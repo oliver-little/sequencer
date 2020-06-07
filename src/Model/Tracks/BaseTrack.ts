@@ -20,31 +20,61 @@ export abstract class BaseTrack {
     protected _context : AudioContext;
     protected _startTime = 0; // Stores the audioContext time at which playback was started
     protected _scheduleEvent : SimpleEvent; // Stores the event which fires every time song events should be scheduled.
+    protected _playing = false; 
+    protected _timeDifference = 0; // Stores the last recorded time difference between the startTime and the audioContext time
 
-    constructor (metadata : SongMetadata, context : AudioContext) {
+    private _anonymousScheduleFunc = function() {this.scheduleSongEvents()}.bind(this); // Reference to the anonymous function scheduleEvent calls
+
+    /**
+     *Creates an instance of BaseTrack.
+     * @param {SongMetadata} metadata The song metadata this track uses.
+     * @param {AudioContext} context The audio context this track should play to
+     * @param {SimpleEvent} scheduleEvent An event that fires regularly to allow notes to be scheduled.
+     * @memberof BaseTrack
+     */
+    constructor (metadata : SongMetadata, context : AudioContext, scheduleEvent : SimpleEvent) {
         this.timeline = new EventTimeline();
         this._context = context;
         this._metadata = metadata;
+        this._scheduleEvent = scheduleEvent;
     }
 
     /**
-     * Sets up object states to begin playback
+     * Returns whether this object is playing
+     *
+     * @readonly
+     * @memberof BaseTrack
+     */
+    get playing() {
+        return this._playing;
+    }
+
+    /**
+     * Begins playback, override by subclasses to determine how to handle the timeline
      *
      * @param {number} audioContextTime The **AudioContext** time at which the playback was started
      * @param {number} startPosition The position **in quarter notes** where playback was started from
-     * @param {SimpleEvent} scheduleEvent The event fired to schedule new notes
      * @memberof BaseTrack
      */
-    public start(scheduleEvent : SimpleEvent, startPosition = 0) : void {
-        this._startTime = this._context.currentTime;
-        this.timeline.start(startPosition);
-        this._scheduleEvent = scheduleEvent;
+    public start(startPosition) : void {
+        this._startTime = this._context.currentTime - startPosition;
+        this._playing = true;
+
         // FIXME: Possible bug here, are callbacks different between class instances.
-        this._scheduleEvent.addListener(function() {this.scheduleSongEvents()}.bind(this));
+        this._scheduleEvent.addListener(this._anonymousScheduleFunc);
     }
 
+    /**
+     * Stops playback at the current position
+     *
+     * @memberof BaseTrack
+     */
     public stop() : void {
-        this._scheduleEvent.removeListener(this.scheduleSongEvents);
+        let index = this._scheduleEvent.callbacks.indexOf(this._anonymousScheduleFunc); 
+        if(index != -1) {
+            this._scheduleEvent.removeAt(index);
+        }
+        this._playing = false;
     }
 
 
@@ -54,12 +84,19 @@ export abstract class BaseTrack {
      * @memberof BaseTrack
      */
     public scheduleSongEvents() {
-        // This calculation works out the amount of time that has passed since playback began, adds the lookahead buffer, then converts it into number of quarter notes.
-        let quarterNoteTime = ((this._context.currentTime - this._startTime + this.lookaheadTime) / this._metadata.secondsPerBeat) / this._metadata.quarterNoteMultiplier;
-        let events = this.timeline.getEventsUntilTime(quarterNoteTime);
-        events.forEach(event => {
-            this.songEventHandler(event);
-        });
+        if (this._playing) {
+            this._timeDifference = this.toQuarterNoteTime(this._context.currentTime - this._startTime);
+            // This calculation works out the amount of time that has passed since playback began, adds the lookahead buffer, then converts it into number of quarter notes.
+            let quarterNoteTime = this._timeDifference + this.toQuarterNoteTime(this.lookaheadTime);
+            let events = this.timeline.getEventsUntilTime(quarterNoteTime);
+            events.forEach(event => {
+                this.songEventHandler(event);
+            });
+        }
+    }
+
+    protected toQuarterNoteTime(value: number) : number {
+        return (value / this._metadata.secondsPerBeat) / this._metadata.quarterNoteMultiplier;
     }
 
     /**

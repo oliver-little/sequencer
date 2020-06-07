@@ -24,6 +24,20 @@ export class SimpleEvent{
         this._callbacks.splice(index, 1);
     }
 
+    public hasListener(callback : Function) : boolean {
+        let index = this._callbacks.indexOf(callback);
+        if (index == -1) {
+            return false;
+        }
+        return true;
+    }
+
+    public removeAt(index : number) : void {
+        this._callbacks.splice(index, 1);
+    }
+
+    public hasLis
+
     public emit(...args : any[]) : void {
         this._callbacks.forEach(element => {
             element(args);

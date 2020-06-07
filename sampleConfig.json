@@ -1,14 +1,16 @@
 {
-    "oscillator": {
-        "type": "sine",
+    "source": {
+        "type": "oscillator",
+        "oscillatorType": "sine",
         "gain": 100,
         "detune": 0
     },
+    "envelopeEnabled" : true,
     "envelope": {
-        "attack": 0,
-        "decay": 0,
-        "sustain": 0,
-        "release": 0
+        "attack": 0.1,
+        "decay": 0.05,
+        "sustain": 1,
+        "release": 0.5
     },
     "chains": [
         {

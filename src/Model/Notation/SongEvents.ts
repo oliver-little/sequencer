@@ -30,6 +30,13 @@ export class NoteEvent extends BaseEvent {
 
     static durationPattern = new RegExp("^((1|2|4|8|16|32|64)(t|n|\\.)|([0-9]*b))$");
 
+    /**
+     *Creates an instance of NoteEvent.
+     * @param {number} startPosition The position of the note to begin (quarter notes)
+     * @param {(number|string)} pitch The pitch of the note (Hz / pitch-octave notation string)
+     * @param {string} duration The duration of the note (1-64 n*(ote)* / t*(riplet)* /. *(dotted)* or **x**b *(number of bars)*)
+     * @memberof NoteEvent
+     */
     constructor (startPosition: number, pitch : number|string, duration: string) {
         super(startPosition);
         
