@@ -8,7 +8,7 @@ export class BaseInstrument {
     protected _source : AudioScheduledSourceNode;
     protected _sourceGain : GainNode;
 
-    constructor(context : AudioContext, settings : IInstrumentSettings, source : AudioScheduledSourceNode) {
+    constructor(context : AudioContext, settings : IInstrumentSettings, source : AudioScheduledSourceNode, sourceGain : GainNode) {
         this._context = context;
         this.settings = settings;
 
@@ -34,7 +34,6 @@ export class BaseInstrument {
      */
     public startNote(time: number, volume = 1) : void {
         if (this.settings.envelopeEnabled) {
-            console.log(this._sourceGain.gain.value);
             this._sourceGain.gain.setValueAtTime(0, time);
             this._sourceGain.gain.linearRampToValueAtTime(this.settings.source.gain * volume, time + this.settings.envelope.attack);
         }

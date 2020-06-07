@@ -93,8 +93,8 @@ let context = new AudioContext();
 let jsonString = `{
     "source": {
         "type": "oscillator",
-        "oscillatorType": "triangle",
-        "gain": 10,
+        "oscillatorType": "sine",
+        "gain": 0.5,
         "detune": 0
     },
     "envelopeEnabled" : true,
@@ -143,13 +143,19 @@ let jsonString = `{
         }
     ]
 }`;
+
+// Testing code
+
 let oscillatorObj = JSON.parse(jsonString) as IOscillatorSettings;
 let scheduleEvent = new SimpleEvent();
 let oscillatorTrack = new OscillatorTrack(metadata, context, scheduleEvent, oscillatorObj);
-oscillatorTrack.timeline.addEvent(new NoteEvent(4, "C6", "4n"));
-oscillatorTrack.timeline.addEvent(new NoteEvent(0, "C5", "4n"));
-oscillatorTrack.timeline.addEvent(new NoteEvent(3, "G5", "4n"));
-oscillatorTrack.timeline.addEvent(new NoteEvent(1, "E5", "32n"));
+oscillatorTrack.timeline.addEvent(new NoteEvent(0, "E5", "2n"));
+oscillatorTrack.timeline.addEvent(new NoteEvent(0, "C5", "2n"));
+oscillatorTrack.timeline.addEvent(new NoteEvent(0, "G5", "2n"));
+//oscillatorTrack.timeline.addEvent(new NoteEvent(2, "E5", "2n"));
+oscillatorTrack.timeline.addEvent(new NoteEvent(2, "C6", "2n"));
+//oscillatorTrack.timeline.addEvent(new NoteEvent(2, "G5", "2n"));
+//oscillatorTrack.timeline.addEvent(new NoteEvent(1, "E5", "32n"));
 let intervalID = setInterval(function() {scheduleEvent.emit()}, 50);
 
 let btn = document.getElementById("startButton");
