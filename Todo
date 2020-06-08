@@ -1,0 +1,11 @@
+To Add:
+- Detect changes in oscillator settings after creation
+- MP3 track
+- MP3 sampler track
+- Global Song Manager (controls scheduling event, etc)
+- Effects chains
+- Global effects bus for high cost effects (attached to a subclass of audio context most likely)
+- Saving and loading
+
+Fixes:
+- Possible refactor of BaseTrack and BaseInstrument
