@@ -74,7 +74,6 @@ export class OscillatorInstrument extends BaseInstrument {
                 break;
             }
         };
-        // TODO: check this works right when two notes start at exactly the same time
         // No free source found, make a new one.
         if (sourceToUse === null) {
             sourceToUse = OscillatorInstrument.newOscillator(this._context, this.settings);

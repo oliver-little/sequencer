@@ -81,7 +81,6 @@ export default class SortedArray<T> extends Array{
         }
 
         if (closest) {
-            // Left will always point to the higher of the values so move it back one
             return left;
         }
         else {

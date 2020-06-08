@@ -2,14 +2,33 @@ export class BaseEvent {
 
     public startPosition: number;
 
-    static positionPattern = new RegExp("^[0-9]*:[0-9]*(:[0-9]*)?$")
+    // Basic duration, has a different meaning for different kinds of events.
+    protected _duration = 0; 
+
 
     constructor (startPosition: number) {
         this.startPosition = startPosition;
     }
 
+    /**
+     * Represents the length of the note in quarter notes.
+     *
+     * @memberof BaseEvent
+     */
+    public get duration() : number {
+        return this._duration;
+    }
+
+    public set duration(value: number) {
+        this._duration = value;
+    }
+
     public static comparator(a : BaseEvent, b : BaseEvent) {
-        return a.startPosition - b.startPosition;
+        if (a.startPosition > b.startPosition) return 1;
+        if (a.startPosition < b.startPosition) return -1;
+        if (a.duration > b.duration) return 1;
+        if (a.duration < b.duration) return -1;
+        return 0;
     }
 }
 
@@ -23,30 +42,31 @@ export class NoteEvent extends BaseEvent {
      */
     public pitch: number;
 
-    private _duration: string;
-
     static notes =  ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    static positionPattern = new RegExp("^[0-9]*:[0-9]*(:[0-9]*)?$");
-
-    static durationPattern = new RegExp("^((1|2|4|8|16|32|64)(t|n|\\.)|([0-9]*b))$");
+    static durationPattern = new RegExp("^(1|2|4|8|16|32|64)(t|n|\\.)$");
 
     /**
      *Creates an instance of NoteEvent.
      * @param {number} startPosition The position of the note to begin (quarter notes)
      * @param {(number|string)} pitch The pitch of the note (Hz / pitch-octave notation string)
-     * @param {string} duration The duration of the note (1-64 n*(ote)* / t*(riplet)* /. *(dotted)* or **x**b *(number of bars)*)
+     * @param {string} duration The duration of the note (1-64 n*(ote)* / t*(riplet)* /. *(dotted)* or a number of quarter notes)
      * @memberof NoteEvent
      */
-    constructor (startPosition: number, pitch : number|string, duration: string) {
+    constructor (startPosition: number, pitch : number|string, duration: number|string) {
         super(startPosition);
         
         if (typeof(pitch) ==="string") {
             this.setPitchString(pitch);
         }
-        else{
+        else {
             this.pitch = pitch;
         }
-        this.duration = duration;
+        if(typeof(duration) === "string") {
+            this.duration = this._parseQuarterNoteLength(duration)
+        }
+        else {
+            this.duration = duration;
+        }
     }
 
     /**
@@ -72,21 +92,62 @@ export class NoteEvent extends BaseEvent {
 
         this.pitch = 440 * Math.pow(2, (noteNumber - 49) / 12);
     }
-    
+
     /**
-     * Represents the length of the note.
+     * Represents the length of the note in quarter notes.
      *
-     * @memberof TrackEvent
+     * @memberof BaseEvent
      */
-    public get duration() : string {
+    // Duplicated because getters aren't inherited in js
+    public get duration() : number {
         return this._duration;
     }
 
-    public set duration(value: string) {
-        if (!NoteEvent.durationPattern.test(value)) {
+    /**
+     * Set note duration as number of quarter notes
+     *
+     * @memberof NoteEvent
+     */
+    public set duration(value: number) {
+        if (value < 0) {
             throw new Error("Invalid duration value");
         }
         this._duration = value;
+    }
+
+    /**
+     * Use to assign duration using a string (1/2/4/8... n(note)/t(riplet)/.(dotted))
+     *
+     * @param {string} value
+     * @memberof NoteEvent
+     */
+    public setDurationString(value : string) {
+        if (!NoteEvent.durationPattern.test(value)) {
+            throw new Error("Invalid duration value");
+        }
+        this._duration = this._parseQuarterNoteLength(value);
+    }
+
+    private _parseQuarterNoteLength(note : string) : number {
+        // General calculation for getting a note's length:
+        // (Beat Type (denominator of time signature) / Note Type) * Seconds Per Beat
+        // E.G: At 120bpm the seconds per beat is 0.5 (60/120),
+        // Therefore in 4/4, an 8th note is 4/8 * 0.5 = 0.25s
+        let noteLength = parseInt(note.slice(0, note.length - 1));
+        switch (note.charAt(note.length - 1)) {
+            case "n":
+                return (4 / noteLength);
+            case ".":
+                return ((4 / noteLength) * 1.5);
+            case "t":
+                return ((4 / noteLength) / 1.5);
+            default:
+                throw new Error("Invalid note.");
+        }
+    }
+
+    public toString() : string {
+        return "(NoteEvent: Duration: " + this.duration + " Pitch: " + this.pitch + " startPosition: " + this.startPosition + ")\n";
     }
 }
 

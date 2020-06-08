@@ -17,7 +17,6 @@ export class EventTimeline {
 
     public addEvent(note: BaseEvent) : void {
         this._events.insert(note);
-        console.log(this.events);
     }
 
     public removeEvent(note: BaseEvent) : void {
@@ -27,12 +26,17 @@ export class EventTimeline {
     /**
      * Call this to signify that playback has begun.
      *
-     * @param {number} time The time to start playback at
+     * @param {number} time The time in **quarter notes** to start playback at 
      * @memberof EventTimeline
      */
     public start(time: number) : void {
-        let index = this._events.binarySearch(new BaseEvent(time), true);
-        this._eventPosition = Math.max(0, index - 1); // The event returned is always the next event to play, go back one to the event currently playing.
+        //FIXME: possibly better to do this using a binary search
+        for (let i = 0; i < this._events.length; i++) {
+            if ((this._events[i].startPosition + this._events[i].duration) > time){ 
+                this._eventPosition = i;
+                break;
+            }
+        }
     }
 
 
