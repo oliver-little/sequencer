@@ -1,5 +1,6 @@
 To Add:
-- Detect changes in oscillator settings after creation
+- Meta event track (bpm and time signature changes)
+- Saving song to WAV using OfflineAudioContext, will require simulating playback between each meta event
 - MP3 track
 - MP3 sampler track
 - Global Song Manager (controls scheduling event, etc)

@@ -2,6 +2,7 @@ import SongMetadata from "../SongManagement/SongMetadata.js";
 import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
 import {EventTimeline} from "../Notation/EventTimeline.js";
 import {BaseEvent} from "../Notation/SongEvents.js";
+import {BaseInstrument} from "../Instruments/BaseInstrument.js";
 
 /**
  * Works with the timeline and instrument objects to schedule notes as required
@@ -15,6 +16,7 @@ export abstract class BaseTrack {
     public lookaheadTime = 0.125;
 
     public timeline : EventTimeline;
+    public audioSource : BaseInstrument;
 
     protected _metadata : SongMetadata;
     protected _context : AudioContext;
@@ -32,11 +34,12 @@ export abstract class BaseTrack {
      * @param {SimpleEvent} scheduleEvent An event that fires regularly to allow notes to be scheduled.
      * @memberof BaseTrack
      */
-    constructor (metadata : SongMetadata, context : AudioContext, scheduleEvent : SimpleEvent) {
+    constructor (metadata : SongMetadata, context : AudioContext, scheduleEvent : SimpleEvent, audioSource : BaseInstrument) {
         this.timeline = new EventTimeline();
         this._context = context;
         this._metadata = metadata;
         this._scheduleEvent = scheduleEvent;
+        this.audioSource = audioSource;
     }
 
     /**
@@ -47,6 +50,22 @@ export abstract class BaseTrack {
      */
     get playing() {
         return this._playing;
+    }
+
+    // Functions rather than getters and setters because these need to be in subclasses too.
+    /**
+     * Get the AudioContext this object (and it's children) is using
+     *
+     * @returns
+     * @memberof BaseTrack
+     */
+    public getContext() {
+        return this._context;
+    }
+
+    public setContext(value : AudioContext) {
+       this._context = value;
+       this.audioSource.setContext(value);
     }
 
     /**
@@ -75,6 +94,7 @@ export abstract class BaseTrack {
             this._scheduleEvent.removeAt(index);
         }
         this._playing = false;
+        this.audioSource.stop();
     }
 
 
@@ -96,6 +116,15 @@ export abstract class BaseTrack {
             });
         }
     }
+
+        /**
+     * Handler for song events, different for each type of track
+     *
+     * @abstract
+     * @param {BaseEvent} event The BaseEvent (but will be a child)
+     * @memberof BaseTrack
+     */
+    protected abstract songEventHandler(event: BaseEvent) : void;
 
     /**
      * Converts a seconds value to quarter notes
@@ -120,13 +149,4 @@ export abstract class BaseTrack {
     protected fromQuarterNoteTime(value: number) : number {
         return (value * this._metadata.quarterNoteMultiplier * this._metadata.secondsPerBeat);
     }
-
-    /**
-     * Handler for song events, different for each type of track
-     *
-     * @abstract
-     * @param {BaseEvent} event The BaseEvent (but will be a child)
-     * @memberof BaseTrack
-     */
-    protected abstract songEventHandler(event: BaseEvent) : void;
 }

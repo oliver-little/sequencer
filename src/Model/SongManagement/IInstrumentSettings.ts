@@ -29,8 +29,15 @@ interface IOscillatorSettings extends IInstrumentSettings {
     "source" : {
         "type" : "oscillator",
         "oscillatorType" : string,
-        "detune" : number,
         "gain" : number
+    }
+}
+
+interface IMP3Settings extends IInstrumentSettings {
+    "source" : {
+        "type" : "MP3",
+        "gain" : number,
+        "MP3Data" : Blob
     }
 }
 

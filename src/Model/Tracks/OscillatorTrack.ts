@@ -6,7 +6,7 @@ import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 import { IOscillatorSettings } from "../SongManagement/IInstrumentSettings.js";
 
 export class OscillatorTrack extends BaseTrack {
-    
+
     public audioSource : OscillatorInstrument;
 
     /**
@@ -17,9 +17,14 @@ export class OscillatorTrack extends BaseTrack {
      * @param {IOscillatorSettings} settings An object that fulfills the IOscillatorSettings interface
      * @memberof OscillatorTrack
      */
-    constructor(metadata : SongMetadata, context : AudioContext, scheduleEvent : SimpleEvent, settings : IOscillatorSettings) {
-        super(metadata, context, scheduleEvent);
-        this.audioSource = new OscillatorInstrument(context, settings);
+    constructor(metadata : SongMetadata, context : AudioContext, scheduleEvent : SimpleEvent, settings? : IOscillatorSettings) {
+        let instrument = null;
+        if (settings != null) {
+            instrument = new OscillatorInstrument(context, settings);
+        } else {
+            instrument = new OscillatorInstrument(context);
+        }
+        super(metadata, context, scheduleEvent, instrument);
     }
 
     /**
@@ -34,16 +39,6 @@ export class OscillatorTrack extends BaseTrack {
         // Time difference is used by default for startPosition to allow easy restarting from where playback was last paused.
         this.timeline.start(startPosition);
         super.start(startPosition);
-    }
-
-    /**
-     * Override BaseTrack stop to mute instrument
-     *
-     * @memberof OscillatorTrack
-     */
-    public stop() : void {
-        super.stop();
-        this.audioSource.stop();
     }
 
     protected songEventHandler(event: BaseEvent) {
@@ -66,9 +61,8 @@ let context = new AudioContext();
 let jsonString = `{
     "source": {
         "type": "oscillator",
-        "oscillatorType": "triangle",
-        "gain": 0.3,
-        "detune": 0
+        "oscillatorType": "sine",
+        "gain": 1
     },
     "envelopeEnabled" : true,
     "envelope": {
@@ -133,6 +127,7 @@ let intervalID = setInterval(function() {scheduleEvent.emit()}, 50);
 
 let btn = document.getElementById("startButton");
 let restartBtn = document.getElementById("restartButton");
+let typeBtn = document.getElementById("typeButton");
 
 btn.onclick = function () {
     if(!oscillatorTrack.playing) {
@@ -151,4 +146,15 @@ restartBtn.onclick = function() {
     oscillatorTrack.stop();
     oscillatorTrack.start(scheduleEvent, 0);
     btn.innerHTML = "Stop";
+}
+
+typeBtn.onclick = function() {
+    if (oscillatorTrack.audioSource.settings.source.oscillatorType === "sawtooth") {
+        console.log("changing type: sine");
+        oscillatorTrack.audioSource.settings.source.oscillatorType = "sine";
+    }
+    else {
+        console.log("changing type: sawtooth");
+        oscillatorTrack.audioSource.settings.source.oscillatorType = "sawtooth";
+    }
 }

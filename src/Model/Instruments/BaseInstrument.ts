@@ -22,8 +22,17 @@ export class BaseInstrument {
         this._sourceGain.connect(context.destination);
     }
 
+    // Functions rather than getter and setter to ensure subclasses also get these functions
+    public getContext() {
+        return this._context;
+    }
 
-
+    public setContext(value : AudioContext) {
+        this._context = value;
+        // Also point the source at the correct destination
+        this._sourceGain.disconnect();
+        this._sourceGain.connect(value.destination);
+    }
 
     /**
      * Starts playback of an event

@@ -21,13 +21,40 @@ export class OscillatorInstrument extends BaseInstrument {
     protected _sources : IOscillatorBaseChain[];
     protected _source : OscillatorNode;
 
-    constructor(context : AudioContext, settings : IOscillatorSettings) {
+    /**
+     *Creates an instance of OscillatorInstrument.
+     * @param {AudioContext} context The AudioContext for this object
+     * @param {IOscillatorSettings} [settings=JSON.parse(oscillatorDefaults)]
+     * @memberof OscillatorInstrument
+     */
+    constructor(context : AudioContext, settings : IOscillatorSettings = JSON.parse(oscillatorDefaults)) {
         let oscillator = context.createOscillator();
         let startOscillator = OscillatorInstrument.newOscillator(context, settings);
-        startOscillator.oscillator.type = settings.source.oscillatorType as OscillatorType;
 
         super(context, settings, startOscillator.oscillator, startOscillator.gain);
         this._sources = [startOscillator];
+
+        // Custom getter and setter to directly update all oscillators with new type if it's changed.
+        // TODO: when serialising the settings, this getter setter format needs to be turned back to an actual property
+        Object.defineProperty(settings.source, "oscillatorType", { 
+            get: function() {
+                return this._sources[0].oscillator.type;
+            }.bind(this),
+            set: function(value : string) {
+                for (let i = 0; i < this._sources.length; i++) {
+                    this._sources[i].oscillator.type = value;
+                }
+            }.bind(this)
+        });
+    }
+
+    // Override superclass function to update all sources
+    public setContext(value : AudioContext) {
+        this._context = value;
+        for (let i = 0; i < this._sources.length; i++) {
+            this._sources[i].oscillator.disconnect();
+            this._sources[i].oscillator.connect(value.destination);
+        }
     }
 
     /**
@@ -123,3 +150,17 @@ export class OscillatorInstrument extends BaseInstrument {
         return {oscillator : source, gain : sourceGain, usage : []};
     }
 }
+
+let oscillatorDefaults = `{
+    "source": {
+        "type": "oscillator",
+        "oscillatorType": "triangle",
+        "gain": 0.3,
+        "detune": 0
+    },
+    "envelopeEnabled" : true,
+    "envelope": {
+        "attack": 0.1,
+        "release": 0.1
+    }
+}`;

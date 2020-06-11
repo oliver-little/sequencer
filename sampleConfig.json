@@ -2,8 +2,7 @@
     "source": {
         "type": "oscillator",
         "oscillatorType": "sine",
-        "gain": 100,
-        "detune": 0
+        "gain": 100
     },
     "envelopeEnabled" : true,
     "envelope": {
