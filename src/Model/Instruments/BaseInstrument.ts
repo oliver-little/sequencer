@@ -42,6 +42,9 @@ export class BaseInstrument {
      * @memberof BaseInstrument
      */
     public startNote(time: number, volume = 1) : void {
+        if (time < this._context.currentTime) {
+            time = this._context.currentTime;
+        }
         if (this.settings.envelopeEnabled) {
             this._sourceGain.gain.setValueAtTime(0, time);
             this._sourceGain.gain.linearRampToValueAtTime(this.settings.source.gain * volume, time + this.settings.envelope.attack);
@@ -59,6 +62,7 @@ export class BaseInstrument {
      */
     public stopNote(time : number, volume = 1) : void {
         if (this.settings.envelopeEnabled) {
+            this._sourceGain.gain.cancelScheduledValues(time - this.settings.envelope.release);
             this._sourceGain.gain.setValueAtTime(this.settings.source.gain * volume, time - this.settings.envelope.release);
             this._sourceGain.gain.linearRampToValueAtTime(0, time);
         }

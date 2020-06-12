@@ -37,6 +37,7 @@ export class EventTimeline {
                 break;
             }
         }
+        console.log(this._eventPosition);
     }
 
 

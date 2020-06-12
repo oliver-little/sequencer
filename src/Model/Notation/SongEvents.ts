@@ -151,13 +151,65 @@ export class NoteEvent extends BaseEvent {
     }
 }
 
-export class MetadataEvent extends BaseEvent {
+export class MetadataEvent {
 
-    public changes: Map<String, any>;
+    public startPosition : number;
 
-    constructor(startPosition: number, changes : Map<String, any>) {
-        super(startPosition);
+    private _bpm : number;
+    private _secondsPerBeat : number;
+    private _timeSignature : number[];
+    private _quarterNoteMultiplier : number;
 
-        this.changes = changes;
+    constructor(startPosition : number, bpm : number, timeSignature : number[]) {
+        this.startPosition = startPosition;
+        this.bpm = bpm;
+        this.timeSignature = timeSignature
+    }
+
+    get bpm() {
+        return this._bpm;
+    }
+
+    set bpm(value: number) {
+        if (value < 0) {
+            throw new Error("Invalid BPM: cannot be negative.");
+        }
+        this._bpm = value;
+        this._secondsPerBeat = 60/this._bpm;
+    }
+
+    get secondsPerBeat() {
+        return this._secondsPerBeat;
+    }
+
+    get timeSignature() {
+        return this._timeSignature;
+    }
+
+    set timeSignature(value: number[]) {
+        if (value.length != 2) {
+            throw new RangeError("Incorrect number of values in array.");
+        }
+        else if (value[0] < 0 || value[1] < 0) {
+            throw new RangeError("Numbers must be greater than 0.");
+        }
+        if (value[1] % 2 != 0) {
+            throw new RangeError("Second number must be a power of two.");
+        }
+        this._timeSignature = value;
+        this._quarterNoteMultiplier = this._timeSignature[1]/4;
+    }
+
+    get quarterNoteMultiplier() {
+        return this._quarterNoteMultiplier;
+    }
+
+    public static comparator(a : MetadataEvent|number, b : MetadataEvent) {
+        if (typeof(a) === "number") {
+            return a - b.startPosition;
+        }
+        else {
+            return a.startPosition - b.startPosition;
+        }
     }
 }

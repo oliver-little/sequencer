@@ -20,8 +20,24 @@ export default class SortedArray<T> extends Array{
     }
 
     public insert(value: T) : void {
-        let index = this.binarySearch(value, true);
-        this.splice(index, 0, value);
+        let left = 0;
+        let right = this.length - 1;
+        let mid = 0;
+
+        while (left <= right) {
+            mid = Math.floor((left + right) / 2);
+            if (value === this[mid]) {
+                this.splice(mid, 0, value);
+            }
+            else if (this._comparator(value, this[mid]) > 0) {
+                left = mid + 1;
+            }
+            else {
+                right = mid - 1;
+            }
+        }
+        // If exact position wasn't found, splice at the left location, which contains the index of the closest element
+        this.splice(left, 0, value);
     }
 
     public remove(value: T) : void {
@@ -62,20 +78,34 @@ export default class SortedArray<T> extends Array{
      * @returns The index of the element
      * @memberof SortedArray
      */
-    public binarySearch(value: T, closest = false) {
+    public binarySearch(value: T|number, closest = false) {
         let left = 0;
         let right = this.length - 1;
         let mid = 0;
 
+        if (this.length == 0) {
+            return -1;
+        }
+
+        if (closest && this._comparator(value, this[right]) > 0) {
+            return right;
+        }
+
         while (left <= right) {
             mid = Math.floor((left + right) / 2);
-            if (value === this[mid]) {
+            if (this._comparator(value, this[mid]) === 0) {
+                while (mid > 0 && this._comparator(this[mid], this[mid-1]) === 0) {
+                    mid = mid - 1;
+                }
                 return mid;
             }
             else if (this._comparator(value, this[mid]) > 0) {
                 left = mid + 1;
             }
             else {
+                if (closest && this._comparator(value, this[mid-1])) {
+                    return mid-1;
+                }
                 right = mid - 1;
             }
         }

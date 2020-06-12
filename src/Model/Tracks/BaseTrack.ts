@@ -20,10 +20,10 @@ export abstract class BaseTrack {
 
     protected _metadata : SongMetadata;
     protected _context : AudioContext;
-    protected _startTime = 0; // Stores the audioContext time at which playback was started
     protected _scheduleEvent : SimpleEvent; // Stores the event which fires every time song events should be scheduled.
+    protected _startTime = 0; // Stores the AudioContext time at which playback was started.
+    protected _quarterNotePosition = 0; // Stores the number of quarter notes passed since the song started playing
     protected _playing = false; 
-    protected _timeDifference = 0; // Stores the last recorded time difference between the startTime and the audioContext time
 
     private _anonymousScheduleFunc = function() {this.scheduleSongEvents()}.bind(this); // Reference to the anonymous function scheduleEvent calls
 
@@ -74,9 +74,14 @@ export abstract class BaseTrack {
      * @param {number} startPosition The position **in quarter notes** where playback should start from
      * @memberof BaseTrack
      */
-    public start(startPosition) : void {
-        // Derive effective start time from difference between current audiocontext time and startposition converted to seconds
-        this._startTime = this._context.currentTime - this.fromQuarterNoteTime(startPosition);
+    public start(startPosition = this._quarterNotePosition) : void {
+        this._quarterNotePosition = startPosition;
+        if (startPosition == 0) {
+            this._startTime = this._context.currentTime;
+        }
+        else {
+            this._startTime = this._context.currentTime - this._metadata.positionQuarterNoteToSeconds(this._quarterNotePosition);
+        }
         this._playing = true;
 
         // FIXME: Possible bug here, are callbacks different between class instances.
@@ -105,11 +110,11 @@ export abstract class BaseTrack {
      */
     public scheduleSongEvents() {
         if (this._playing) {
-            // Calculate the number of quarter notes that have passed since playback began.
-            this._timeDifference = this.toQuarterNoteTime(this._context.currentTime - this._startTime);
-
-            // Add the lookahead time
-            let quarterNoteTime = this._timeDifference + this.toQuarterNoteTime(this.lookaheadTime);
+            // TODO: move this into the central clock and just have this take the quarterNoteTime as a parameter
+            let timeSinceStart = this._context.currentTime - this._startTime;
+            this._quarterNotePosition = this._metadata.positionSecondsToQuarterNote(timeSinceStart);
+            let quarterNoteTime = this._quarterNotePosition + ((this.lookaheadTime / this._metadata.getSecondsPerBeat(this._quarterNotePosition))
+                                                                                    / this._metadata.getQuarterNoteMultiplier(this._quarterNotePosition));
             let events = this.timeline.getEventsUntilTime(quarterNoteTime);
             events.forEach(event => {
                 this.songEventHandler(event);
@@ -125,28 +130,4 @@ export abstract class BaseTrack {
      * @memberof BaseTrack
      */
     protected abstract songEventHandler(event: BaseEvent) : void;
-
-    /**
-     * Converts a seconds value to quarter notes
-     *
-     * @protected
-     * @param {number} value The value in seconds
-     * @returns {number} The value in quarter notes
-     * @memberof BaseTrack
-     */
-    protected toQuarterNoteTime(value: number) : number {
-        return (value / this._metadata.secondsPerBeat) / this._metadata.quarterNoteMultiplier;
-    }
-
-    /**
-     * Converts a quarter note value to seconds.
-     *
-     * @protected
-     * @param {number} value The value in quarter notes
-     * @returns {number} The value in seconds
-     * @memberof BaseTrack
-     */
-    protected fromQuarterNoteTime(value: number) : number {
-        return (value * this._metadata.quarterNoteMultiplier * this._metadata.secondsPerBeat);
-    }
 }

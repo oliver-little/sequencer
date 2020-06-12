@@ -79,7 +79,7 @@ export class OscillatorInstrument extends BaseInstrument {
      * @param {number} duration The duration of the note (s)
      * @memberof OscillatorInstrument
      */
-    public playNote(frequency : number, time : number, duration : number) : void {
+    public playNote(frequency : number, start : number, end : number) : void {
         // Find oscillator that isn't in use
         let sourceToUse = null;
         for (let i = 0; i < this._sources.length; i++) {
@@ -91,7 +91,7 @@ export class OscillatorInstrument extends BaseInstrument {
                     currentSource.usage.splice(j, 1);
                     continue;
                 }
-                else if (time >= noteDuration[0] && time <= noteDuration[1]) {
+                else if (start >= noteDuration[0] && start <= noteDuration[1]) {
                     sourceAvailable = false;
                     break;
                 }
@@ -107,13 +107,14 @@ export class OscillatorInstrument extends BaseInstrument {
             this._sources.push(sourceToUse);
         }
         // Push the time this source is being used for to the list
-        sourceToUse.usage.push([time, time + duration]);
+        sourceToUse.usage.push([start, end]);
         // Switch out the base instrument's current source so it schedules the note correctly.
         this._source = sourceToUse.oscillator;
         this._sourceGain = sourceToUse.gain;
 
-        this.startNote(frequency, time);
-        this.stopNote(time + duration);
+        this.startNote(frequency, start);
+        this.stopNote(end);
+        console.log(start + " " + end);
     }
 
     /**

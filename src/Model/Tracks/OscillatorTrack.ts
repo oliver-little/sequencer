@@ -35,7 +35,7 @@ export class OscillatorTrack extends BaseTrack {
      * @param {SimpleEvent} scheduleEvent The event fired to schedule new notes
      * @memberof OscillatorTrack
      */
-    public start(scheduleEvent : SimpleEvent, startPosition = this._timeDifference) : void {
+    public start(startPosition = this._quarterNotePosition) : void {
         // Time difference is used by default for startPosition to allow easy restarting from where playback was last paused.
         this.timeline.start(startPosition);
         super.start(startPosition);
@@ -43,12 +43,10 @@ export class OscillatorTrack extends BaseTrack {
 
     protected songEventHandler(event: BaseEvent) {
         if (event instanceof NoteEvent) {
-            let noteLength = event.duration * this._metadata.quarterNoteMultiplier * this._metadata.secondsPerBeat;
-            // Calculate the time the note should play in seconds using the start audioContext time + 
-            // the start position (in quarter notes) * the multiplier to get from the quarter notes to the beat * the number of seconds per beat
-            let noteTime = this._startTime + (event.startPosition * this._metadata.quarterNoteMultiplier * this._metadata.secondsPerBeat);
+            let eventStart = this._startTime + this._metadata.positionQuarterNoteToSeconds(event.startPosition);
+            let eventEnd = this._startTime +  this._metadata.positionQuarterNoteToSeconds(event.startPosition + event.duration);
             console.log("queuing: " + event.pitch);
-            this.audioSource.playNote(event.pitch, noteTime, noteLength);
+            this.audioSource.playNote(event.pitch, eventStart, eventEnd);
         }
         else {
             throw new Error("OscillatorTrack cannot handle this event type:" + event);
@@ -62,7 +60,7 @@ let jsonString = `{
     "source": {
         "type": "oscillator",
         "oscillatorType": "sine",
-        "gain": 1
+        "gain": 0.1
     },
     "envelopeEnabled" : true,
     "envelope": {
@@ -119,10 +117,12 @@ let oscillatorTrack = new OscillatorTrack(metadata, context, scheduleEvent, osci
 oscillatorTrack.timeline.addEvent(new NoteEvent(0, "E5", "2n"));
 oscillatorTrack.timeline.addEvent(new NoteEvent(0, "C5", "2n"));
 oscillatorTrack.timeline.addEvent(new NoteEvent(0, "G5", "2n"));
-//oscillatorTrack.timeline.addEvent(new NoteEvent(2, "E5", "2n"));
+oscillatorTrack.timeline.addEvent(new NoteEvent(2, "E5", "2n"));
 oscillatorTrack.timeline.addEvent(new NoteEvent(2, "C6", "2n"));
-//oscillatorTrack.timeline.addEvent(new NoteEvent(2, "G5", "2n"));
-//oscillatorTrack.timeline.addEvent(new NoteEvent(1, "E5", "32n"));
+oscillatorTrack.timeline.addEvent(new NoteEvent(2, "G5", "2n"));
+oscillatorTrack.timeline.addEvent(new NoteEvent(3, "G6", "32n"));
+console.log(oscillatorTrack.timeline.events);
+metadata.addMetadataEvent(2, 180, [4,4]);
 let intervalID = setInterval(function() {scheduleEvent.emit()}, 50);
 
 let btn = document.getElementById("startButton");
@@ -132,7 +132,7 @@ let typeBtn = document.getElementById("typeButton");
 btn.onclick = function () {
     if(!oscillatorTrack.playing) {
         context.resume();
-        oscillatorTrack.start(scheduleEvent);
+        oscillatorTrack.start();
         btn.innerHTML = "Stop";
     }
     else {
@@ -144,7 +144,7 @@ btn.onclick = function () {
 
 restartBtn.onclick = function() {
     oscillatorTrack.stop();
-    oscillatorTrack.start(scheduleEvent, 0);
+    oscillatorTrack.start(0);
     btn.innerHTML = "Stop";
 }
 
