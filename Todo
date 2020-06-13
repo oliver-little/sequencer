@@ -1,12 +1,10 @@
 To Add:
-- Refactor main clock into clock scheduler because each track currently has its own quarter note position
-- Saving song to WAV using OfflineAudioContext, will require simulating playback between each meta event
 - MP3 track
 - MP3 sampler track
-- Global Song Manager (controls scheduling event, etc)
 - Effects chains
 - Global effects bus for high cost effects (attached to a subclass of audio context most likely)
 - Saving and loading
+- Saving song to WAV - half complete, need to be able to save song data in order to recreate songManager using offlineaudiocontext
 
 Fixes:
 - If playback starts after last note, last note plays infinitely

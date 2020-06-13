@@ -19,7 +19,14 @@ export default class SortedArray<T> extends Array{
         this._comparator = comparator;
     }
 
-    public insert(value: T) : void {
+    /**
+     * Adds a new item to the array
+     *
+     * @param {T} value The item to add
+     * @returns {number} The index the item was added at
+     * @memberof SortedArray
+     */
+    public insert(value: T) : number {
         let left = 0;
         let right = this.length - 1;
         let mid = 0;
@@ -28,6 +35,7 @@ export default class SortedArray<T> extends Array{
             mid = Math.floor((left + right) / 2);
             if (value === this[mid]) {
                 this.splice(mid, 0, value);
+                return mid;
             }
             else if (this._comparator(value, this[mid]) > 0) {
                 left = mid + 1;
@@ -38,15 +46,24 @@ export default class SortedArray<T> extends Array{
         }
         // If exact position wasn't found, splice at the left location, which contains the index of the closest element
         this.splice(left, 0, value);
+        return left;
     }
 
-    public remove(value: T) : void {
-        let index = this.binarySearch(value);
+    /**
+     * Removes an item from the array if it exists
+     *
+     * @param {T} value The item to remove
+     * @returns {number} The index where the item was removed from
+     * @memberof SortedArray
+     */
+    public remove(value: T) : number {
+        let index = this.indexOf(value);
         if (index === -1) {
             throw new Error("Element doesn't exist");
         }
         else {
             this.splice(index, 1);
+            return index;
         }
     }
 

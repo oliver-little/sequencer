@@ -12,12 +12,12 @@ export class OscillatorTrack extends BaseTrack {
     /**
      * Creates an instance of OscillatorTrack.
      * @param {SongMetadata} metadata A SongMetadata object
-     * @param {AudioContext} context The AudioContext this object will use
+     * @param {AudioContext|OfflineAudioContext} context The AudioContext this object will use
      * @param {SimpleEvent} scheduleEvent A scheduling event that triggers regularly to schedule notes to play.
      * @param {IOscillatorSettings} settings An object that fulfills the IOscillatorSettings interface
      * @memberof OscillatorTrack
      */
-    constructor(metadata : SongMetadata, context : AudioContext, scheduleEvent : SimpleEvent, settings? : IOscillatorSettings) {
+    constructor(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, settings? : IOscillatorSettings) {
         let instrument = null;
         if (settings != null) {
             instrument = new OscillatorInstrument(context, settings);

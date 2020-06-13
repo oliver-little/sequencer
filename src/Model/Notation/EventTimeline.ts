@@ -10,18 +10,65 @@ export class EventTimeline {
 
     private _events = new SortedArray<BaseEvent>(BaseEvent.comparator);
     private _eventPosition = 0; // Tracks the next event that should be scheduled
+    
+    // Used to calculate total playback time of this track.
+    private longestEventIndex = null;
+    private longestEventValue = 0;
 
     get events() {
         return this._events;
     }
 
-    public addEvent(note: BaseEvent) : void {
-        this._events.insert(note);
+    get playbackTime() {
+        return this.longestEventValue;
     }
 
-    public removeEvent(note: BaseEvent) : void {
-        this._events.remove(note);
+    /**
+     * Adds an event to the timeline
+     *
+     * @param {BaseEvent} event
+     * @memberof EventTimeline
+     */
+    public addEvent(event: BaseEvent) : void {
+        let index = this._events.insert(event);
+
+        // Check if this event is the new longest event
+        if (this.longestEventIndex != null && (event.startPosition + event.duration) > this.longestEventValue) {
+            this.longestEventIndex = index;
+            this.longestEventValue = event.startPosition + event.duration;
+        }
+        else {
+            this.longestEventIndex = 0;
+        }
     }
+
+    /**
+     * Removes a specific event from the timeline
+     *
+     * @param {BaseEvent} event
+     * @memberof EventTimeline
+     */
+    public removeEvent(event: BaseEvent) : void {
+        let index = this._events.remove(event);
+        // Check if the longest event was removed, find the new longest event if it was.
+        if (index === this.longestEventIndex)  {
+            if (this._events.length > 0) {
+                this.longestEventIndex = null;
+                this.longestEventValue = 0;
+                for(let i = 0; i < this.longestEventIndex; i++) {
+                    if ((this._events[i].startDuration + this._events[i].duration) > this.longestEventValue){
+                        this.longestEventIndex = i;
+                        this.longestEventValue = (this._events[i].startDuration + this._events[i].duration);
+                    }
+                }
+            }
+            else {
+                this.longestEventIndex = null;
+                this.longestEventValue = 0;
+            }
+        }
+    }
+
 
     /**
      * Call this to signify that playback has begun.

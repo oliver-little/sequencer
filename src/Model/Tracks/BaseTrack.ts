@@ -16,7 +16,7 @@ export abstract class BaseTrack {
     public audioSource : BaseInstrument;
 
     protected _metadata : SongMetadata;
-    protected _context : AudioContext;
+    protected _context : AudioContext|OfflineAudioContext;
     protected _scheduleEvent : SimpleEvent; // Stores the event which fires every time song events should be scheduled.
     protected _startTime = 0; // Stores the AudioContext time at which playback was started.
     protected _playing = false;
@@ -24,34 +24,17 @@ export abstract class BaseTrack {
     /**
      *Creates an instance of BaseTrack.
      * @param {SongMetadata} metadata The song metadata this track uses.
-     * @param {AudioContext} context The audio context this track should play to
+     * @param {AudioContext|OfflineAudioContext} context The audio context this track should play to
      * @param {SimpleEvent} scheduleEvent An event that fires regularly to allow notes to be scheduled.
      * @memberof BaseTrack
      */
-    constructor (metadata : SongMetadata, context : AudioContext, scheduleEvent : SimpleEvent, audioSource : BaseInstrument) {
+    constructor (metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, audioSource : BaseInstrument) {
         this.timeline = new EventTimeline();
         this._context = context;
         this._metadata = metadata;
         this._scheduleEvent = scheduleEvent;
         this._scheduleEvent.addListener(function(quarterNotePosition : number) {this.scheduleSongEvents(quarterNotePosition)}.bind(this));
         this.audioSource = audioSource;
-    }
-
-
-    // Functions rather than getters and setters because these need to be in subclasses too.
-    /**
-     * Get the AudioContext this object (and it's children) is using
-     *
-     * @returns
-     * @memberof BaseTrack
-     */
-    public getContext() {
-        return this._context;
-    }
-
-    public setContext(value : AudioContext) {
-       this._context = value;
-       this.audioSource.setContext(value);
     }
 
     /**
@@ -96,6 +79,18 @@ export abstract class BaseTrack {
             events.forEach(event => {
                 this.songEventHandler(event);
             });
+        }
+    }
+
+    /**
+     * Schedules all notes to the context, with a start time of now
+     *
+     * @memberof BaseTrack
+     */
+    public scheduleAllEvents() {
+        this._startTime = this._context.currentTime;
+        for(let i = 0; i < this.timeline.events.length; i++) {
+            this.songEventHandler(this.timeline.events[i]);
         }
     }
 

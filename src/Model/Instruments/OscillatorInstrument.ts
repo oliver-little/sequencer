@@ -27,7 +27,7 @@ export class OscillatorInstrument extends BaseInstrument {
      * @param {IOscillatorSettings} [settings=JSON.parse(oscillatorDefaults)]
      * @memberof OscillatorInstrument
      */
-    constructor(context : AudioContext, settings : IOscillatorSettings = JSON.parse(oscillatorDefaults)) {
+    constructor(context : AudioContext|OfflineAudioContext, settings : IOscillatorSettings = JSON.parse(oscillatorDefaults)) {
         let oscillator = context.createOscillator();
         let startOscillator = OscillatorInstrument.newOscillator(context, settings);
 
@@ -136,7 +136,7 @@ export class OscillatorInstrument extends BaseInstrument {
      * @returns An array containing the oscillator and its gain.
      * @memberof OscillatorInstrument
      */
-    private static newOscillator(context : AudioContext, settings : IOscillatorSettings) : IOscillatorBaseChain {
+    private static newOscillator(context : AudioContext|OfflineAudioContext, settings : IOscillatorSettings) : IOscillatorBaseChain {
         // Create nodes
         let source = context.createOscillator();
         source.start();

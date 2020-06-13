@@ -5,7 +5,6 @@ export class BaseEvent {
     // Basic duration, has a different meaning for different kinds of events.
     protected _duration = 0; 
 
-
     constructor (startPosition: number) {
         this.startPosition = startPosition;
     }
