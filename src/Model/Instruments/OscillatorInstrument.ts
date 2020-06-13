@@ -114,7 +114,6 @@ export class OscillatorInstrument extends BaseInstrument {
 
         this.startNote(frequency, start);
         this.stopNote(end);
-        console.log(start + " " + end);
     }
 
     /**

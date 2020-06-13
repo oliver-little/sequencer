@@ -36,8 +36,6 @@ export class SimpleEvent{
         this._callbacks.splice(index, 1);
     }
 
-    public hasLis
-
     public emit(...args : any[]) : void {
         this._callbacks.forEach(element => {
             element(args);
