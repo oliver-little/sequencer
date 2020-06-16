@@ -43,13 +43,30 @@ export class EventTimeline {
     }
 
     /**
-     * Removes a specific event from the timeline
+     * Removes an event from the timeline
      *
      * @param {BaseEvent} event
      * @memberof EventTimeline
      */
-    public removeEvent(event: BaseEvent) : void {
-        let index = this._events.remove(event);
+    // TODO: add uuid to baseevents and remove using uuid
+    public removeEvent(event : BaseEvent) : void {
+        let index = this._events.binarySearch(event);
+        if (index == -1) {
+            throw new Error("Event doesn't exist.");
+        }
+
+        this.removeAt(index);
+    }
+
+    /**
+     * Removes an event at a specific index from the timeline
+     *
+     * @param {BaseEvent} event
+     * @memberof EventTimeline
+     */
+    public removeAt(index : number) : void {
+        this._events.splice(index, 1); 
+        
         // Check if the longest event was removed, find the new longest event if it was.
         if (index === this.longestEventIndex)  {
             if (this._events.length > 0) {
@@ -84,7 +101,6 @@ export class EventTimeline {
                 break;
             }
         }
-        console.log(this._eventPosition);
     }
 
 

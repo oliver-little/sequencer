@@ -3,8 +3,6 @@ interface IInstrumentSettings {
         "type" : string,
         "gain" : number,
     }
-    "envelopeEnabled" : boolean,
-    "envelope"? : IAmplitudeEnvelope,
     "chains"? : Array<IChain>;
     
 }
@@ -31,14 +29,17 @@ interface IOscillatorSettings extends IInstrumentSettings {
         "oscillatorType" : string,
         "gain" : number
     }
+    "envelopeEnabled" : boolean,
+    "envelope"? : IAmplitudeEnvelope,
 }
 
-interface IMP3Settings extends IInstrumentSettings {
+interface ISoundFileSettings extends IInstrumentSettings {
     "source" : {
-        "type" : "MP3",
+        "type" : "soundFile",
         "gain" : number,
-        "MP3Data" : Blob
+        // A base64 encoded Blob of the sound file
+        "soundData" : string
     }
 }
 
-export {IInstrumentSettings, IOscillatorSettings};
+export {IInstrumentSettings, IOscillatorSettings, ISoundFileSettings};

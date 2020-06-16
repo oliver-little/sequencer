@@ -2,7 +2,7 @@ import SongMetadata from "../SongManagement/SongMetadata.js";
 import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
 import {EventTimeline} from "../Notation/EventTimeline.js";
 import {BaseEvent} from "../Notation/SongEvents.js";
-import {BaseInstrument} from "../Instruments/BaseInstrument.js";
+import {IInstrument} from "../Instruments/IInstrument.js";
 
 /**
  * Works with the timeline and instrument objects to schedule notes as required
@@ -12,9 +12,9 @@ import {BaseInstrument} from "../Instruments/BaseInstrument.js";
  */
 export abstract class BaseTrack {
 
-    public timeline : EventTimeline;
-    public audioSource : BaseInstrument;
+    public audioSource : IInstrument;
 
+    protected _timeline : EventTimeline;
     protected _metadata : SongMetadata;
     protected _context : AudioContext|OfflineAudioContext;
     protected _scheduleEvent : SimpleEvent; // Stores the event which fires every time song events should be scheduled.
@@ -28,13 +28,17 @@ export abstract class BaseTrack {
      * @param {SimpleEvent} scheduleEvent An event that fires regularly to allow notes to be scheduled.
      * @memberof BaseTrack
      */
-    constructor (metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, audioSource : BaseInstrument) {
-        this.timeline = new EventTimeline();
+    constructor (metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, audioSource : IInstrument) {
+        this._timeline = new EventTimeline();
         this._context = context;
         this._metadata = metadata;
         this._scheduleEvent = scheduleEvent;
         this._scheduleEvent.addListener(function(quarterNotePosition : number) {this.scheduleSongEvents(quarterNotePosition)}.bind(this));
         this.audioSource = audioSource;
+    }
+
+    get timeline() {
+        return this._timeline;
     }
 
     /**
@@ -53,7 +57,7 @@ export abstract class BaseTrack {
         }
 
         this._playing = true;
-        this.timeline.start(startPosition);
+        this._timeline.start(startPosition);
     }
 
     /**
@@ -75,7 +79,7 @@ export abstract class BaseTrack {
      */
     public scheduleSongEvents(quarterNoteTime : number) {
         if(this._playing) {
-            let events = this.timeline.getEventsUntilTime(quarterNoteTime);
+            let events = this._timeline.getEventsUntilTime(quarterNoteTime);
             events.forEach(event => {
                 this.songEventHandler(event);
             });
@@ -89,8 +93,8 @@ export abstract class BaseTrack {
      */
     public scheduleAllEvents() {
         this._startTime = this._context.currentTime;
-        for(let i = 0; i < this.timeline.events.length; i++) {
-            this.songEventHandler(this.timeline.events[i]);
+        for(let i = 0; i < this._timeline.events.length; i++) {
+            this.songEventHandler(this._timeline.events[i]);
         }
     }
 

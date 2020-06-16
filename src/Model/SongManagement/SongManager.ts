@@ -1,9 +1,10 @@
 import SongMetadata from "./SongMetadata.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
-import { IInstrumentSettings, IOscillatorSettings } from "./IInstrumentSettings.js";
+import { IInstrumentSettings, IOscillatorSettings, ISoundFileSettings } from "./IInstrumentSettings.js";
 import { BaseTrack } from "../Tracks/BaseTrack.js";
 import { OscillatorTrack } from "../Tracks/OscillatorTrack.js";
 import { NoteEvent } from "../Notation/SongEvents.js";
+import { SoundFileTrack } from "../Tracks/SoundFileTrack.js";
 
 export class SongManager {
 
@@ -40,17 +41,23 @@ export class SongManager {
     }
 
     /**
-     * Adds a new track to the song
+     * Adds a new track to the song, async because 
      *
-     * @param {IInstrumentSettings} settings The settings object describing the track to add.
+     * @param {IInstrumentSettings} settings
+     * @returns {Promise<BaseTrack>}
      * @memberof SongManager
      */
-    public addTrack(settings: IInstrumentSettings): BaseTrack {
-        if (settings.source.type = "oscillator") {
-            let newTrack = new OscillatorTrack(this.metadata, this.context, this.scheduleEvent, settings as IOscillatorSettings);
-            this._tracks.push(newTrack);
-            return newTrack;
-        }
+    public  addOscillatorTrack(settings: IOscillatorSettings): OscillatorTrack {
+        let newTrack = new OscillatorTrack(this.metadata, this.context, this.scheduleEvent, settings as IOscillatorSettings);
+        this._tracks.push(newTrack);
+        return newTrack;
+
+    }
+
+    public async addSoundFileTrack(settings: ISoundFileSettings) : Promise<SoundFileTrack> {
+        let newTrack = await SoundFileTrack.create(this.metadata, this.context, this.scheduleEvent, settings as ISoundFileSettings);
+        this._tracks.push(newTrack);
+        return newTrack;
     }
 
     public async start(startPosition = this._quarterNotePosition) {
@@ -264,24 +271,88 @@ let jsonString = `{
         }
     ]
 }`;
+let soundFileString = `{
+    "source": {
+        "type": "soundFile",
+        "gain": 1,
+        "soundData": ""
+    },
+    "chains": [
+        {
+            "filters": [
+                {
+                    "type": "filter",
+                    "filterType": "Delay",
+                    "properties": {
+                        "...": "."
+                    }
+                },
+                {
+                    "type": "tuna",
+                    "filterType": "Chorus",
+                    "properties": {
+                        "...": "."
+                    }
+                }
+            ],
+            "gain": 100
+        },
+        {
+            "filters": [
+                {
+                    "type": "filter",
+                    "filterType": "Delay",
+                    "properties": {
+                        "...": "."
+                    }
+                },
+                {
+                    "type": "tuna",
+                    "filterType": "Chorus",
+                    "properties": {
+                        "...": "."
+                    }
+                }
+            ],
+            "gain": 100
+        }
+    ]
+}`;
 
 // Testing code
 let songManager = new SongManager();
-let oscillatorObj = JSON.parse(jsonString) as IOscillatorSettings;
-let oscillatorTrack = songManager.addTrack(oscillatorObj) as OscillatorTrack;
-oscillatorTrack.timeline.addEvent(new NoteEvent(0, "E5", "2n"));
-oscillatorTrack.timeline.addEvent(new NoteEvent(0, "C5", "2n"));
-oscillatorTrack.timeline.addEvent(new NoteEvent(0, "G5", "2n"));
-oscillatorTrack.timeline.addEvent(new NoteEvent(2, "E5", "2n"));
-oscillatorTrack.timeline.addEvent(new NoteEvent(2, "C6", "2n"));
-oscillatorTrack.timeline.addEvent(new NoteEvent(2, "G5", "2n"));
-oscillatorTrack.timeline.addEvent(new NoteEvent(3, "G6", "32n"));
+/*let oscillatorObj = JSON.parse(jsonString) as IOscillatorSettings;
+let oscillatorTrack = songManager.addOscillatorTrack(oscillatorObj) as OscillatorTrack;
+oscillatorTrack.addNote(0, "E5", "2n");
+oscillatorTrack.addNote(0, "C5", "2n");
+oscillatorTrack.addNote(0, "G5", "2n");
+oscillatorTrack.addNote(2, "E5", "2n");
+oscillatorTrack.addNote(2, "C6", "2n");
+oscillatorTrack.addNote(2, "G5", "2n");
+oscillatorTrack.addNote(3, "G6", "32n");*/
 
-songManager.metadata.addMetadataEvent(2, 180, [4, 4]);
+songManager.addSoundFileTrack(JSON.parse(soundFileString) as ISoundFileSettings).then(result =>{
+    let soundFileTrack = result;
+    soundFileTrack.addOneShot(0);
+    const input = document.getElementById("soundFile");
+    input.addEventListener("change", handleFiles, false);
+    function handleFiles() {
+        const objecturl = URL.createObjectURL(this.files[0]);
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', objecturl, true);
+        xhr.responseType = 'blob';
+        xhr.onload = function(e) {
+            if (this.status == 200) {
+                soundFileTrack.setSoundFile(this.response).then(() => {console.log("done");});
+            }
+    };
+    xhr.send();
+}
+
+});
 
 let btn = document.getElementById("startButton");
 let restartBtn = document.getElementById("restartButton");
-let typeBtn = document.getElementById("typeButton");
 
 btn.onclick = function () {
     if (!songManager.playing) {
@@ -299,15 +370,4 @@ restartBtn.onclick = function () {
     songManager.stop();
     songManager.start(0);
     btn.innerHTML = "Stop";
-}
-
-typeBtn.onclick = function () {
-    if (oscillatorTrack.audioSource.settings.source.oscillatorType === "sawtooth") {
-        console.log("changing type: sine");
-        oscillatorTrack.audioSource.settings.source.oscillatorType = "sine";
-    }
-    else {
-        console.log("changing type: sawtooth");
-        oscillatorTrack.audioSource.settings.source.oscillatorType = "sawtooth";
-    }
 }

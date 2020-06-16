@@ -86,6 +86,7 @@ export default class SortedArray<T> extends Array{
             return true;
         }
     }
+    
     /**
      * Searches for a value in the sorted array, returns -1 if not found (or the index of the closest element if closest = True)
      *
