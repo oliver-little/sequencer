@@ -3,24 +3,12 @@ interface IInstrumentSettings {
         "type" : string,
         "gain" : number,
     }
-    "chains"? : Array<IChain>;
-    
+    "connections" : Array<String>
 }
 
 interface IAmplitudeEnvelope {
     "attack"  : number,
     "release" : number
-}
-
-interface IChain {
-    "filters" : Array<IFilter>,
-    "gain" : number
-}
-
-interface IFilter {
-    "type" : string,
-    "filterType" : string,
-    "properties" : {[key: string] :any};
 }
 
 interface IOscillatorSettings extends IInstrumentSettings {
@@ -29,6 +17,7 @@ interface IOscillatorSettings extends IInstrumentSettings {
         "oscillatorType" : string,
         "gain" : number
     }
+    // TODO: add getters and setters to oscillatorinstrument then make settings private on all objects.
     "envelopeEnabled" : boolean,
     "envelope"? : IAmplitudeEnvelope,
 }
@@ -42,4 +31,15 @@ interface ISoundFileSettings extends IInstrumentSettings {
     }
 }
 
-export {IInstrumentSettings, IOscillatorSettings, ISoundFileSettings};
+interface IChain {
+    "filters" : Array<IEffect>,
+    "connections": Array<String>,
+}
+
+interface IEffect {
+    "type" : string,
+    "effectType" : string,
+    "properties" : {[key: string] :any},
+}
+
+export {IInstrumentSettings, IOscillatorSettings, ISoundFileSettings, IChain};

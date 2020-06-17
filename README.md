@@ -1,10 +1,10 @@
 # Sequencer
-A web-based DAW and sequencer, built in TypeScript and using the Web Audio API.
+A web-based DAW and sequencer, built in TypeScript, using the Web Audio API.
 
 ### Dependencies
 - tuna
-    - Can be installed using npm (details at tuna repository)
+    - Found in dependencies folder, as this project uses a modified version making use of ES6 imports and exports.
 
 
 ### Credits
-- [tuna](https://github.com/Theodeus/tuna) - Used for various audio nodes in effects chains.
+- [tuna](https://github.com/Theodeus/tuna) - Used for effects in effects chains and the global bus.

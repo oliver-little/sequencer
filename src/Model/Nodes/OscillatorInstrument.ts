@@ -1,6 +1,7 @@
-import {IInstrument} from "./IInstrument.js";
-import { IOscillatorSettings } from "../SongManagement/IInstrumentSettings.js";
-import SongMetadata from "../SongManagement/SongMetadata.js";
+import {IInstrument} from "../Interfaces/IInstrument.js";
+import { IOscillatorSettings } from "../Interfaces/IInstrumentSettings.js";
+import {v4 as uuid} from "uuid";
+import { ICustomOutputAudioNode, ICustomInputAudioNode } from "../Interfaces/ICustomAudioNode.js";
 
 interface IOscillatorBaseChain {
     "oscillator" : OscillatorNode,
@@ -9,13 +10,13 @@ interface IOscillatorBaseChain {
 }
 
 /**
- * Implements an instrument based on the OscillatorNode class
+ * Implements an instrument based on the OscillatorNode class. Not connected to any nodes by default.
  *
  * @export
  * @class OscillatorInstrument
  */
-export class OscillatorInstrument implements IInstrument {
-
+export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode {
+    public id : string;
     public settings : IOscillatorSettings;
 
     protected _context : AudioContext|OfflineAudioContext;
@@ -23,17 +24,18 @@ export class OscillatorInstrument implements IInstrument {
     protected _masterGain : GainNode;
 
     /**
-     *Creates an instance of OscillatorInstrument.
+     * Creates an instance of OscillatorInstrument.
      * @param {AudioContext} context The AudioContext for this object
      * @param {IOscillatorSettings} [settings=JSON.parse(oscillatorDefaults)] An object describing the settings for this track
      * @memberof OscillatorInstrument
      */
     constructor(context : AudioContext|OfflineAudioContext, settings : IOscillatorSettings = JSON.parse(oscillatorDefaults)) {
-        this._context = context;
         this.settings = settings;
+        this.id = uuid();
+
+        this._context = context;
         this._masterGain = context.createGain();
         this._masterGain.gain.value = this.settings.source.gain;
-        this._masterGain.connect(context.destination);
         this._sources = [OscillatorInstrument.newOscillator(context, settings, this._masterGain)];
     }
 
@@ -58,6 +60,45 @@ export class OscillatorInstrument implements IInstrument {
         }
         this.settings.source.gain = value;
         this._masterGain.gain.value;
+    }
+
+    /**
+     * Connects this instrument to a give node.
+     *
+     * @param {AudioNode} node
+     * @memberof OscillatorInstrument
+     */
+    public connect(node : AudioNode|ICustomInputAudioNode) {
+        if (node instanceof AudioNode) {
+            this._masterGain.connect(node);
+        }
+        else {
+            this._masterGain.connect(node.input);
+        }
+    }
+
+    /**
+     * Disconnects this instrument from a specific node, if it is connected.
+     *
+     * @param {AudioNode} node
+     * @memberof OscillatorInstrument
+     */
+    public disconnect(node : AudioNode|ICustomInputAudioNode) {
+        if (node instanceof AudioNode) {
+            this._masterGain.disconnect(node);
+        }
+        else {
+            this._masterGain.disconnect(node.input);
+        }
+    }
+
+    /**
+     * Removes all connections from this node.
+     *
+     * @memberof OscillatorInstrument
+     */
+    public disconnectAll() {
+        this._masterGain.disconnect();
     }
 
     /**

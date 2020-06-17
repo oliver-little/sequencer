@@ -1,6 +1,6 @@
 import SongMetadata from "./SongMetadata.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
-import { IInstrumentSettings, IOscillatorSettings, ISoundFileSettings } from "./IInstrumentSettings.js";
+import { IInstrumentSettings, IOscillatorSettings, ISoundFileSettings } from "../Interfaces/IInstrumentSettings.js";
 import { BaseTrack } from "../Tracks/BaseTrack.js";
 import { OscillatorTrack } from "../Tracks/OscillatorTrack.js";
 import { NoteEvent } from "../Notation/SongEvents.js";

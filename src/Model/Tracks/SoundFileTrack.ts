@@ -1,7 +1,7 @@
 import {BaseTrack} from "./BaseTrack.js";
-import { SoundFileInstrument } from "../Instruments/SoundFileInstrument.js";
+import { SoundFileInstrument } from "../Nodes/SoundFileInstrument.js";
 import SongMetadata from "../SongManagement/SongMetadata.js";
-import { ISoundFileSettings } from "../SongManagement/IInstrumentSettings.js";
+import { ISoundFileSettings } from "../Interfaces/IInstrumentSettings.js";
 import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
 import { BaseEvent } from "../Notation/SongEvents.js";
 

@@ -1,9 +1,9 @@
 import SongMetadata from "../SongManagement/SongMetadata.js";
-import {OscillatorInstrument} from "../Instruments/OscillatorInstrument.js";
+import {OscillatorInstrument} from "../Nodes/OscillatorInstrument.js";
 import {NoteEvent, BaseEvent} from "../Notation/SongEvents.js";
 import {BaseTrack} from "./BaseTrack.js";
 import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
-import {IOscillatorSettings} from "../SongManagement/IInstrumentSettings.js";
+import {IOscillatorSettings} from "../Interfaces/IInstrumentSettings.js";
 
 export class OscillatorTrack extends BaseTrack {
 
