@@ -18,33 +18,31 @@
         {
             "effects": [
                 {
-                    "type": "standard",
                     "effectType": "Delay",
                     "properties": {
                         "...": "."
                     }
                 },
                 {
-                    "type": "tuna",
                     "effectType": "Chorus",
                     "properties": {
                         "...": "."
                     }
                 }
             ],
+            "preGain" : 1,
+            "postGain" : 1,
             "connections": ["context", "bus"]
         },
         {
             "effects": [
                 {
-                    "type": "filter",
                     "effectType": "Delay",
                     "properties": {
                         "...": "."
                     }
                 },
                 {
-                    "type": "tuna",
                     "effectType": "Chorus",
                     "properties": {
                         "...": "."
@@ -74,6 +72,7 @@
             }
         ],
         "preGain" : 1,
-        "postGain" : 1
+        "postGain" : 1,
+        "connections" : ["context"]
     }
 }

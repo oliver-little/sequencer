@@ -1,51 +1,109 @@
 import { ICustomInputAudioNode, ICustomOutputAudioNode } from "../Interfaces/ICustomAudioNode.js";
 import { IChain } from "../Interfaces/IInstrumentSettings.js";
-import {Tuna} from "../../../dependencies/tuna.js";
+import { Tuna } from "../../../dependencies/tuna.js";
+import {v4 as uuid} from "uuid";
 
 export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNode {
 
-    private _context : AudioContext|OfflineAudioContext;
-    private _settings : IChain;
-    private _preGain : GainNode;
-    private _postGain : GainNode;
+    public id : string;
+
+    private _context: AudioContext | OfflineAudioContext;
+    private _settings: IChain;
+    private _preGain: GainNode;
+    private _postGain: GainNode;
     private _tuna;
 
     private _chainNodes = [];
 
-    constructor (context : AudioContext|OfflineAudioContext, settings : IChain) {
+    constructor(context: AudioContext | OfflineAudioContext, settings: IChain) {
+        this.id = uuid();
+
         this._context = context;
         this._settings = settings;
         this._tuna = new Tuna(context);
         this._preGain = context.createGain();
+        this._preGain.gain.value = this._settings.preGain;
         this._postGain = context.createGain();
+        this._preGain.gain.value = this._settings.postGain;
+
+        // Populate chain from settings
+        if (this._settings.filters.length > 0) {
+            // TODO: error handle for invalid effect types and properties
+            let currentEffect = this._tuna[this._settings.filters[0].effectType](this._settings.filters[0].properties);
+            this._chainNodes.push(currentEffect);
+            this._preGain.connect(currentEffect)
+            for (let i = 1; i < this._settings.filters.length; i++) {
+                currentEffect = this._tuna[this._settings.filters[i].effectType](this._settings.filters[i].properties)
+                this._chainNodes[i-1].connect(currentEffect);
+                this._chainNodes.push(currentEffect);
+            }
+            this._chainNodes[this._chainNodes.length - 1].connect(this._postGain);
+        }
+    }
+
+    get input() {
+        return this._postGain;
     }
 
     get effectCount() {
         return this._chainNodes.length;
     }
 
+    public connect(node : AudioNode|ICustomInputAudioNode) {
+        if (node instanceof AudioNode) {
+            this._postGain.connect(node);
+        }
+        else {
+            this._postGain.connect(node.input);
+        }
+    }
+
+    public disconnect(node : AudioNode|ICustomInputAudioNode) {
+        if (node instanceof AudioNode) {
+            this._postGain.disconnect(node);
+        }
+        else {
+            this._postGain.disconnect(node.input);
+        }
+    }
+
+    public disconnectAll() {
+        this._postGain.disconnect();
+    }
+
     /**
      * Adds a new tuna effect to the chain - one of "Chorus", "Delay", "Phaser", "Overdrive", "Compressor", "Convolver", "Filter", 
      * "Cabinet", "Tremolo", "WahWah", "Bitcrusher", "MoogFilter", "PingPongDelay", "Panner", "Gain"
      *
-     * @param {number} position The index to add the effect to in the chain
+     * @param {number} position The index to add the effect to in the chain, between 0 and the number of nodes in the chain (inclusive)
      * @param {string} effectType The name of the effect
      * @param {{[property : string] : any}} properties Properties object, different for each effect (see https://github.com/Theodeus/tuna/wiki/Node-examples for usage)
      * @memberof EffectsChain
      */
-    public addEffect(index : number, type : string, effectType : string, properties : {[property : string] : any}) {
-        let effect = null;
-        if (type == "tuna") { // Create tuna effect
-            let effect = new this._tuna[effectType](properties);
-            
+    // TODO: update settings when effects are added or removed
+    public addEffect(index: number, effectType: string, properties: { [property: string]: any }) {
+        if (index < 0 || index > this._chainNodes.length) {
+            throw new RangeError("Index out of range");
+        }
+        let effect = new this._tuna[effectType](properties);
 
-        }
-        else if (type == "standard") { // Create default web audio effect
-            let x=1;
-        }
         // Connect effect
-        this._chainNodes[index-1].disconnect();
-        this._chainNodes[index-1].connect(effect);
+        if (index > 0) {
+            this._chainNodes[index - 1].disconnect();
+            this._chainNodes[index - 1].connect(effect);
+        }
+        else {
+            this._preGain.disconnect();
+            this._preGain.connect(effect);
+        }
+        if (index === this._chainNodes.length) {
+            effect.connect(this._postGain);
+            this._chainNodes.push(effect);
+        }
+        else {
+            effect.connect(this._chainNodes[index]);
+            this._chainNodes.splice(index, 0, effect);
+        }
     }
 
     /**
@@ -54,8 +112,10 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
      * @param {number} index The index to remove the effect at.
      * @memberof EffectsChain
      */
-    public removeEffect(index : number) {
+    public removeEffect(index: number) {
         if (index > 0 && index < this._chainNodes.length) {
+            this._chainNodes[index-1].disconnect();
+            this._chainNodes[index-1].connect(this._chainNodes[index+1]);
             this._chainNodes.splice(index, 1);
         }
         else {

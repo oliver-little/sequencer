@@ -1,5 +1,5 @@
 import { IInstrument } from "../Interfaces/IInstrument.js";
-import { ICustomInputAudioNode } from "../Interfaces/ICustomAudioNode.js";
+import { ICustomInputAudioNode, ICustomOutputAudioNode } from "../Interfaces/ICustomAudioNode.js";
 import { ISoundFileSettings } from "../Interfaces/IInstrumentSettings.js";
 import { v4 as uuid } from 'uuid';
 
@@ -10,7 +10,7 @@ import { v4 as uuid } from 'uuid';
  * @class SoundFileInstrument
  * @implements {IInstrument}
  */
-export class SoundFileInstrument implements IInstrument, ICustomInputAudioNode {
+export class SoundFileInstrument implements IInstrument, ICustomOutputAudioNode {
     public id : string; // UUID for this object
     public settings : ISoundFileSettings;
 

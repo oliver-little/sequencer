@@ -33,11 +33,12 @@ interface ISoundFileSettings extends IInstrumentSettings {
 
 interface IChain {
     "filters" : Array<IEffect>,
+    "preGain" : number,
+    "postGain" : number,
     "connections": Array<String>,
 }
 
 interface IEffect {
-    "type" : string,
     "effectType" : string,
     "properties" : {[key: string] :any},
 }
