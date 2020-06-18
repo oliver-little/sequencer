@@ -1,9 +1,9 @@
 import SongMetadata from "../SongManagement/SongMetadata.js";
-import {OscillatorInstrument} from "../Instruments/OscillatorInstrument.js";
+import {OscillatorInstrument} from "../Nodes/OscillatorInstrument.js";
 import {NoteEvent, BaseEvent} from "../Notation/SongEvents.js";
 import {BaseTrack} from "./BaseTrack.js";
 import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
-import {IOscillatorSettings} from "../SongManagement/IInstrumentSettings.js";
+import {IOscillatorSettings} from "../Interfaces/IInstrumentSettings.js";
 
 export class OscillatorTrack extends BaseTrack {
 
@@ -19,11 +19,7 @@ export class OscillatorTrack extends BaseTrack {
      */
     constructor(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, settings? : IOscillatorSettings) {
         let instrument = null;
-        if (settings != null) {
-            instrument = new OscillatorInstrument(context, settings);
-        } else {
-            instrument = new OscillatorInstrument(context);
-        }
+        instrument = new OscillatorInstrument(context);
         super(metadata, context, scheduleEvent, instrument);
     }
 

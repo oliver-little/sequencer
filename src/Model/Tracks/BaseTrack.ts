@@ -2,7 +2,7 @@ import SongMetadata from "../SongManagement/SongMetadata.js";
 import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
 import {EventTimeline} from "../Notation/EventTimeline.js";
 import {BaseEvent} from "../Notation/SongEvents.js";
-import {IInstrument} from "../Instruments/IInstrument.js";
+import {IInstrument} from "../Interfaces/IInstrument.js";
 
 /**
  * Works with the timeline and instrument objects to schedule notes as required

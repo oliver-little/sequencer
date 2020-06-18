@@ -1,54 +1,78 @@
 {
-    "source": {
-        "type": "oscillator",
-        "oscillatorType": "sine",
-        "gain": 100
-    },
-    "envelopeEnabled" : true,
-    "envelope": {
-        "attack": 0.1,
-        "decay": 0.05,
-        "sustain": 1,
-        "release": 0.5
-    },
-    "chains": [
-        {
-            "filters": [
-                {
-                    "type": "filter",
-                    "filterType": "Delay",
-                    "properties": {
-                        "...": "."
-                    }
-                },
-                {
-                    "type": "tuna",
-                    "filterType": "Chorus",
-                    "properties": {
-                        "...": "."
-                    }
-                }
-            ],
+    "instrument": {
+        "source": {
+            "type": "oscillator",
+            "oscillatorType": "sine",
             "gain": 100
         },
+        "envelopeEnabled" : true,
+        "envelope": {
+            "attack": 0.1,
+            "decay": 0.05,
+            "sustain": 1,
+            "release": 0.5
+        },
+        "connections" : ["context", "bus", "chain0"]
+    },
+    "chains" : [
         {
-            "filters": [
+            "effects": [
                 {
-                    "type": "filter",
-                    "filterType": "Delay",
+                    "effectType": "Delay",
                     "properties": {
                         "...": "."
                     }
                 },
                 {
-                    "type": "tuna",
-                    "filterType": "Chorus",
+                    "effectType": "Chorus",
                     "properties": {
                         "...": "."
                     }
                 }
             ],
-            "gain": 100
+            "preGain" : 1,
+            "postGain" : 1,
+            "connections": ["context", "bus"]
+        },
+        {
+            "effects": [
+                {
+                    "effectType": "Delay",
+                    "properties": {
+                        "...": "."
+                    }
+                },
+                {
+                    "effectType": "Chorus",
+                    "properties": {
+                        "...": "."
+                    }
+                }
+            ],
+            "preGain" : 1,
+            "postGain" : 1,
+            "connections": ["context", "bus"]
         }
-    ]
+    ],
+    "bus" : {
+        "effects": [
+            {
+                "type": "filter",
+                "effectType": "Delay",
+                "properties": {
+                    "...": "."
+                }
+            },
+            {
+                "type": "tuna",
+                "effectType": "Chorus",
+                "properties": {
+                    "...": "."
+                }
+            }
+        ],
+        "preGain" : 1,
+        "postGain" : 1,
+        "connections" : ["context"]
+    }
 }

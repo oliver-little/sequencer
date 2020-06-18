@@ -1,7 +1,7 @@
 import {BaseTrack} from "./BaseTrack.js";
-import { SoundFileInstrument } from "../Instruments/SoundFileInstrument.js";
+import { SoundFileInstrument } from "../Nodes/SoundFileInstrument.js";
 import SongMetadata from "../SongManagement/SongMetadata.js";
-import { ISoundFileSettings } from "../SongManagement/IInstrumentSettings.js";
+import { ISoundFileSettings } from "../Interfaces/IInstrumentSettings.js";
 import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
 import { BaseEvent } from "../Notation/SongEvents.js";
 
@@ -18,7 +18,7 @@ export class SoundFileTrack extends BaseTrack {
      * @param {ISoundFileSettings} settings
      * @memberof SoundFileTrack
      */
-    public static async create(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, settings : ISoundFileSettings) {
+    public static async create(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, settings? : ISoundFileSettings) {
         const o = new SoundFileTrack(metadata, context, scheduleEvent, settings);
         await o.initialise();
         return o;
@@ -32,7 +32,7 @@ export class SoundFileTrack extends BaseTrack {
      * @param {ISoundFileSettings} settings
      * @memberof SoundFileTrack
      */
-    constructor(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, settings : ISoundFileSettings) {
+    constructor(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, settings? : ISoundFileSettings) {
         super(metadata, context, scheduleEvent, new SoundFileInstrument(context, settings));
     }
 
