@@ -9,7 +9,9 @@ export class ConnectionManager {
 
     constructor (context : AudioContext|OfflineAudioContext) {
         this._context = context;
-        this._possibleConnections = {"context" : context.destination};
+        let bus = new EffectsChain(context);
+        bus.connect(context.destination);
+        this._possibleConnections = {"context" : context.destination, "bus" : bus};
         this._currentConnections = {};
     }
 
@@ -17,8 +19,22 @@ export class ConnectionManager {
         return this._possibleConnections;
     }
 
+    public getBus() {
+        return this._possibleConnections["bus"];
+    }
+
+    public getChains() : ICustomInputAudioNode[] {
+        let chains = []
+        Object.keys(this._possibleConnections).forEach(key => {
+            if (key.startsWith("chain")) {
+                chains.push(this._possibleConnections[key]);
+            }
+        })
+        return chains;
+    }
+
     /**
-     * 
+     * Gets the connections for a given object
      *
      * @param {ICustomOutputAudioNode} object
      * @memberof ConnectionManager
@@ -132,21 +148,6 @@ export class ConnectionManager {
         }
         else {
             throw new Error("Object not in ConnectionManager");
-        }
-    }
-
-    /**
-     * Sets the global effects bus (overwrites the one that is already set if it exists)
-     *
-     * @param {EffectsChain} object An EffectsChain, or null to remove the bus
-     * @memberof ConnectionManager
-     */
-    public setBus(object : EffectsChain) {
-        if (object === null) {
-            delete this._possibleConnections["bus"];
-        }
-        else {
-            this._possibleConnections["bus"] = object;
         }
     }
 }

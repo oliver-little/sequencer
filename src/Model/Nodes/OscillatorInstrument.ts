@@ -1,5 +1,5 @@
 import {IInstrument} from "../Interfaces/IInstrument.js";
-import { IOscillatorSettings } from "../Interfaces/IInstrumentSettings.js";
+import { IOscillatorSettings, IAmplitudeEnvelope } from "../Interfaces/IInstrumentSettings.js";
 import {v4 as uuid} from "uuid";
 import { ICustomOutputAudioNode, ICustomInputAudioNode } from "../Interfaces/ICustomAudioNode.js";
 
@@ -17,8 +17,8 @@ interface IOscillatorBaseChain {
  */
 export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode {
     public id : string;
-    public settings : IOscillatorSettings;
-
+    
+    protected _settings : IOscillatorSettings;
     protected _context : AudioContext|OfflineAudioContext;
     protected _sources : IOscillatorBaseChain[];
     protected _masterGain : GainNode;
@@ -30,12 +30,12 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
      * @memberof OscillatorInstrument
      */
     constructor(context : AudioContext|OfflineAudioContext, settings : IOscillatorSettings = OscillatorInstrument.defaults) {
-        this.settings = settings;
+        this._settings = settings;
         this.id = uuid();
 
         this._context = context;
         this._masterGain = context.createGain();
-        this._masterGain.gain.value = this.settings.gain;
+        this._masterGain.gain.value = this._settings.gain;
         this._sources = [OscillatorInstrument.newOscillator(context, settings, this._masterGain)];
     }
 
@@ -44,7 +44,11 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
     }
     
     set oscillatorType(value : string) {
-        this.settings.oscillatorType = value;
+        // TODO: add support for custom waves (https://github.com/mohayonao/wave-tables)?
+        if (["sine", "square", "sawtooth", "triangle"].indexOf(value) == -1) {
+            throw new Error("Invalid oscillator type");
+        }
+        this._settings.oscillatorType = value;
         for (let i = 0; i < this._sources.length; i++) {
             this._sources[i].oscillator.type = value as OscillatorType;
         }
@@ -58,8 +62,24 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
         if (!(value >= 0 && value <= 1)){
             throw new RangeError("Invalid Gain Value");
         }
-        this.settings.gain = value;
+        this._settings.gain = value;
         this._masterGain.gain.value;
+    }
+
+    get envelopeEnabled() : boolean {
+        return this._settings.envelopeEnabled;
+    }
+    
+    set envelopeEnabled(value : boolean) {
+        this._settings.envelopeEnabled = value;
+    }
+
+    get envelope() : IAmplitudeEnvelope {
+        return this._settings.envelope;
+    }
+
+    set envelope(value : IAmplitudeEnvelope) {
+        this._settings.envelope = value;
     }
 
     /**
@@ -133,7 +153,7 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
         };
         // No free source found, make a new one.
         if (sourceToUse === null) {
-            sourceToUse = OscillatorInstrument.newOscillator(this._context, this.settings, this._masterGain);
+            sourceToUse = OscillatorInstrument.newOscillator(this._context, this._settings, this._masterGain);
             this._sources.push(sourceToUse);
         }
         // Push the time this source is being used for to the list
@@ -149,9 +169,9 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
         if (time < this._context.currentTime) {
             time = this._context.currentTime;
         }
-        if (this.settings.envelopeEnabled) {
+        if (this._settings.envelopeEnabled) {
             sourceGain.gain.setValueAtTime(0, time);
-            sourceGain.gain.linearRampToValueAtTime(volume, time + this.settings.envelope.attack);
+            sourceGain.gain.linearRampToValueAtTime(volume, time + this._settings.envelope.attack);
         }
         else {
             sourceGain.gain.setValueAtTime(volume, time);
@@ -166,9 +186,9 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
      * @memberof BaseInstrument
      */
     public stopNote(time : number, sourceGain : GainNode, volume = 1) : void {
-        if (this.settings.envelopeEnabled) {
-            sourceGain.gain.cancelScheduledValues(time - this.settings.envelope.release);
-            sourceGain.gain.setValueAtTime(volume, time - this.settings.envelope.release);
+        if (this._settings.envelopeEnabled) {
+            sourceGain.gain.cancelScheduledValues(time - this._settings.envelope.release);
+            sourceGain.gain.setValueAtTime(volume, time - this._settings.envelope.release);
             sourceGain.gain.linearRampToValueAtTime(0, time);
         }
         else {
@@ -184,8 +204,12 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
     public stop() {
         this._sources.forEach(element => {
             element.gain.gain.cancelAndHoldAtTime(0);
-            element.gain.gain.linearRampToValueAtTime(0, this.settings.envelope.release);
+            element.gain.gain.linearRampToValueAtTime(0, this._settings.envelope.release);
         });
+    }
+
+    public serialise() : IOscillatorSettings {
+        return this._settings;
     }
 
     /**

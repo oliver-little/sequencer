@@ -1,3 +1,9 @@
+export interface ISongEvent {
+    "eventType" : string,
+    "startPosition" : number
+    [x: string]: any 
+}
+
 export class BaseEvent {
 
     public startPosition: number;
@@ -21,6 +27,14 @@ export class BaseEvent {
 
     public set duration(value: number) {
         this._duration = value;
+    }
+
+    public serialise() : ISongEvent {
+        return {
+            "eventType": "BaseEvent",
+            "startPosition": this.startPosition,
+            "duration": this.duration
+        };
     }
 
     public static comparator(a : BaseEvent, b : BaseEvent) {
@@ -128,6 +142,13 @@ export class NoteEvent extends BaseEvent {
         this._duration = this._parseQuarterNoteLength(value);
     }
 
+    public serialise() : ISongEvent {
+        let obj = super.serialise();
+        obj.eventType = "NoteEvent";
+        obj["pitch"] = this.pitch;
+        return obj;
+    }
+
     private _parseQuarterNoteLength(note : string) : number {
         // General calculation for getting a note's length:
         // (Beat Type (denominator of time signature) / Note Type) * Seconds Per Beat
@@ -211,5 +232,14 @@ export class MetadataEvent {
         else {
             return a.startPosition - b.startPosition;
         }
+    }
+
+    public serialise() : ISongEvent {
+        return {
+            "eventType" : "MetadataEvent",
+            "startPosition" : this.startPosition,
+            "bpm" : this.bpm,
+            "timeSignature" : this.timeSignature,
+        };
     }
 }

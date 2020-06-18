@@ -1,28 +1,25 @@
-interface IInstrumentSettings {
-    "source" : ISourceSettings
-    "connections" : Array<string>
-}
+// Generally, these interfaces are used to make serialisation and deserialisation simpler.
 
 interface IAmplitudeEnvelope {
     "attack"  : number,
     "release" : number
 }
 
-interface ISourceSettings {
+interface IInstrumentSettings {
     "type" : string,
     "gain" : number
 }
 
-interface IOscillatorSettings extends ISourceSettings {
+interface IOscillatorSettings extends IInstrumentSettings {
     "type" : "oscillator",
     "oscillatorType" : string,
     "gain" : number,
     // TODO: add getters and setters to oscillatorinstrument then make settings private on all objects.
     "envelopeEnabled" : boolean,
-    "envelope"? : IAmplitudeEnvelope,
+    "envelope" : IAmplitudeEnvelope,
 }
 
-interface ISoundFileSettings extends ISourceSettings {
+interface ISoundFileSettings extends IInstrumentSettings {
     "type" : "soundFile",
     "gain" : number,
     // A base64 encoded Blob of the sound file
@@ -30,6 +27,8 @@ interface ISoundFileSettings extends ISourceSettings {
 }
 
 interface IChain {
+    // TODO: store chain name so it can be saved under the save name afterwards
+    "chainName" : string
     "effects" : Array<IEffect>,
     "preGain" : number,
     "postGain" : number,
@@ -41,4 +40,4 @@ interface IEffect {
     "properties" : {[key: string] :any},
 }
 
-export {IInstrumentSettings, IOscillatorSettings, ISoundFileSettings, IChain};
+export {IOscillatorSettings, ISoundFileSettings, IInstrumentSettings, IAmplitudeEnvelope, IChain};

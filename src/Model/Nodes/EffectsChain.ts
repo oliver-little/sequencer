@@ -15,7 +15,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
 
     private _chainNodes = [];
 
-    constructor(context: AudioContext | OfflineAudioContext, settings: IChain) {
+    constructor(context: AudioContext | OfflineAudioContext, settings: IChain = EffectsChain.defaults) {
         this.id = uuid();
 
         this._context = context;
@@ -123,6 +123,48 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
         else {
             throw new RangeError("Index out of range");
         }
+    }
+
+    /**
+     * Swaps the position of two effects in the chain
+     *
+     * @param {number} index1
+     * @param {number} index2
+     * @memberof EffectsChain
+     */
+    public swapEffects(index1 : number, index2 : number) {
+        if (index1 > 0 && index1 < this._chainNodes.length && index2 > 0 && index2 < this._chainNodes.length) {
+            if (index1 != index2) {
+                // Disconnect nodes
+                this._chainNodes[index1-1].disconnect();
+                this._chainNodes[index1].disconnect();
+                this._chainNodes[index2-1].disconnect();
+                this._chainNodes[index2].disconnect();
+                // Swap nodes
+                let temp = this._chainNodes[index1];
+                this._chainNodes[index1] = this._chainNodes[index2];
+                this._chainNodes[index2] = temp;
+                // Reconnect nodes
+                this._chainNodes[index1-1].connect(this._chainNodes[index1]);
+                this._chainNodes[index1].connect(this._chainNodes[index1+1]);
+                this._chainNodes[index2-1].connect(this._chainNodes[index2]);
+                this._chainNodes[index2].connect(this._chainNodes[index2+1]);
+            }
+        }
+        else {
+            throw new RangeError("Index out of range");
+        }
+    }
+
+    public serialise() : IChain{
+        return this._settings;
+    }
+
+    public static defaults : IChain = {
+        "effects" : [],
+        "preGain" : 1,
+        "postGain" : 1,
+        "connections" : ["context"]
     }
 }
 

@@ -1,8 +1,15 @@
 import SongMetadata from "../SongManagement/SongMetadata.js";
 import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
 import {EventTimeline} from "../Notation/EventTimeline.js";
-import {BaseEvent} from "../Notation/SongEvents.js";
+import {BaseEvent, ISongEvent} from "../Notation/SongEvents.js";
 import {IInstrument} from "../Interfaces/IInstrument.js";
+import { IInstrumentSettings } from "../Interfaces/IInstrumentSettings.js";
+
+interface ITrackSettings {
+    "source" : IInstrumentSettings,
+    "events" : ISongEvent[],
+    "connections" : Array<string>
+}
 
 /**
  * Works with the timeline and instrument objects to schedule notes as required
@@ -70,7 +77,6 @@ export abstract class BaseTrack {
         this._playing = false;
     }
 
-
     /**
      * Schedules upcoming playback events (start **must** be called first)
      *
@@ -106,4 +112,12 @@ export abstract class BaseTrack {
      * @memberof BaseTrack
      */
     protected abstract songEventHandler(event: BaseEvent) : void;
+
+    public serialise() : ITrackSettings {
+        return {
+            "source" : this.audioSource.serialise(),
+            "events" : this.timeline.serialise(),
+            "connections" : [],
+        }
+    }
 }

@@ -1,6 +1,6 @@
 import SongMetadata from "./SongMetadata.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
-import { IOscillatorSettings, ISoundFileSettings, IInstrumentSettings } from "../Interfaces/IInstrumentSettings.js";
+import { IOscillatorSettings, ISoundFileSettings } from "../Interfaces/IInstrumentSettings.js";
 import { BaseTrack } from "../Tracks/BaseTrack.js";
 import { OscillatorTrack } from "../Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "../Tracks/SoundFileTrack.js";
@@ -43,10 +43,10 @@ export class SongManager {
     }
 
     /**
-     * Adds a new track to the song, async because 
+     * Adds a new oscillator track to the song
      *
-     * @param {IInstrumentSettings} settings
-     * @returns {Promise<BaseTrack>}
+     * @param {IOscillatorSettings} settings
+     * @returns {OscillatorTrack}
      * @memberof SongManager
      */
     public addOscillatorTrack(settings?: IOscillatorSettings, connections : string[] = ["context"]): OscillatorTrack {
@@ -57,6 +57,14 @@ export class SongManager {
 
     }
 
+    /**
+     * Adds a new sound file track to the song
+     *
+     * @param {ISoundFileSettings} [settings]
+     * @param {string[]} [connections=["context"]]
+     * @returns {Promise<SoundFileTrack>}
+     * @memberof SongManager
+     */
     public async addSoundFileTrack(settings?: ISoundFileSettings, connections : string[] = ["context"]) : Promise<SoundFileTrack> {
         let newTrack = await SoundFileTrack.create(this.metadata, this.context, this.scheduleEvent, settings);
         this._tracks.push(newTrack);
@@ -64,6 +72,12 @@ export class SongManager {
         return newTrack;
     }
 
+    /**
+     * Starts playback at the given quarter note position
+     *
+     * @param {number} [startPosition=this._quarterNotePosition]
+     * @memberof SongManager
+     */
     public async start(startPosition = this._quarterNotePosition) {
         if (this.context.state === "suspended") {
             await this.context.resume();
@@ -83,6 +97,11 @@ export class SongManager {
         });
     }
 
+    /**
+     * Stops playback immediately
+     *
+     * @memberof SongManager
+     */
     public stop() {
         this._playing = false;
         clearInterval(this.playingIntervalID);

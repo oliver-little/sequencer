@@ -120,4 +120,17 @@ export class EventTimeline {
 
         return eventsToSchedule;
     }
+
+    /**
+     * Serialises the events in the timeline by returning an array of data objects
+     *
+     * @memberof EventTimeline
+     */
+    public serialise() {
+        let serialisedEvents = [];
+        for(let i = 0; i < this.events.length; i++) {
+            serialisedEvents.push(this.events[i].serialise());
+        }
+        return serialisedEvents;
+    }
 }
