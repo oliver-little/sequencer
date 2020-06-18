@@ -29,13 +29,13 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
      * @param {IOscillatorSettings} [settings=JSON.parse(oscillatorDefaults)] An object describing the settings for this track
      * @memberof OscillatorInstrument
      */
-    constructor(context : AudioContext|OfflineAudioContext, settings : IOscillatorSettings = JSON.parse(oscillatorDefaults)) {
+    constructor(context : AudioContext|OfflineAudioContext, settings : IOscillatorSettings = OscillatorInstrument.defaults) {
         this.settings = settings;
         this.id = uuid();
 
         this._context = context;
         this._masterGain = context.createGain();
-        this._masterGain.gain.value = this.settings.source.gain;
+        this._masterGain.gain.value = this.settings.gain;
         this._sources = [OscillatorInstrument.newOscillator(context, settings, this._masterGain)];
     }
 
@@ -44,7 +44,7 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
     }
     
     set oscillatorType(value : string) {
-        this.settings.source.oscillatorType = value;
+        this.settings.oscillatorType = value;
         for (let i = 0; i < this._sources.length; i++) {
             this._sources[i].oscillator.type = value as OscillatorType;
         }
@@ -58,7 +58,7 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
         if (!(value >= 0 && value <= 1)){
             throw new RangeError("Invalid Gain Value");
         }
-        this.settings.source.gain = value;
+        this.settings.gain = value;
         this._masterGain.gain.value;
     }
 
@@ -199,7 +199,7 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
         // Create nodes
         let source = context.createOscillator();
         source.start();
-        source.type = settings.source.oscillatorType as OscillatorType;
+        source.type = settings.oscillatorType as OscillatorType;
         let sourceGain = context.createGain();
         sourceGain.gain.value = 0;
 
@@ -208,18 +208,15 @@ export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode
         sourceGain.connect(destination);
         return {oscillator : source, gain : sourceGain, usage : []};
     }
-}
 
-let oscillatorDefaults = `{
-    "source": {
+    public static defaults : IOscillatorSettings = {
         "type": "oscillator",
-        "oscillatorType": "triangle",
-        "gain": 0.3,
-        "detune": 0
-    },
-    "envelopeEnabled" : true,
-    "envelope": {
-        "attack": 0.1,
-        "release": 0.1
+        "oscillatorType": "sine",
+        "gain": 0.5,
+        "envelopeEnabled" : true,
+        "envelope": {
+            "attack": 0.1,
+            "release": 0.1
+        }
     }
-}`;
+}

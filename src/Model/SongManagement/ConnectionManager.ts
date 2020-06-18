@@ -1,4 +1,5 @@
 import { ICustomOutputAudioNode, ICustomInputAudioNode } from "../Interfaces/ICustomAudioNode.js";
+import { EffectsChain } from "../Nodes/EffectsChain.js";
 
 export class ConnectionManager {
 
@@ -10,6 +11,25 @@ export class ConnectionManager {
         this._context = context;
         this._possibleConnections = {"context" : context.destination};
         this._currentConnections = {};
+    }
+
+    get possibleConnections() {
+        return this._possibleConnections;
+    }
+
+    /**
+     * 
+     *
+     * @param {ICustomOutputAudioNode} object
+     * @memberof ConnectionManager
+     */
+    public getConnections(object : ICustomOutputAudioNode) {
+        if (object.id in this._currentConnections) {
+            return this._currentConnections[object.id];
+        }
+        else {
+            throw new Error("Object not found");
+        }
     }
 
     /**
@@ -81,6 +101,52 @@ export class ConnectionManager {
         }
         else {
             throw new Error("Object does not have any connections.");
+        }
+    }
+
+    /**
+     * Adds an EffectsChain to the list of possible connections
+     *
+     * @param {EffectsChain} object
+     * @returns The connection name given to this effects chain 
+     * @memberof ConnectionManager
+     */
+    public addChain(object : EffectsChain) : string {
+        let chainNo = 0;
+        while (("chain" + chainNo) in this._possibleConnections) {
+            chainNo++;
+        }
+        this._possibleConnections["chain" + chainNo] = object;
+        return "chain" + chainNo;
+    }
+
+    /**
+     * Removes an EffectsChain from the list of possible connections by its name
+     *
+     * @param {string} name The name of the EffectsChain in the list of possible connections
+     * @memberof ConnectionManager
+     */
+    public removeChain(name : string) {
+        if (name.startsWith("chain") && name in this._possibleConnections) {
+            delete this._possibleConnections[name];
+        }
+        else {
+            throw new Error("Object not in ConnectionManager");
+        }
+    }
+
+    /**
+     * Sets the global effects bus (overwrites the one that is already set if it exists)
+     *
+     * @param {EffectsChain} object An EffectsChain, or null to remove the bus
+     * @memberof ConnectionManager
+     */
+    public setBus(object : EffectsChain) {
+        if (object === null) {
+            delete this._possibleConnections["bus"];
+        }
+        else {
+            this._possibleConnections["bus"] = object;
         }
     }
 }

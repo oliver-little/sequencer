@@ -30,7 +30,7 @@ export class SoundFileInstrument implements IInstrument, ICustomOutputAudioNode 
      * @returns
      * @memberof SoundFileInstrument
      */
-    static async create(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings) {
+    static async create(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings = SoundFileInstrument.defaults) {
         const o = new SoundFileInstrument(context, settings);
         await o.initialise();
         return o;
@@ -51,7 +51,7 @@ export class SoundFileInstrument implements IInstrument, ICustomOutputAudioNode 
         this._playingNodes = [];
 
         this._masterGain = context.createGain();
-        this._masterGain.gain.value = this.settings.source.gain;
+        this._masterGain.gain.value = this.settings.gain;
     }
 
     /**
@@ -60,9 +60,9 @@ export class SoundFileInstrument implements IInstrument, ICustomOutputAudioNode 
      * @memberof SoundFileInstrument
      */
     public async initialise() {
-        if (this.settings.source.soundData != "") {
+        if (this.settings.soundData != "") {
             // Complicated way of decoding the base64 string into a blob, converting to an ArrayBuffer, then converting to an AudioBuffer
-            this._audioBuffer = await this._context.decodeAudioData(await SoundFileInstrument.getBlobFromBase64(this.settings.source.soundData).arrayBuffer());
+            this._audioBuffer = await this._context.decodeAudioData(await SoundFileInstrument.getBlobFromBase64(this.settings.soundData).arrayBuffer());
         }
     }
 
@@ -83,7 +83,7 @@ export class SoundFileInstrument implements IInstrument, ICustomOutputAudioNode 
         if (!(value >= 0 && value <= 1)){
             throw new RangeError("Invalid Gain Value");
         }
-        this.settings.source.gain = value;
+        this.settings.gain = value;
         this._masterGain.gain.value;
     }
 
@@ -153,7 +153,7 @@ export class SoundFileInstrument implements IInstrument, ICustomOutputAudioNode 
 
     public async setSoundFile(file : Blob) {
         SoundFileInstrument.getBase64FromBlob(file, base64 => {
-            this.settings.source.soundData = base64;
+            this.settings.soundData = base64;
         });
 
         // Get ArrayBuffer from blob and load as AudioBuffer
@@ -203,6 +203,13 @@ export class SoundFileInstrument implements IInstrument, ICustomOutputAudioNode 
             ia[i] = byteString.charCodeAt(i);
         }
         return new Blob([ab], { type: base64blob.split(":").pop().split(";")[0] });
+    }
+
+    
+    public static defaults : ISoundFileSettings = {
+        "type": "soundFile",
+        "gain": 1,
+        "soundData": ""
     }
 }
 

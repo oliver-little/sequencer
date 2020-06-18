@@ -27,13 +27,12 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
         this._preGain.gain.value = this._settings.postGain;
 
         // Populate chain from settings
-        if (this._settings.filters.length > 0) {
-            // TODO: error handle for invalid effect types and properties
-            let currentEffect = this._tuna[this._settings.filters[0].effectType](this._settings.filters[0].properties);
+        if (this._settings.effects.length > 0) {
+            let currentEffect = this._tuna[this._settings.effects[0].effectType](this._settings.effects[0].properties);
             this._chainNodes.push(currentEffect);
             this._preGain.connect(currentEffect)
-            for (let i = 1; i < this._settings.filters.length; i++) {
-                currentEffect = this._tuna[this._settings.filters[i].effectType](this._settings.filters[i].properties)
+            for (let i = 1; i < this._settings.effects.length; i++) {
+                currentEffect = this._tuna[this._settings.effects[i].effectType](this._settings.effects[i].properties)
                 this._chainNodes[i-1].connect(currentEffect);
                 this._chainNodes.push(currentEffect);
             }
@@ -80,7 +79,6 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
      * @param {{[property : string] : any}} properties Properties object, different for each effect (see https://github.com/Theodeus/tuna/wiki/Node-examples for usage)
      * @memberof EffectsChain
      */
-    // TODO: update settings when effects are added or removed
     public addEffect(index: number, effectType: string, properties: { [property: string]: any }) {
         if (index < 0 || index > this._chainNodes.length) {
             throw new RangeError("Index out of range");
@@ -104,6 +102,9 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
             effect.connect(this._chainNodes[index]);
             this._chainNodes.splice(index, 0, effect);
         }
+
+        // Update settings
+        this._settings.effects.splice(index, 0, {effectType, properties});
     }
 
     /**
@@ -117,9 +118,12 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
             this._chainNodes[index-1].disconnect();
             this._chainNodes[index-1].connect(this._chainNodes[index+1]);
             this._chainNodes.splice(index, 1);
+            this._settings.effects.splice(index, 1);
         }
         else {
             throw new RangeError("Index out of range");
         }
     }
 }
+
+
