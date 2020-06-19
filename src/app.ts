@@ -4,7 +4,7 @@ import { ISongSettings } from "./Model/SongManagement/SongManager.js";
 
 // Testing code
 let songManager = new SongManager();
-/*let oscillatorTrack = songManager.addOscillatorTrack();
+let oscillatorTrack = songManager.addOscillatorTrack();
 oscillatorTrack.addNote(0, "E5", "2n");
 oscillatorTrack.addNote(0, "C5", "2n");
 oscillatorTrack.addNote(0, "G5", "2n");
@@ -31,11 +31,11 @@ songManager.addSoundFileTrack().then(result =>{
         xhr.send();
     }
 
-});*/
+});
 
 let btn = document.getElementById("startButton");
 let restartBtn = document.getElementById("restartButton");
-let loadBtn = document.getElementById("loadButton");
+let saveBtn = document.getElementById("saveButton");
 
 btn.onclick = function () {
     if (!songManager.playing) {
@@ -55,13 +55,24 @@ restartBtn.onclick = function () {
     btn.innerHTML = "Stop";
 }
 
-/*saveBtn.onclick = function () {
+/* // Saving the track
+saveBtn.onclick = function () {
     var a = document.createElement("a");
     var file = new Blob([JSON.stringify(songManager.serialise())], {type: "text/plain"});
     a.href = URL.createObjectURL(file);
     a.download = "song.sqn";
     a.click();
 }*/
+
+// Saving to wav
+saveBtn.onclick = async function() {
+    songManager.saveToWAV().then(result => {
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(result);
+        a.download = "song.wav";
+        a.click();
+    });
+}
 
 /*loadBtn.addEventListener("change", handleLoadSong, false);
 

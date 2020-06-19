@@ -73,7 +73,6 @@ export class OscillatorTrack extends BaseTrack {
         if (event instanceof NoteEvent) {
             let eventStart = this._startTime + this._metadata.positionQuarterNoteToSeconds(event.startPosition);
             let eventEnd = this._startTime +  this._metadata.positionQuarterNoteToSeconds(event.startPosition + event.duration);
-            console.log("queuing: " + event.pitch);
             this.audioSource.playNote(eventStart, eventEnd, event.pitch);
         }
         else {

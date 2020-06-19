@@ -61,7 +61,6 @@ export class SoundFileInstrument implements IInstrument {
      */
     public async initialise() {
         if (this._settings.soundData != "") {
-            console.log(this._settings.soundData);
             // Complicated way of decoding the base64 string into a blob, converting to an ArrayBuffer, then converting to an AudioBuffer
             this._audioBuffer = await this._context.decodeAudioData(await SoundFileInstrument.getBlobFromBase64(this._settings.soundData).arrayBuffer());
         }

@@ -24,6 +24,22 @@ export class EventTimeline {
     }
 
     /**
+     * Scans the list of events to find the new longest event.
+     *
+     * @memberof EventTimeline
+     */
+    public updatePlaybackTime() {
+        this.longestEventIndex = null;
+        this.longestEventValue = 0;
+        for(let i = 0; i < this._events.length; i++) {
+            if ((this._events[i].startPosition + this._events[i].duration) > this.longestEventValue){
+                this.longestEventIndex = i;
+                this.longestEventValue = (this._events[i].startPosition + this._events[i].duration);
+            }
+        }
+    }
+
+    /**
      * Adds an event to the timeline
      *
      * @param {BaseEvent} event
@@ -70,14 +86,7 @@ export class EventTimeline {
         // Check if the longest event was removed, find the new longest event if it was.
         if (index === this.longestEventIndex)  {
             if (this._events.length > 0) {
-                this.longestEventIndex = null;
-                this.longestEventValue = 0;
-                for(let i = 0; i < this.longestEventIndex; i++) {
-                    if ((this._events[i].startDuration + this._events[i].duration) > this.longestEventValue){
-                        this.longestEventIndex = i;
-                        this.longestEventValue = (this._events[i].startDuration + this._events[i].duration);
-                    }
-                }
+                this.updatePlaybackTime();
             }
             else {
                 this.longestEventIndex = null;
@@ -149,5 +158,6 @@ export class EventTimeline {
                     this._events.push(new NoteEvent(songEvents[i].startPosition, songEvents[i].pitch, songEvents[i].duration));
             }
         }
+        this.updatePlaybackTime();
     }
 }

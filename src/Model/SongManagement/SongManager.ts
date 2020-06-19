@@ -16,21 +16,20 @@ export class SongManager {
 
     public metadata: SongMetadata;
     public connectionManager : ConnectionManager;
-    public context: AudioContext;
+    public context: AudioContext|OfflineAudioContext;
     public scheduleEvent: SimpleEvent;
 
-    private _tracks: BaseTrack[];
-    private _playing = false;
+    protected _tracks: BaseTrack[];
+    protected _playing = false;
 
-    private _startTime = 0; // Stores the AudioContext time at which the song started playing.
-    private _quarterNotePosition = 0; // Stores the current quarter note position of the song.
+    protected _startTime = 0; // Stores the AudioContext time at which the song started playing.
+    protected _quarterNotePosition = 0; // Stores the current quarter note position of the song.
 
-    private playingIntervalID = null;
+    protected playingIntervalID = null;
 
-    // TODO: construct with existing song file
-    constructor() {
+    constructor(context? : AudioContext|OfflineAudioContext) {
         this.metadata = new SongMetadata();
-        this.context = new AudioContext();
+        this.context = (context === undefined) ? new AudioContext() : context;
         this.connectionManager = new ConnectionManager(this.context);
         this.scheduleEvent = new SimpleEvent();
         this._tracks = [];
@@ -138,21 +137,42 @@ export class SongManager {
         }
     }
 
+    /**
+     * Deserialises an ISongSettings object to recreate a given song.
+     *
+     * @param {ISongSettings} settings
+     * @memberof SongManager
+     */
     public async deserialise(settings : ISongSettings) {
         if (settings.version != SongManager.saveFileVersion) {
             console.log("WARNING: Save file is an old version, loading may not function correctly.");
         }
         this.connectionManager.deserialiseChains(settings.chains);
-        settings.tracks.forEach(async track => {
+        for (let i = 0; i < settings.tracks.length; i++) {
+            let track = settings.tracks[i]
             switch (track.source.type) {
                 case "oscillator": 
-                    this._tracks.push(this.addOscillatorTrack(track.connections, track.source as IOscillatorSettings, track.events));
+                    this.addOscillatorTrack(track.connections, track.source as IOscillatorSettings, track.events);
                     break;
                 case "soundFile":
-                    this._tracks.push(await this.addSoundFileTrack(track.connections, track.source as ISoundFileSettings, track.events));
+                    await this.addSoundFileTrack(track.connections, track.source as ISoundFileSettings, track.events);
                     break;
             }
-        });
+        };
+    }
+
+    /**
+     * Saves the current song to a WAV file
+     *
+     * @returns The WAV file as a Blob
+     * @memberof SongManager
+     */
+    public async saveToWAV() {
+        let song = this.serialise();
+        let offlineManager = new OfflineSongManager(this.metadata.positionQuarterNoteToSeconds(this.getPlaybackLength()));
+        await offlineManager.deserialise(song);
+        let result = await offlineManager.saveToWAV();
+        return result;
     }
 
     /**
@@ -162,7 +182,7 @@ export class SongManager {
      * @returns {number} The playback length of the song in quarter notes
      * @memberof SongManager
      */
-    private getPlaybackLength() : number {
+    protected getPlaybackLength() : number {
         let longestEvent = 0;
         this._tracks.forEach(track => {
             if (track.timeline.playbackTime > longestEvent) {
@@ -172,68 +192,77 @@ export class SongManager {
         return longestEvent;
     }
 
-    private scheduleNotes() { // Calculates the current quarter note position and updates tracks.
+    protected scheduleNotes() { // Calculates the current quarter note position and updates tracks.
         let timeSinceStart = this.context.currentTime - this._startTime;
         this._quarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
         let quarterNoteTime = this._quarterNotePosition + ((this.lookaheadTime / this.metadata.getSecondsPerBeat(this._quarterNotePosition))
             / this.metadata.getQuarterNoteMultiplier(this._quarterNotePosition));
         this.scheduleEvent.emit(quarterNoteTime);
     }
+}
+
+export class OfflineSongManager extends SongManager {
+
+    public context : OfflineAudioContext;
 
     /**
-     * Saves the current song to a WAV (as a Blob)
-     *
-     * @param {Function} callback The function to call once saving is complete
-     * @memberof SongManager
+     * Constructs a SongManager for saving the track
+     * @param {number} length
+     * @memberof OfflineSongManager
      */
-    // TODO: need to get the saved song and create a new SongManager with an offlineaudiocontext and the current song data before this will work
-    public saveToWAV(callback : Function) : void {
-        return;
-        let songLength = this.metadata.positionQuarterNoteToSeconds(this.getPlaybackLength());
-        let offlineContext = new OfflineAudioContext(2, songLength * 44100, 44100);
-        
-        // Setup what to do when rendering is complete
-        offlineContext.oncomplete = function(e) {
-            let audioBuffer = e.renderedBuffer;
-            // AudioBuffer to ArrayBuffer conversion (from: https://stackoverflow.com/questions/62172398/convert-audiobuffer-to-arraybuffer-blob-for-wav-download)
-            // Get channels as two arrays
-            const [left, right] = [audioBuffer.getChannelData(0), audioBuffer.getChannelData(1)];
+    constructor(length : number) {
+        super(new OfflineAudioContext(2, length * 44100, 44100));
+    }
 
-            // Interleave arrays
-            const interleaved = new Float32Array(left.length)
-            for (let src=0, dst=0; src < left.length; src++, dst+=2) {
-                interleaved[dst] =   left[src]
-                interleaved[dst+1] = right[src]
-            };
+    /**
+     * Saves the current song to a WAV file
+     *
+     * @returns The WAV as a Blob
+     * @memberof OfflineSongManager
+     */
+    public async saveToWAV() {
+        this._tracks.forEach(track => {
+            track.scheduleAllEvents();
+        });
+        console.log("Starting AudioBuffer render");
+        let audioBuffer = await this.context.startRendering();
+        console.log("Finished AudioBuffer render");
 
-            const wavBytes = getWavBytes(interleaved.buffer, {
-                isFloat: true,       // floating point or 16-bit integer
-                numChannels: 2,
-                sampleRate: 48000,
-            });
+        // AudioBuffer to ArrayBuffer conversion (from: https://stackoverflow.com/questions/62172398/convert-audiobuffer-to-arraybuffer-blob-for-wav-download)
+        // Get channels as two arrays
+        const [left, right] = [audioBuffer.getChannelData(0), audioBuffer.getChannelData(1)];
 
-            const wav = new Blob([wavBytes], {type: "audio/wav"});
-            callback(wav);
+        // Interleave arrays
+        const interleaved = new Float32Array(left.length * 2); // Double the length of the buffer because the two channels are being merged.
+        for (let src=0, dst=0; src < left.length; src++, dst+=2) {
+            interleaved[dst] =   left[src]
+            interleaved[dst+1] = right[src]
         };
-        
-        offlineContext.startRendering();
+
+        const wavBytes = getWavBytes(interleaved.buffer, {
+            isFloat: true,       // floating point or 16-bit integer
+            numChannels: 2,
+            sampleRate: 44100,
+        });
+
+        return new Blob([wavBytes], {type: "audio/wav"});
     }
 }
 
 // Helper functions for WAV conversion
 // Generates the bytes of the WAV file (header and data)
 function getWavBytes(buffer, options) {
-    const type = options.isFloat ? Float32Array : Uint16Array
-    const numFrames = buffer.byteLength / type.BYTES_PER_ELEMENT
+    const type = options.isFloat ? Float32Array : Uint16Array;
+    const numFrames = buffer.byteLength / type.BYTES_PER_ELEMENT;
   
-    const headerBytes = getWavHeader(Object.assign({}, options, { numFrames }))
+    const headerBytes = getWavHeader(Object.assign({}, options, { numFrames }));
     const wavBytes = new Uint8Array(headerBytes.length + buffer.byteLength);
   
     // Prepend header, then add pcmBytes
-    wavBytes.set(headerBytes, 0)
-    wavBytes.set(new Uint8Array(buffer), headerBytes.length)
+    wavBytes.set(headerBytes, 0);
+    wavBytes.set(new Uint8Array(buffer), headerBytes.length);
   
-    return wavBytes
+    return wavBytes;
 }
 
 // Generates a WAV header (from https://gist.github.com/also/900023)

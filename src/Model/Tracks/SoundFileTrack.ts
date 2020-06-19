@@ -60,6 +60,7 @@ export class SoundFileTrack extends BaseTrack {
         this._timeline.events.forEach(event => {
             event.duration = this._metadata.positionSecondsToQuarterNote(this.audioSource.duration);
         });
+        this._timeline.updatePlaybackTime();
     }
 
     protected songEventHandler(event : BaseEvent) {

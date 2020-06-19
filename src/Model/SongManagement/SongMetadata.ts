@@ -145,6 +145,5 @@ export default class SongMetadata {
                 this._metaEventLengths.push(totalDuration);
             }
         }
-        console.log(this._metaEventLengths);
     }
 }
