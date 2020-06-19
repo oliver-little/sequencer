@@ -10,7 +10,7 @@ import { v4 as uuid } from 'uuid';
  * @class SoundFileInstrument
  * @implements {IInstrument}
  */
-export class SoundFileInstrument implements IInstrument, ICustomOutputAudioNode {
+export class SoundFileInstrument implements IInstrument {
     public id : string; // UUID for this object
     
     protected _settings : ISoundFileSettings;
@@ -42,7 +42,7 @@ export class SoundFileInstrument implements IInstrument, ICustomOutputAudioNode 
      * @param {IMP3Settings} settings
      * @memberof MP3Instrument
      */
-    constructor(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings) {
+    constructor(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings = SoundFileInstrument.defaults) {
         this._settings = settings;
         this.id = uuid();
 
@@ -61,6 +61,7 @@ export class SoundFileInstrument implements IInstrument, ICustomOutputAudioNode 
      */
     public async initialise() {
         if (this._settings.soundData != "") {
+            console.log(this._settings.soundData);
             // Complicated way of decoding the base64 string into a blob, converting to an ArrayBuffer, then converting to an AudioBuffer
             this._audioBuffer = await this._context.decodeAudioData(await SoundFileInstrument.getBlobFromBase64(this._settings.soundData).arrayBuffer());
         }

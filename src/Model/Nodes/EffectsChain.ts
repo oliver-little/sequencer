@@ -1,5 +1,5 @@
 import { ICustomInputAudioNode, ICustomOutputAudioNode } from "../Interfaces/ICustomAudioNode.js";
-import { IChain } from "../Interfaces/IInstrumentSettings.js";
+import { IChainSettings } from "../Interfaces/IInstrumentSettings.js";
 import { Tuna } from "../../../dependencies/tuna.js";
 import {v4 as uuid} from "uuid";
 
@@ -8,14 +8,14 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
     public id : string;
 
     private _context: AudioContext | OfflineAudioContext;
-    private _settings: IChain;
+    private _settings: IChainSettings;
     private _preGain: GainNode;
     private _postGain: GainNode;
     private _tuna;
 
     private _chainNodes = [];
 
-    constructor(context: AudioContext | OfflineAudioContext, settings: IChain = EffectsChain.defaults) {
+    constructor(context: AudioContext | OfflineAudioContext, settings: IChainSettings = EffectsChain.defaults) {
         this.id = uuid();
 
         this._context = context;
@@ -46,6 +46,19 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
 
     get effectCount() {
         return this._chainNodes.length;
+    }
+
+    /**
+     * The name assigned to this EffectsChain by the connection manager
+     *
+     * @memberof EffectsChain
+     */
+    get chainName() {
+        return this._settings.chainName;
+    }
+
+    set chainName(value : string) {
+        this._settings.chainName = value;
     }
 
     public connect(node : AudioNode|ICustomInputAudioNode) {
@@ -156,11 +169,12 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
         }
     }
 
-    public serialise() : IChain{
+    public serialise() : IChainSettings{
         return this._settings;
     }
 
-    public static defaults : IChain = {
+    public static defaults : IChainSettings = {
+        "chainName" : "",
         "effects" : [],
         "preGain" : 1,
         "postGain" : 1,

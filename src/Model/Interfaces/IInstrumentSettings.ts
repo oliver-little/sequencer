@@ -26,13 +26,12 @@ interface ISoundFileSettings extends IInstrumentSettings {
     "soundData" : string
 }
 
-interface IChain {
-    // TODO: store chain name so it can be saved under the save name afterwards
+interface IChainSettings {
     "chainName" : string
     "effects" : Array<IEffect>,
     "preGain" : number,
     "postGain" : number,
-    "connections": Array<String>,
+    "connections": Array<string>,
 }
 
 interface IEffect {
@@ -40,4 +39,4 @@ interface IEffect {
     "properties" : {[key: string] :any},
 }
 
-export {IOscillatorSettings, ISoundFileSettings, IInstrumentSettings, IAmplitudeEnvelope, IChain};
+export {IOscillatorSettings, ISoundFileSettings, IInstrumentSettings, IAmplitudeEnvelope, IChainSettings};

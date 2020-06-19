@@ -1,5 +1,5 @@
 import SortedArray from "../../HelperModules/SortedArray.js";
-import {BaseEvent} from "./SongEvents.js";
+import {BaseEvent, ISongEvent, NoteEvent} from "./SongEvents.js";
 
 /**
  * Container for a series of timeline events
@@ -132,5 +132,22 @@ export class EventTimeline {
             serialisedEvents.push(this.events[i].serialise());
         }
         return serialisedEvents;
+    }
+
+    /**
+     * Deserialises an ordered list of song events
+     *
+     * @param {ISongEvent[]} songEvents
+     * @memberof EventTimeline
+     */
+    public deserialise(songEvents : ISongEvent[]) {
+        for (let i = 0; i < songEvents.length; i++) {
+            switch (songEvents[i].eventType) {
+                case "BaseEvent": 
+                    this._events.push(new BaseEvent(songEvents[i].startPosition, songEvents[i].duration));
+                case "NoteEvent":
+                    this._events.push(new NoteEvent(songEvents[i].startPosition, songEvents[i].pitch, songEvents[i].duration));
+            }
+        }
     }
 }

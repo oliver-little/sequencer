@@ -1,9 +1,6 @@
 To Add:
-- Effects chains - chains can emulate nodes, and multiple instruments could use one chain. Global bus would be a chain used by all tracks.
-- Global effects bus for high cost effects (attached to a subclass of audio context most likely)
-- Saving and loading
 - Saving song to WAV - half complete, need to be able to save song data in order to recreate songManager using offlineaudiocontext
 
 Fixes:
-- If playback starts after last note, last note plays infinitely
 - Possible refactor of BaseTrack and BaseInstrument
+- General error handling

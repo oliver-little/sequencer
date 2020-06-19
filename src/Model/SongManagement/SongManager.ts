@@ -1,10 +1,11 @@
 import SongMetadata from "./SongMetadata.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
-import { IOscillatorSettings, ISoundFileSettings } from "../Interfaces/IInstrumentSettings.js";
-import { BaseTrack } from "../Tracks/BaseTrack.js";
+import { IOscillatorSettings, ISoundFileSettings, IChainSettings } from "../Interfaces/IInstrumentSettings.js";
+import { BaseTrack, ITrackSettings } from "../Tracks/BaseTrack.js";
 import { OscillatorTrack } from "../Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "../Tracks/SoundFileTrack.js";
 import { ConnectionManager } from "./ConnectionManager.js";
+import { ISongEvent } from "../Notation/SongEvents.js";
 
 export class SongManager {
 
@@ -30,7 +31,6 @@ export class SongManager {
         this.context = new AudioContext();
         this.connectionManager = new ConnectionManager(this.context);
         this.scheduleEvent = new SimpleEvent();
-
         this._tracks = [];
     }
 
@@ -49,12 +49,14 @@ export class SongManager {
      * @returns {OscillatorTrack}
      * @memberof SongManager
      */
-    public addOscillatorTrack(settings?: IOscillatorSettings, connections : string[] = ["context"]): OscillatorTrack {
+    public addOscillatorTrack(connections : string[] = ["context"], settings?: IOscillatorSettings, events? : ISongEvent[]): OscillatorTrack {
         let newTrack = new OscillatorTrack(this.metadata, this.context, this.scheduleEvent, settings);
+        if (events != undefined) {
+            newTrack.timeline.deserialise(events);
+        }
         this._tracks.push(newTrack);
         this.connectionManager.createConnections(newTrack.audioSource, connections);
         return newTrack;
-
     }
 
     /**
@@ -65,8 +67,11 @@ export class SongManager {
      * @returns {Promise<SoundFileTrack>}
      * @memberof SongManager
      */
-    public async addSoundFileTrack(settings?: ISoundFileSettings, connections : string[] = ["context"]) : Promise<SoundFileTrack> {
+    public async addSoundFileTrack(connections : string[] = ["context"], settings?: ISoundFileSettings, events? : ISongEvent[]) : Promise<SoundFileTrack> {
         let newTrack = await SoundFileTrack.create(this.metadata, this.context, this.scheduleEvent, settings);
+        if (events != undefined) {
+            newTrack.timeline.deserialise(events);
+        }
         this._tracks.push(newTrack);
         this.connectionManager.createConnections(newTrack.audioSource, connections);
         return newTrack;
@@ -107,6 +112,40 @@ export class SongManager {
         clearInterval(this.playingIntervalID);
         this._tracks.forEach(element => {
             element.stop();
+        });
+    }
+
+    /**
+     * Serialises the song into an object that can be saved as a JSON string using JSON.parse
+     *
+     * @returns {ISongSettings}
+     * @memberof SongManager
+     */
+    public serialise() : ISongSettings {
+        let serialisedTracks = []
+        this._tracks.forEach(track => {
+            let trackSettings = track.serialise();
+            trackSettings.connections = this.connectionManager.getConnections(track.audioSource);
+            serialisedTracks.push(trackSettings);
+        });
+        let serialisedChains = this.connectionManager.serialiseChains();
+        return {
+            "tracks" : serialisedTracks,
+            "chains" : serialisedChains
+        }
+    }
+
+    public async deserialise(settings : ISongSettings) {
+        this.connectionManager.deserialiseChains(settings.chains);
+        settings.tracks.forEach(async track => {
+            switch (track.source.type) {
+                case "oscillator": 
+                    this._tracks.push(this.addOscillatorTrack(track.connections, track.source as IOscillatorSettings, track.events));
+                    break;
+                case "soundFile":
+                    this._tracks.push(await this.addSoundFileTrack(track.connections, track.source as ISoundFileSettings, track.events));
+                    break;
+            }
         });
     }
 
@@ -240,4 +279,9 @@ function getWavHeader(options) {
     writeUint32(dataSize)            // Subchunk2Size
   
     return new Uint8Array(buffer)
+}
+
+export interface ISongSettings {
+    "tracks" : Array<ITrackSettings>,
+    "chains" : Array<IChainSettings>
 }

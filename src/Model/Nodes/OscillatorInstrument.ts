@@ -15,7 +15,7 @@ interface IOscillatorBaseChain {
  * @export
  * @class OscillatorInstrument
  */
-export class OscillatorInstrument implements IInstrument, ICustomOutputAudioNode {
+export class OscillatorInstrument implements IInstrument {
     public id : string;
     
     protected _settings : IOscillatorSettings;

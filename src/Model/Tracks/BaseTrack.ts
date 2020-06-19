@@ -5,7 +5,13 @@ import {BaseEvent, ISongEvent} from "../Notation/SongEvents.js";
 import {IInstrument} from "../Interfaces/IInstrument.js";
 import { IInstrumentSettings } from "../Interfaces/IInstrumentSettings.js";
 
-interface ITrackSettings {
+/**
+ * Interface describing a serialised track
+ *
+ * @export
+ * @interface ITrackSettings
+ */
+export interface ITrackSettings {
     "source" : IInstrumentSettings,
     "events" : ISongEvent[],
     "connections" : Array<string>
