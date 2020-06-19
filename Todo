@@ -1,4 +1,5 @@
 To Add:
+- Add magic header to save file
 - Saving song to WAV - half complete, need to be able to save song data in order to recreate songManager using offlineaudiocontext
 
 Fixes:

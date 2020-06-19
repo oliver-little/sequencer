@@ -9,6 +9,8 @@ import { ISongEvent } from "../Notation/SongEvents.js";
 
 export class SongManager {
 
+    static saveFileVersion = "1.0.0";
+
     // The amount of time to look ahead for events in seconds
     public lookaheadTime = 0.125;
 
@@ -130,12 +132,16 @@ export class SongManager {
         });
         let serialisedChains = this.connectionManager.serialiseChains();
         return {
+            "version" : SongManager.saveFileVersion,
             "tracks" : serialisedTracks,
             "chains" : serialisedChains
         }
     }
 
     public async deserialise(settings : ISongSettings) {
+        if (settings.version != SongManager.saveFileVersion) {
+            console.log("WARNING: Save file is an old version, loading may not function correctly.");
+        }
         this.connectionManager.deserialiseChains(settings.chains);
         settings.tracks.forEach(async track => {
             switch (track.source.type) {
@@ -282,6 +288,7 @@ function getWavHeader(options) {
 }
 
 export interface ISongSettings {
+    "version" : string;
     "tracks" : Array<ITrackSettings>,
     "chains" : Array<IChainSettings>
 }
