@@ -1,5 +1,5 @@
 import SortedArray from "../../HelperModules/SortedArray.js";
-import {MetadataEvent} from "../Notation/SongEvents.js";
+import {MetadataEvent, ISongEvent} from "../Notation/SongEvents.js";
 
 /**
  * Container class to store global song data
@@ -145,5 +145,37 @@ export default class SongMetadata {
                 this._metaEventLengths.push(totalDuration);
             }
         }
+    }
+
+    /**
+     * Serialises the current set of MetadataEvents
+     *
+     * @returns {Array<ISongEvent>}
+     * @memberof SongMetadata
+     */
+    public serialise() : Array<ISongEvent> {
+        let serialisedEvents = [];
+        this._metaEvents.forEach(metaEvent => {
+            serialisedEvents.push(metaEvent.serialise());
+        });
+
+        return serialisedEvents;
+    }
+
+    /**
+     * Deserialises an array of serialised MetadataEvents and adds them to the array of events.
+     *
+     * @param {Array<ISongEvent>} metaEvents
+     * @memberof SongMetadata
+     */
+    public deserialise(metaEvents : Array<ISongEvent>) {
+        metaEvents.forEach(metaEvent => {
+            if (metaEvent.eventType === "MetadataEvent") {
+                this.addMetadataEvent(metaEvent.startPosition, metaEvent.bpm, metaEvent.timeSignature);
+            }
+            else {
+                console.log("SongMetadata does not support this event type.");
+            }
+        });
     }
 }

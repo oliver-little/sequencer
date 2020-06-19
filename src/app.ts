@@ -13,6 +13,8 @@ oscillatorTrack.addNote(2, "C6", "2n");
 oscillatorTrack.addNote(2, "G5", "2n");
 oscillatorTrack.addNote(3, "G6", "32n");
 
+songManager.metadata.addMetadataEvent(2, 180, [4,4]);
+
 songManager.addSoundFileTrack().then(result =>{
     let soundFileTrack = result;
     soundFileTrack.addOneShot(0);

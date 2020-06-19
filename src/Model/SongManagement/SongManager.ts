@@ -132,6 +132,7 @@ export class SongManager {
         let serialisedChains = this.connectionManager.serialiseChains();
         return {
             "version" : SongManager.saveFileVersion,
+            "metadataEvents" : this.metadata.serialise(),
             "tracks" : serialisedTracks,
             "chains" : serialisedChains
         }
@@ -148,6 +149,7 @@ export class SongManager {
             console.log("WARNING: Save file is an old version, loading may not function correctly.");
         }
         this.connectionManager.deserialiseChains(settings.chains);
+        this.metadata.deserialise(settings.metadataEvents);
         for (let i = 0; i < settings.tracks.length; i++) {
             let track = settings.tracks[i];
             switch (track.source.type) {
@@ -317,7 +319,8 @@ function getWavHeader(options) {
 }
 
 export interface ISongSettings {
-    "version" : string;
+    "version" : string,
+    "metadataEvents" : Array<ISongEvent>,
     "tracks" : Array<ITrackSettings>,
     "chains" : Array<IChainSettings>
 }

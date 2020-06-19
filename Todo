@@ -1,7 +1,5 @@
 To Add:
-- Save metadata events to save file
 - Add magic header to save file
 
 Fixes:
-- Possible refactor of BaseTrack and BaseInstrument
 - General error handling
