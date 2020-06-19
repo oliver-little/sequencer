@@ -1,0 +1,33 @@
+{
+  "name": "sequencer",
+  "version": "1.0.0",
+  "description": "A web-based DAW and sequencer, built in TypeScript, using the Web Audio API.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "uuid": "^8.1.0"
+  },
+  "devDependencies": {
+    "terser-webpack-plugin": "^3.0.5",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.12"
+  },
+  "scripts": {
+    "dev": "tsc -p ./tsconfig.json & webpack --mode development",
+    "build": "webpack --mode production",
+    "start": "webpack-dev-server --mode development --open"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oliver-little/sequencer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/oliver-little/sequencer/issues"
+  },
+  "homepage": "https://github.com/oliver-little/sequencer#readme"
+}

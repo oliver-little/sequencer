@@ -2,4 +2,6 @@
 
 build
 
-tsconfig.json
+test
+
+node_modules

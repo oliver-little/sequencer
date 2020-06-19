@@ -1,0 +1,78 @@
+{
+    "instrument": {
+        "source": {
+            "type": "oscillator",
+            "oscillatorType": "sine",
+            "gain": 100
+        },
+        "envelopeEnabled" : true,
+        "envelope": {
+            "attack": 0.1,
+            "decay": 0.05,
+            "sustain": 1,
+            "release": 0.5
+        },
+        "connections" : ["context", "bus", "chain0"]
+    },
+    "chains" : [
+        {
+            "effects": [
+                {
+                    "effectType": "Delay",
+                    "properties": {
+                        "...": "."
+                    }
+                },
+                {
+                    "effectType": "Chorus",
+                    "properties": {
+                        "...": "."
+                    }
+                }
+            ],
+            "preGain" : 1,
+            "postGain" : 1,
+            "connections": ["context", "bus"]
+        },
+        {
+            "effects": [
+                {
+                    "effectType": "Delay",
+                    "properties": {
+                        "...": "."
+                    }
+                },
+                {
+                    "effectType": "Chorus",
+                    "properties": {
+                        "...": "."
+                    }
+                }
+            ],
+            "preGain" : 1,
+            "postGain" : 1,
+            "connections": ["context", "bus"]
+        }
+    ],
+    "bus" : {
+        "effects": [
+            {
+                "type": "filter",
+                "effectType": "Delay",
+                "properties": {
+                    "...": "."
+                }
+            },
+            {
+                "type": "tuna",
+                "effectType": "Chorus",
+                "properties": {
+                    "...": "."
+                }
+            }
+        ],
+        "preGain" : 1,
+        "postGain" : 1,
+        "connections" : ["context"]
+    }
+}
