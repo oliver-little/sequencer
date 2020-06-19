@@ -3,7 +3,7 @@ import { SoundFileInstrument } from "../Nodes/SoundFileInstrument.js";
 import SongMetadata from "../SongManagement/SongMetadata.js";
 import { ISoundFileSettings } from "../Interfaces/IInstrumentSettings.js";
 import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
-import { BaseEvent } from "../Notation/SongEvents.js";
+import { SecondsBaseEvent, BaseEvent } from "../Notation/SongEvents.js";
 
 export class SoundFileTrack extends BaseTrack {
     public audioSource : SoundFileInstrument;
@@ -42,11 +42,11 @@ export class SoundFileTrack extends BaseTrack {
 
 
     public addOneShot(startPosition : number) {
-        this._timeline.addEvent(new BaseEvent(startPosition, this._metadata.positionSecondsToQuarterNote(this.audioSource.duration)));
+        this._timeline.addEvent(new SecondsBaseEvent(startPosition, this._metadata, this.audioSource.duration));
     }
 
     public removeOneShot(startPosition : number) {
-        this._timeline.removeEvent(new BaseEvent(startPosition, this._metadata.positionSecondsToQuarterNote(this.audioSource.duration)));
+        this._timeline.removeEvent(new SecondsBaseEvent(startPosition, this._metadata, this.audioSource.duration));
     }
 
     /**
@@ -58,18 +58,18 @@ export class SoundFileTrack extends BaseTrack {
     public async setSoundFile(file : Blob) {
         await this.audioSource.setSoundFile(file);
         this._timeline.events.forEach(event => {
-            event.duration = this._metadata.positionSecondsToQuarterNote(this.audioSource.duration);
+            event.duration = this._metadata.positionQuarterNoteToSeconds(this.audioSource.duration);
         });
         this._timeline.updatePlaybackTime();
     }
 
     protected songEventHandler(event : BaseEvent) {
-        if (event instanceof BaseEvent) {
+        if (event instanceof SecondsBaseEvent) {
             let startPositionSeconds = this._startTime + this._metadata.positionQuarterNoteToSeconds(event.startPosition);
             this.audioSource.playOneShot(startPositionSeconds, this._context.currentTime - startPositionSeconds);
         }
         else {
-            throw new Error("SoundFileTrack cannot handle this event type: " + event);
+            throw new Error("SoundFileTrack cannot handle this event type: " + event.constructor.name);
         }
     }
 }

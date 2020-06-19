@@ -1,5 +1,6 @@
 import SortedArray from "../../HelperModules/SortedArray.js";
-import {BaseEvent, ISongEvent, NoteEvent} from "./SongEvents.js";
+import {BaseEvent, ISongEvent, NoteEvent, SecondsBaseEvent} from "./SongEvents.js";
+import SongMetadata from "../SongManagement/SongMetadata.js";
 
 /**
  * Container for a series of timeline events
@@ -20,7 +21,8 @@ export class EventTimeline {
     }
 
     get playbackTime() {
-        return this.longestEventValue;
+        let event = this._events[this.longestEventIndex];
+        return event.startPosition + event.duration;
     }
 
     /**
@@ -34,7 +36,6 @@ export class EventTimeline {
         for(let i = 0; i < this._events.length; i++) {
             if ((this._events[i].startPosition + this._events[i].duration) > this.longestEventValue){
                 this.longestEventIndex = i;
-                this.longestEventValue = (this._events[i].startPosition + this._events[i].duration);
             }
         }
     }
@@ -51,7 +52,6 @@ export class EventTimeline {
         // Check if this event is the new longest event
         if (this.longestEventIndex != null && (event.startPosition + event.duration) > this.longestEventValue) {
             this.longestEventIndex = index;
-            this.longestEventValue = event.startPosition + event.duration;
         }
         else {
             this.longestEventIndex = 0;
@@ -90,7 +90,6 @@ export class EventTimeline {
             }
             else {
                 this.longestEventIndex = null;
-                this.longestEventValue = 0;
             }
         }
     }
@@ -149,13 +148,18 @@ export class EventTimeline {
      * @param {ISongEvent[]} songEvents
      * @memberof EventTimeline
      */
-    public deserialise(songEvents : ISongEvent[]) {
+    public deserialise(songEvents : ISongEvent[], metadata : SongMetadata) {
         for (let i = 0; i < songEvents.length; i++) {
             switch (songEvents[i].eventType) {
                 case "BaseEvent": 
                     this._events.push(new BaseEvent(songEvents[i].startPosition, songEvents[i].duration));
+                    break;
                 case "NoteEvent":
                     this._events.push(new NoteEvent(songEvents[i].startPosition, songEvents[i].pitch, songEvents[i].duration));
+                    break;
+                case "SecondsBaseEvent":
+                    this._events.push(new SecondsBaseEvent(songEvents[i].startPosition, metadata, songEvents[i].duration));
+                    break;
             }
         }
         this.updatePlaybackTime();

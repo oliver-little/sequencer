@@ -53,7 +53,7 @@ export class SongManager {
     public addOscillatorTrack(connections : string[] = ["context"], settings?: IOscillatorSettings, events? : ISongEvent[]): OscillatorTrack {
         let newTrack = new OscillatorTrack(this.metadata, this.context, this.scheduleEvent, settings);
         if (events != undefined) {
-            newTrack.timeline.deserialise(events);
+            newTrack.timeline.deserialise(events, this.metadata);
         }
         this._tracks.push(newTrack);
         this.connectionManager.createConnections(newTrack.audioSource, connections);
@@ -71,7 +71,7 @@ export class SongManager {
     public async addSoundFileTrack(connections : string[] = ["context"], settings?: ISoundFileSettings, events? : ISongEvent[]) : Promise<SoundFileTrack> {
         let newTrack = await SoundFileTrack.create(this.metadata, this.context, this.scheduleEvent, settings);
         if (events != undefined) {
-            newTrack.timeline.deserialise(events);
+            newTrack.timeline.deserialise(events, this.metadata);
         }
         this._tracks.push(newTrack);
         this.connectionManager.createConnections(newTrack.audioSource, connections);
@@ -149,7 +149,7 @@ export class SongManager {
         }
         this.connectionManager.deserialiseChains(settings.chains);
         for (let i = 0; i < settings.tracks.length; i++) {
-            let track = settings.tracks[i]
+            let track = settings.tracks[i];
             switch (track.source.type) {
                 case "oscillator": 
                     this.addOscillatorTrack(track.connections, track.source as IOscillatorSettings, track.events);
@@ -169,7 +169,7 @@ export class SongManager {
      */
     public async saveToWAV() {
         let song = this.serialise();
-        let offlineManager = new OfflineSongManager(this.metadata.positionQuarterNoteToSeconds(this.getPlaybackLength()));
+        let offlineManager = new OfflineSongManager(this.getPlaybackLength());
         await offlineManager.deserialise(song);
         let result = await offlineManager.saveToWAV();
         return result;
@@ -179,7 +179,7 @@ export class SongManager {
      * Gets the total playback length of this song
      *
      * @private
-     * @returns {number} The playback length of the song in quarter notes
+     * @returns {number} The playback length of the song in seconds
      * @memberof SongManager
      */
     protected getPlaybackLength() : number {

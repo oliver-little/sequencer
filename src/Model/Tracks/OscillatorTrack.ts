@@ -76,7 +76,7 @@ export class OscillatorTrack extends BaseTrack {
             this.audioSource.playNote(eventStart, eventEnd, event.pitch);
         }
         else {
-            throw new Error("OscillatorTrack cannot handle this event type:" + event);
+            throw new Error("OscillatorTrack cannot handle this event type:" + event.constructor.name);
         }
     }
 }

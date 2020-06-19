@@ -1,3 +1,5 @@
+import SongMetadata from "../SongManagement/SongMetadata.js";
+
 export interface ISongEvent {
     "eventType" : string,
     "startPosition" : number
@@ -43,6 +45,74 @@ export class BaseEvent {
         if (a.duration > b.duration) return 1;
         if (a.duration < b.duration) return -1;
         return 0;
+    }
+}
+
+/**
+ * Same as BaseEvent but duration is set in seconds and returned in quarter notes.
+ * This takes a reference to the metadata because it does the conversion every time the quarter note duration is requested.
+ *
+ * @export
+ * @class SecondsBaseEvent
+ */
+export class SecondsBaseEvent extends BaseEvent {
+
+    private _metadata : SongMetadata;
+
+    /**
+     * Creates an instance of SecondsBaseEvent.
+     * @param {number} startPosition The start position in quarter notes
+     * @param {SongMetadata} metadata The SongMetadata object this event should use
+     * @param {number} [secondsDuration=0] The duration of the note in seconds
+     * @memberof SecondsBaseEvent
+     */
+    constructor (startPosition: number, metadata : SongMetadata, secondsDuration : number = 0) {
+        super(startPosition);
+        this._metadata = metadata;
+        this.secondsDuration = secondsDuration;
+    }
+
+    /**
+     * Get duration in quarter notes.
+     *
+     * @memberof SecondsBaseEvent
+     */
+    public get duration() {
+        return this._metadata.positionSecondsToQuarterNote(this._duration);
+    }
+
+    /**
+     * NOT USED.
+     *
+     * @memberof SecondsBaseEvent
+     */
+    public set duration(value : number) {
+        this._duration = value;
+    }
+
+    /**
+     * Get duration in seconds.
+     *
+     * @memberof SecondsBaseEvent
+     */
+    public get secondsDuration() {
+        return this._duration;
+    }
+
+    /**
+     * Set duration in seconds.
+     *
+     * @memberof SecondsBaseEvent
+     */
+    public set secondsDuration(value : number) {
+        this._duration = value;
+    }
+
+    public serialise() : ISongEvent {
+        let obj = super.serialise();
+        obj.eventType = "SecondsBaseEvent";
+        obj.duration = this._duration;
+        return obj;
     }
 }
 

@@ -1,5 +1,5 @@
 import {SongManager} from "../build/Model/SongManagement/SongManager.js";
-import {ISoundFileSettings} from "../build/Model/Interfaces/IInstrumentSettings"
+import {ISoundFileSettings} from "../build/Model/Interfaces/IInstrumentSettings.js";
 import { ISongSettings } from "./Model/SongManagement/SongManager.js";
 
 // Testing code
