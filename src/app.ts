@@ -1,11 +1,12 @@
-import { BarTimeline } from "./View/Timeline/Bar.js";
 import * as PIXI from "pixi.js";
+import { TimelineView } from "./View/Timeline/TimelineView.js";
 
 window.onload = function () {
     let app = new PIXI.Application({ width: window.innerWidth * 0.8, height: window.innerHeight * 0.8 });
 
     document.body.appendChild(app.view);
 
-    app.stage.addChild(new BarTimeline(app.renderer));
+    app.renderer.backgroundColor = 0x303030;
+    app.stage.addChild(new TimelineView(app.renderer));
 
 }
