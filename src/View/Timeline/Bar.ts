@@ -16,19 +16,24 @@ export class BarTimeline extends PIXI.Container {
     private _startXPosition : number;
     private _isDragging : boolean;
 
-    constructor(x : number, y : number, viewWidth : number, viewHeight : number) {
+    /**
+     * Creates an instance of BarTimeline.
+     * @param {number} x The x coordinate in the parent where this timeline should start (pixels)
+     * @param {number} viewWidth The width of the view (pixels)
+     * @param {number} viewHeight The height of the view (pixels)
+     * @memberof BarTimeline
+     */
+    constructor(x : number, viewWidth : number, viewHeight : number) {
         super();
-        this.x = x;
         this._startX = x;
-        this.y = y;
         this.viewWidth = viewWidth;
         this.viewHeight = viewHeight;
 
         this._objectPool = new ObjectPool(Bar);
         this._bars = [];
 
-        let currentXPosition = 0
-        let barNumber = 0
+        let currentXPosition = this._startX;
+        let barNumber = 0;
         // TODO: don't base off renderer width, take a width and height value
         while (currentXPosition < this.viewWidth) {
             let bar = new Bar();
@@ -55,36 +60,44 @@ export class BarTimeline extends PIXI.Container {
             let moveDelta = event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x;
             this.x = this._startXPosition + moveDelta;
             
-            if (this.x > this._startX) {
-                this.x = this._startX;
+            // This solution is used because the container's x is reset to 0 after each scroll event,
+            // but while scrolling occurs the container's position rather than the child objects' positions is changed.
+            // Therefore, we have to find out if bar 0 is past where the timeline should start.
+            // If it is, calculate the offset required to position bar 0 at the start of the timeline.
+            if (this._bars[0].barNumber === 0 && this.x + this._bars[0].leftBound > this._startX) {
+                this.x = -this._bars[0].leftBound + this._startX;
             }
 
+            // While loops are used in this section because extremely quick, large scrolls can cause bars to be missing
+
+            // Check right side for adding or removing bars offscreen
             let rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.viewWidth;
-            if (rightSideOffset < 100) {
-                let bar = this._getBar();
+            while (rightSideOffset < 100) { // If the right side is too close, need to add a new bar.
+                let bar = this._getBar(); // Get a new bar and initialise it at the right location
                 bar.initialise(this._bars[this._bars.length - 1].rightBound, this.viewHeight, this._bars[this._bars.length - 1].barNumber+1);
-                this._bars.push(bar);
-                console.log("added to right: " + bar.barNumber);
+                this._bars.push(bar); // Add it to the list of bars, and recalculate where the right side is.
+                rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.viewWidth;
             }
-            else if (rightSideOffset > 800) {
+            while (rightSideOffset > 800) {
                 let bar = this._bars.pop();
                 this._returnBar(bar);
-                console.log("removed from right: " + bar.barNumber);
+
+                rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.viewWidth;
             }
-            else {
-                let leftSideOffset = this._startX - this.x - this._bars[0].leftBound;
-                if (leftSideOffset < 100 && this._bars[0].barNumber != 0) {
-                    let bar = this._getBar();
-                    bar.initialise(this._bars[0].leftBound, this.viewHeight, this._bars[0].barNumber-1, false);
-                    this._bars.splice(0, 0, bar);
-                    console.log("added to left: " + bar.barNumber);
-                }
-                else if (leftSideOffset > 800) {
-                    let bar = this._bars.splice(0, 1)[0];
-                    this._returnBar(bar);
-                    console.log("removed from left: " + bar.barNumber);
-                }
+
+            // Check left side for adding or removing bars offscreen
+            let leftSideOffset = this._startX - this.x - this._bars[0].leftBound;
+            while (leftSideOffset < 100 && this._bars[0].barNumber != 0) {
+                let bar = this._getBar();
+                bar.initialise(this._bars[0].leftBound, this.viewHeight, this._bars[0].barNumber-1, false);
+                this._bars.splice(0, 0, bar);
+                leftSideOffset = this._startX - this.x - this._bars[0].leftBound;
             }
+            while (leftSideOffset > 800) {
+                let bar = this._bars.splice(0, 1)[0];
+                this._returnBar(bar);
+                leftSideOffset = this._startX - this.x - this._bars[0].leftBound;
+            } 
         }
     }
 
@@ -92,11 +105,10 @@ export class BarTimeline extends PIXI.Container {
         this._startXPosition = undefined;
         this._startPointerPosition = undefined;
         this._isDragging = false;
-        /*let xOffset = this._startX - this.x;
         for(let i = 0; i < this._bars.length; i++) {
-            this._bars[i].x -= xOffset;
+            this._bars[i].x += this.x;
         }
-        this.x = this._startX;*/
+        this.x = 0;
     }
 
     private _getBar() : Bar {

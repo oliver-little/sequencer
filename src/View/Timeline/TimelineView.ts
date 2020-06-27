@@ -16,7 +16,7 @@ export class TimelineView extends PIXI.Container {
         this.on("pointerupoutside", this._pointerUpHandler.bind(this));
         this._interactivityRect = new PIXI.Graphics();
         this.resize(renderer.width, renderer.height);
-        this._timeline = new BarTimeline(this._sidebarPosition, 0, renderer.width - this._sidebarPosition, renderer.height);
+        this._timeline = new BarTimeline(this._sidebarPosition, renderer.width - this._sidebarPosition, renderer.height);
         this.addChild(this._timeline);
         this.addChild(this._interactivityRect);
     }
