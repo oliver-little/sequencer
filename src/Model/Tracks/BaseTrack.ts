@@ -4,6 +4,7 @@ import {EventTimeline} from "../Notation/EventTimeline.js";
 import {BaseEvent, ISongEvent} from "../Notation/SongEvents.js";
 import {IInstrument} from "../Interfaces/IInstrument.js";
 import { IInstrumentSettings } from "../Interfaces/IInstrumentSettings.js";
+import {v4 as uuid} from "uuid";
 
 /**
  * Interface describing a serialised track
@@ -12,6 +13,7 @@ import { IInstrumentSettings } from "../Interfaces/IInstrumentSettings.js";
  * @interface ITrackSettings
  */
 export interface ITrackSettings {
+    "id" : string,
     "source" : IInstrumentSettings,
     "events" : ISongEvent[],
     "connections" : Array<string>
@@ -26,6 +28,7 @@ export interface ITrackSettings {
 export abstract class BaseTrack {
 
     public audioSource : IInstrument;
+    public id : string;
 
     protected _timeline : EventTimeline;
     protected _metadata : SongMetadata;
@@ -34,20 +37,25 @@ export abstract class BaseTrack {
     protected _startTime = 0; // Stores the AudioContext time at which playback was started.
     protected _playing = false;
 
+
     /**
      *Creates an instance of BaseTrack.
-     * @param {SongMetadata} metadata The song metadata this track uses.
-     * @param {AudioContext|OfflineAudioContext} context The audio context this track should play to
-     * @param {SimpleEvent} scheduleEvent An event that fires regularly to allow notes to be scheduled.
+     * @param {SongMetadata} metadata The SongMetadata this track uses
+     * @param {(AudioContext|OfflineAudioContext)} context The AudioContext this track is using
+     * @param {SimpleEvent} scheduleEvent An event to schedule notes, should be fired around every 50ms when playing
+     * @param {IInstrument} audioSource An AudioSource that this track will use to emit sound.
+     * @param {string} [id] An optional uuid to represent this track (used in deserialisation). This is generated if not provided.
      * @memberof BaseTrack
      */
-    constructor (metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, audioSource : IInstrument) {
+    constructor (metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, audioSource : IInstrument, id? : string) {
         this._timeline = new EventTimeline();
         this._context = context;
         this._metadata = metadata;
         this._scheduleEvent = scheduleEvent;
         this._scheduleEvent.addListener(function(quarterNotePosition : number) {this.scheduleSongEvents(quarterNotePosition)}.bind(this));
+
         this.audioSource = audioSource;
+        this.id = id === undefined ? uuid() : id;
     }
 
     get timeline() {
@@ -121,6 +129,7 @@ export abstract class BaseTrack {
 
     public serialise() : ITrackSettings {
         return {
+            "id" : this.id,
             "source" : this.audioSource.serialise(),
             "events" : this.timeline.serialise(),
             "connections" : [],

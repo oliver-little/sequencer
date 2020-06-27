@@ -1,5 +1,10 @@
 To Add:
 - Add magic header to save file
+- Finish TODOs
+
+To Add UI: 
+Canvas for timeline and note editor - use https://www.pixijs.com/ and https://github.com/davidfig/pixi-scrollbox
+Connections for tracks with chains and global bus - https://github.com/lukasoppermann/html5sortable
 
 Fixes:
 - General error handling
