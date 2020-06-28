@@ -1,13 +1,15 @@
 import * as PIXI from "pixi.js";
 import { BarTimeline } from "./Bar.js";
+import SongMetadata from "../../Model/SongManagement/SongMetadata.js";
 
 export class TimelineView extends PIXI.Container {
 
+    public timeline : BarTimeline;
+
     private _interactivityRect : PIXI.Graphics;
-    private _timeline : BarTimeline;
     private _sidebarPosition : number = 100;
 
-    constructor(renderer : PIXI.Renderer) {
+    constructor(renderer : PIXI.Renderer, metadata : SongMetadata) {
         super();
         this.interactive = true;
         this.on("pointerdown", this._pointerDownHandler.bind(this));
@@ -16,8 +18,8 @@ export class TimelineView extends PIXI.Container {
         this.on("pointerupoutside", this._pointerUpHandler.bind(this));
         this._interactivityRect = new PIXI.Graphics();
         this.resize(renderer.width, renderer.height);
-        this._timeline = new BarTimeline(this._sidebarPosition, renderer.width - this._sidebarPosition, renderer.height);
-        this.addChild(this._timeline);
+        this.timeline = new BarTimeline(this._sidebarPosition, renderer.width, renderer.height, metadata);
+        this.addChild(this.timeline);
         this.addChild(this._interactivityRect);
     }
 
@@ -30,22 +32,23 @@ export class TimelineView extends PIXI.Container {
     }
 
     // Custom code to delegate events to children.
+    // TODO: This is not a good system to do this, as it overrides the usual event capture/bubble system, need to add the interactivity rect to the children rather than this object.
 
     private _pointerDownHandler(event : PIXI.InteractionEvent) {
         if (event.data.getLocalPosition(this).x > this._sidebarPosition) {
-            this._timeline.pointerDownHandler(event);
+            this.timeline.pointerDownHandler(event);
         }
     }
 
     private _pointerMoveHandler(event : PIXI.InteractionEvent) {;
-        if (this._timeline.isDragging || event.data.getLocalPosition(this).x > this._sidebarPosition) {
-            this._timeline.pointerMoveHandler(event);
+        if (this.timeline.isDragging || event.data.getLocalPosition(this).x > this._sidebarPosition) {
+            this.timeline.pointerMoveHandler(event);
         }
     }
 
     private _pointerUpHandler(event : PIXI.InteractionEvent) {
-        if (this._timeline.isDragging || event.data.getLocalPosition(this).x > this._sidebarPosition) {
-            this._timeline.pointerUpHandler(event);
+        if (this.timeline.isDragging || event.data.getLocalPosition(this).x > this._sidebarPosition) {
+            this.timeline.pointerUpHandler(event);
         }
     }
 }

@@ -1,16 +1,20 @@
 import * as PIXI from "pixi.js";
 import { PointHelper } from "../../HelperModules/PointHelper.js";
 import { ObjectPool } from "../../HelperModules/ObjectPool.js";
+import SongMetadata from "../../Model/SongManagement/SongMetadata.js";
 
 export class BarTimeline extends PIXI.Container {
 
-    public viewWidth : number;
-    public viewHeight : number;
+    public startX : number;
+    public endX : number;
+    public endY : number;
+
+    public metadata : SongMetadata;
 
     private _objectPool : ObjectPool<Bar>;
     private _bars : Bar[];
 
-    private _startX : number;
+    private barScale = 1;
 
     private _startPointerPosition : PIXI.Point;
     private _startXPosition : number;
@@ -23,22 +27,20 @@ export class BarTimeline extends PIXI.Container {
      * @param {number} viewHeight The height of the view (pixels)
      * @memberof BarTimeline
      */
-    constructor(x : number, viewWidth : number, viewHeight : number) {
+    constructor(x : number, viewWidth : number, viewHeight : number, metadata : SongMetadata) {
         super();
-        this._startX = x;
-        this.viewWidth = viewWidth;
-        this.viewHeight = viewHeight;
+        this.startX = x;
+        this.endX = viewWidth;
+        this.endY = viewHeight;
+        this.metadata = metadata;
 
         this._objectPool = new ObjectPool(Bar);
         this._bars = [];
 
-        let currentXPosition = this._startX;
+        let currentXPosition = this.startX;
         let barNumber = 0;
-        // TODO: don't base off renderer width, take a width and height value
-        while (currentXPosition < this.viewWidth) {
-            let bar = new Bar();
-            bar.initialise(currentXPosition, this.viewHeight, barNumber);
-            this.addChild(bar);
+        while (currentXPosition < this.endX) {
+            let bar = this._initialiseBar(currentXPosition, barNumber);
             this._bars.push(bar);
             currentXPosition = bar.rightBound;
             barNumber++;
@@ -64,39 +66,37 @@ export class BarTimeline extends PIXI.Container {
             // but while scrolling occurs the container's position rather than the child objects' positions is changed.
             // Therefore, we have to find out if bar 0 is past where the timeline should start.
             // If it is, calculate the offset required to position bar 0 at the start of the timeline.
-            if (this._bars[0].barNumber === 0 && this.x + this._bars[0].leftBound > this._startX) {
-                this.x = -this._bars[0].leftBound + this._startX;
+            if (this._bars[0].barNumber === 0 && this.x + this._bars[0].leftBound > this.startX) {
+                this.x = -this._bars[0].leftBound + this.startX;
             }
 
             // While loops are used in this section because extremely quick, large scrolls can cause bars to be missing
 
             // Check right side for adding or removing bars offscreen
-            let rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.viewWidth;
+            let rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.endX;
             while (rightSideOffset < 100) { // If the right side is too close, need to add a new bar.
-                let bar = this._getBar(); // Get a new bar and initialise it at the right location
-                bar.initialise(this._bars[this._bars.length - 1].rightBound, this.viewHeight, this._bars[this._bars.length - 1].barNumber+1);
+                let bar = this._initialiseBar(this._bars[this._bars.length - 1].rightBound, this._bars[this._bars.length - 1].barNumber+1);
                 this._bars.push(bar); // Add it to the list of bars, and recalculate where the right side is.
-                rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.viewWidth;
+                rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.endX;
             }
             while (rightSideOffset > 800) {
                 let bar = this._bars.pop();
                 this._returnBar(bar);
 
-                rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.viewWidth;
+                rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.endX;
             }
 
             // Check left side for adding or removing bars offscreen
-            let leftSideOffset = this._startX - this.x - this._bars[0].leftBound;
+            let leftSideOffset = this.startX - this.x - this._bars[0].leftBound;
             while (leftSideOffset < 100 && this._bars[0].barNumber != 0) {
-                let bar = this._getBar();
-                bar.initialise(this._bars[0].leftBound, this.viewHeight, this._bars[0].barNumber-1, false);
+                let bar = this._initialiseBar(this._bars[0].leftBound, this._bars[0].barNumber-1, false);
                 this._bars.splice(0, 0, bar);
-                leftSideOffset = this._startX - this.x - this._bars[0].leftBound;
+                leftSideOffset = this.startX - this.x - this._bars[0].leftBound;
             }
             while (leftSideOffset > 800) {
                 let bar = this._bars.splice(0, 1)[0];
                 this._returnBar(bar);
-                leftSideOffset = this._startX - this.x - this._bars[0].leftBound;
+                leftSideOffset = this.startX - this.x - this._bars[0].leftBound;
             } 
         }
     }
@@ -111,6 +111,46 @@ export class BarTimeline extends PIXI.Container {
         this.x = 0;
     }
 
+    public mouseWheelHandler(event : WheelEvent) {
+        // Need to:
+        // Calculate which bar is at the mouse position, and the position within that bar.
+        // Change the scaling, and regenerate all bars on the screen with the new scaling (multiply default bar width by the scaling value)
+        // Scroll the new bars to be at the same position (under the mouse) as before.
+        this.barScale = Math.max(0.5, Math.min(5.0, this.barScale - event.deltaY/1000));
+        console.log(this.barScale);
+        this._regenerateBars(this._bars[0].barNumber, this._bars[this._bars.length - 1].barNumber);
+    }
+
+
+    /**
+     * Clears the screen and regenerates all bars between two numbers - places the first bar at startX.
+     *
+     * @private
+     * @param {number} fromBar The bar to start generating from
+     * @param {number} toBar The bar to finish generating at
+     * @memberof BarTimeline
+     */
+    private _regenerateBars(fromBar : number, toBar : number) {
+        while(this._bars.length > 0) {
+            this._returnBar(this._bars[0]);
+            this._bars.splice(0, 1);
+        }
+
+        let currentXPosition = this.startX;
+        for (let i = fromBar; i < toBar+1; i++) {
+            let bar = this._initialiseBar(currentXPosition, i)
+            this._bars.push(bar);
+            currentXPosition = bar.rightBound;
+        }
+    }
+
+    /**
+     * Gets a pooled Bar object
+     *
+     * @private
+     * @returns {Bar}
+     * @memberof BarTimeline
+     */
     private _getBar() : Bar {
         if (this._objectPool.objectCount > 0) {
             let bar = this._objectPool.getObject();
@@ -124,9 +164,34 @@ export class BarTimeline extends PIXI.Container {
         }
     }
 
+    /**
+     * Returns a bar object to the pool
+     *
+     * @private
+     * @param {Bar} instance
+     * @memberof BarTimeline
+     */
     private _returnBar(instance : Bar) {
         instance.visible = false;
         this._objectPool.returnObject(instance);
+    }
+
+    /**
+     * Initialises a new bar with the given values, using the metadata to get the number of beats in the bar.
+     *
+     * @private
+     * @param {number} xPosition The x coordinate to initialise the new bar at
+     * @param {number} barNumber The number for this bar
+     * @param {boolean} [leftSide=true] Whether the x coordinate represents the left bound of that bar (use false if the bar should be placed to the left of the x coordinate)
+     * @returns {Bar}
+     * @memberof BarTimeline
+     */
+    private _initialiseBar(xPosition : number, barNumber : number, leftSide = true) : Bar {
+        let bar = this._getBar();
+        let quarterNotePosition = this.metadata.positionBarsToQuarterNote(barNumber);
+        let numberOfBeats = this.metadata.getTimeSignature(quarterNotePosition)[0];
+        bar.initialise(xPosition, this.endY, barNumber, numberOfBeats, this.barScale, leftSide);
+        return bar;
     }
 }
 
@@ -159,23 +224,26 @@ class Bar extends PIXI.Container {
         return this._barNumber;
     }
 
-    public initialise(x : number, height : number, barNumber = 0, leftSide = true) : Bar {
+    public initialise(x : number, height : number, barNumber : number, numberOfBeats : number, widthScale = 1, leftSide = true) : Bar {
+        let newBarWidth = Bar.barWidth * widthScale;
         if (leftSide) {
             this.x = x;
         }
         else {
-            this.x = x - Bar.barWidth * 4;
+            this.x = x - newBarWidth * numberOfBeats;
         }
 
+        this._graphics.clear();
         this._graphics.beginFill(Bar.barColor);
         this._graphics.drawRect(0, 0, 2, height);
-        for (let i = 1; i < 5; i++) {
-            this._graphics.drawRect(0 + (Bar.barWidth * i), 0, 1, height);
+        for (let i = 1; i < numberOfBeats + 1; i++) {
+            this._graphics.drawRect(newBarWidth * i, 0, 1, height);
         }
         this._graphics.endFill();
 
         this._barNumber = barNumber;
-        this._barText.text = barNumber.toString();
+        // Add 1 to bar number display text because indexing and calculations start from 0.
+        this._barText.text = (barNumber+1).toString();
         this._barText.x = 12;
         this._barText.y = 10;
 
