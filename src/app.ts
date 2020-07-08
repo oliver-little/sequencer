@@ -1,12 +1,10 @@
 import * as PIXI from "pixi.js";
 import { TimelineView } from "./View/Timeline/TimelineView.js";
-
-import {SongManager} from "../build/Model/SongManagement/SongManager.js";
-import {ISoundFileSettings} from "../build/Model/Interfaces/IInstrumentSettings.js";
-import { ISongSettings } from "../src/Model/SongManagement/SongManager.js";
+import { SongManager } from "./Model/SongManagement/SongManager.js";
+import { UITrack } from "./View/UIObjects/UITrack.js";
 
 // Testing code
-let songManager = new SongManager();
+let songManager : SongManager = new SongManager();
 let oscillatorTrack = songManager.addOscillatorTrack();
 oscillatorTrack.addNote(0, "E5", "2n");
 oscillatorTrack.addNote(0, "C5", "2n");
@@ -24,8 +22,13 @@ window.onload = function () {
     document.body.appendChild(app.view);
 
     app.renderer.backgroundColor = 0x303030;
-    let timeline = new TimelineView(app.renderer, songManager.metadata);
-    app.view.addEventListener("wheel", event => timeline.timeline.mouseWheelHandler(event));
+    let newUITracks : UITrack[] = [];
+    for (let i = 0; i < songManager.tracks.length; i++) {
+        newUITracks.push(new UITrack("", 250, songManager.tracks[i]));
+    }
+
+    let timeline = new TimelineView(app.renderer, newUITracks, songManager.metadata);
+    app.view.addEventListener("wheel", event => timeline.timeline.mouseWheelHandler(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));
     app.stage.addChild(timeline);
 
 }

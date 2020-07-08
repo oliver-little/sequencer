@@ -1,4 +1,5 @@
 import SongMetadata from "../SongManagement/SongMetadata.js";
+import NoteHelper from "../../HelperModules/NoteHelper.js";
 
 export interface ISongEvent {
     "eventType" : string,
@@ -128,7 +129,6 @@ export class NoteEvent extends BaseEvent {
 
     private _pitchString;
 
-    static notes =  ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     static durationPattern = new RegExp("^(1|2|4|8|16|32|64)(t|n|\\.)$");
 
     /**
@@ -140,9 +140,9 @@ export class NoteEvent extends BaseEvent {
      */
     constructor (startPosition: number, pitch : number|string, duration: number|string) {
         super(startPosition);
-        
+    
         if (typeof(pitch) ==="string") {
-            this.setPitchString(pitch);
+            this.pitchString = pitch;
         }
         else {
             this.pitch = pitch;
@@ -156,12 +156,7 @@ export class NoteEvent extends BaseEvent {
     }
 
     get pitchString() : string {
-        if (this._pitchString != undefined) {
-            return this._pitchString;
-        }
-        else {
-            throw new Error("This note doesn't have a pitch string");
-        }
+        return this._pitchString;
     }
 
     /**
@@ -170,23 +165,9 @@ export class NoteEvent extends BaseEvent {
      * @param {string} value The pitch-octave notation string
      * @memberof NoteEvent
      */
-    public setPitchString(value: string) : void {
-        let octave = 0;
-        if (value.length == 2) {
-            octave = parseInt(value.charAt(1));
-        }
-        else if (value.length === 3) {
-            octave = parseInt(value.charAt(2));
-        }
-        else {
-            throw new RangeError("String is invalid (incorrect length)");
-        }
-
-        let noteNumber = NoteEvent.notes.indexOf(value.slice(0, -1)) + 3;
-        noteNumber = noteNumber + ((octave - 1) * 12) + 1; 
-
-        this.pitch = 440 * Math.pow(2, (noteNumber - 49) / 12);
+    set pitchString(value: string) {
         this._pitchString = value;
+        this.pitch = NoteHelper.noteStringToFrequency(value);
     }
 
     /**

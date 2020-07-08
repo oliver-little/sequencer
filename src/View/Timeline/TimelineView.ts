@@ -1,15 +1,20 @@
 import * as PIXI from "pixi.js";
 import { BarTimeline } from "./Bar.js";
 import SongMetadata from "../../Model/SongManagement/SongMetadata.js";
+import { TrackList, TrackHorizontalLines } from "./TrackList.js";
+import { UITrack } from "../UIObjects/UITrack.js";
 
 export class TimelineView extends PIXI.Container {
 
+    public trackList : TrackList;
     public timeline : BarTimeline;
+
+    private _trackLines : TrackHorizontalLines;
 
     private _interactivityRect : PIXI.Graphics;
     private _sidebarPosition : number = 100;
 
-    constructor(renderer : PIXI.Renderer, metadata : SongMetadata) {
+    constructor(renderer : PIXI.Renderer, tracks : UITrack[], metadata : SongMetadata) {
         super();
         this.interactive = true;
         this.on("pointerdown", this._pointerDownHandler.bind(this));
@@ -18,8 +23,13 @@ export class TimelineView extends PIXI.Container {
         this.on("pointerupoutside", this._pointerUpHandler.bind(this));
         this._interactivityRect = new PIXI.Graphics();
         this.resize(renderer.width, renderer.height);
+
         this.timeline = new BarTimeline(this._sidebarPosition, renderer.width, renderer.height, metadata);
         this.addChild(this.timeline);
+        this.trackList = new TrackList(this._sidebarPosition, renderer.width, tracks);
+        this.addChild(this.trackList);
+        this._trackLines = new TrackHorizontalLines(tracks, renderer.width);
+        this.addChild(this._trackLines);
         this.addChild(this._interactivityRect);
     }
 
