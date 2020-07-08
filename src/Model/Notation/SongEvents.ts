@@ -126,6 +126,8 @@ export class NoteEvent extends BaseEvent {
      */
     public pitch: number;
 
+    private _pitchString;
+
     static notes =  ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     static durationPattern = new RegExp("^(1|2|4|8|16|32|64)(t|n|\\.)$");
 
@@ -153,6 +155,15 @@ export class NoteEvent extends BaseEvent {
         }
     }
 
+    get pitchString() : string {
+        if (this._pitchString != undefined) {
+            return this._pitchString;
+        }
+        else {
+            throw new Error("This note doesn't have a pitch string");
+        }
+    }
+
     /**
      * Sets the pitch of the note with pitch-octave notation
      *
@@ -175,6 +186,7 @@ export class NoteEvent extends BaseEvent {
         noteNumber = noteNumber + ((octave - 1) * 12) + 1; 
 
         this.pitch = 440 * Math.pow(2, (noteNumber - 49) / 12);
+        this._pitchString = value;
     }
 
     /**
