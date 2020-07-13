@@ -3,10 +3,12 @@ import { OscillatorTrack } from "../../Model/Tracks/OscillatorTrack.js";
 
 export class UITrack {
     public name: string;
+    public startY: number;
     public height: number;
     public track: BaseTrack;
-    constructor(name: string, height: number, track: BaseTrack) {
+    constructor(name: string, startY : number, height: number, track: BaseTrack) {
         this.name = name;
+        this.startY = startY;
         this.height = height;
         this.track = track;
     }
@@ -24,23 +26,35 @@ export class NoteUITrack extends UITrack {
 
     private _noteGroups: number[][];
 
-    constructor(name: string, height: number, baseTrack: BaseTrack, noteGroups?: number[][]) {
-        super(name, height, baseTrack);
-        if (noteGroups != undefined) {
-            this._noteGroups = noteGroups;
-        }
+    constructor(name: string, startY : number, height: number, baseTrack: BaseTrack, noteGroups?: number[][]) {
+        super(name, startY, height, baseTrack);
+        this._noteGroups = noteGroups;
     }
 
     public getNoteGroups() {
         return this._noteGroups;
     }
 
+    public getNoteGroupsBetweenTime(startTime : number, endTime : number) : number[][] {
+        let noteGroupsInRange = [];
+        for(let i = 0; i < this._noteGroups.length; i++) {
+            let noteGroup = this._noteGroups[i];
+            if (noteGroup[0] > startTime && noteGroup[1] < endTime) {
+                noteGroupsInRange.push(noteGroup);
+            }
+            else if (noteGroup[0] > endTime) {
+                break;
+            }
+        }
+        return noteGroupsInRange;
+    }
+
     /**
      * Adds a note grouping using the start time and end time (quarter notes)
      * This will fail if either the start or end time falls under another note grouping.
      *
-     * @param {number} startTime
-     * @param {number} endTime
+     * @param {number} startTime Start time of this note group in quarter notes
+     * @param {number} endTime End time of this note group in quarter notes
      * @memberof NoteUITrack
      */
     public addNoteGroup(startTime: number, endTime: number) {

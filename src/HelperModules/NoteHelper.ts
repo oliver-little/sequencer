@@ -27,8 +27,7 @@ export default class NoteHelper {
      */
     public static distanceBetweenNotes(note1 : string, note2 : string) {
         let notePosition1 = (NoteHelper.extractOctave(note1) * 12) + NoteHelper.notes.indexOf(note1.slice(0, -1));
-        let notePosition2 = (NoteHelper.extractOctave(note2) * 12) + NoteHelper.notes.indexOf(note1.slice(0, -1));
-
+        let notePosition2 = (NoteHelper.extractOctave(note2) * 12) + NoteHelper.notes.indexOf(note2.slice(0, -1));
         return notePosition1 - notePosition2;
     }
 

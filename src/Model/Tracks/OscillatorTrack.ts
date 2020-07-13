@@ -75,7 +75,7 @@ export class OscillatorTrack extends BaseTrack {
             this._pitchStrings[pitch] += 1
         }
         else {
-            this._pitchStrings[pitch] == 0
+            this._pitchStrings[pitch] = 1
         }
     }
 

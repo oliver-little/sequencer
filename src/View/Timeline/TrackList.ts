@@ -13,11 +13,12 @@ export class TrackList extends PIXI.Container {
 
     public static trackStartOffset = 40;
 
+    public tracks : UITrack[];
+
     private _width : number;
     private _height : number;
 
     private _lines = new PIXI.Graphics();
-    private _tracks : UITrack[];
 
     /**
      * Creates an instance of TrackList.
@@ -28,14 +29,14 @@ export class TrackList extends PIXI.Container {
      */
     constructor(width : number,  height : number, tracks : UITrack[]) {
         super();
-        this._tracks = tracks;
+        this.tracks = tracks;
         this._width = width;
         this._height = height;
         
         let yPosition = TrackList.trackStartOffset;
         this._lines.beginFill(UIColors.fgColor);
         this._lines.drawRect(0, yPosition, width, 2);
-        this._tracks.forEach(track => {
+        this.tracks.forEach(track => {
             this.addChild(new TrackSettings(yPosition, width, track));
             yPosition += track.height;
         });

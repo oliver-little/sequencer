@@ -12,6 +12,7 @@ export default class SongMetadata {
     private _metaEvents = new SortedArray<MetadataEvent>(MetadataEvent.comparator);
     private _metaEventSecondLengths = [];
     private _metaEventBarLengths = [];
+    private _metaEventBeatLengths = [];
 
 
     constructor(bpm = 60, timeSignature = [4, 4]) {
@@ -112,7 +113,7 @@ export default class SongMetadata {
                 }
             }
             // It didn't match to anything in the lengths array, it has to be part of the last bpm/time sig pair.
-            let event = this._metaEvents[this._metaEvents.length - 1]
+            let event = this._metaEvents[this._metaEvents.length - 1];
             return event.startPosition + (((time - this._metaEventSecondLengths[this._metaEvents.length - 2]) / event.secondsPerBeat) / event.quarterNoteMultiplier);
         }
     }
@@ -165,8 +166,61 @@ export default class SongMetadata {
                 }
             }
             // It didn't match to anything in the lengths array, it has to be part of the last bpm/time sig pair.
-            let event = this._metaEvents[this._metaEvents.length - 1]
+            let event = this._metaEvents[this._metaEvents.length - 1];
             return event.startPosition + (((time - this._metaEventBarLengths[this._metaEvents.length - 2]) * event.timeSignature[0]) / event.quarterNoteMultiplier);
+        }
+    }
+
+    /**
+     * Converts a quarter note position to beats 
+     *
+     * @param {number} time The position in quarter notes
+     * @returns {number} The position in beats
+     * @memberof SongMetadata
+     */
+    public positionQuarterNoteToBeats(time : number) : number {
+        if (time < 0) {
+            throw new RangeError("Cannot have negative time");
+        }
+
+        // Find the meta event this quarter note position is within.
+        let index = this._metaEvents.binarySearch(time, true);
+        if (index == 0) {
+            // If it's the first one, just do the calculation
+            return (time * this._metaEvents[index].quarterNoteMultiplier);
+        }
+        else {
+            // If it's not the first one, get the number of bars passed to get to this bpm/time sig pair then calculate exactly when the position occurs in that event.
+            return this._metaEventBeatLengths[index - 1] + ((time - this._metaEvents[index].startPosition) * this._metaEvents[index].quarterNoteMultiplier);
+        }
+    }
+
+    /**
+     * Converts a beats position to quarter notes
+     *
+     * @param {number} time The position in beats
+     * @returns {number}  The position in quarter notes
+     * @memberof SongMetadata
+     */
+    public positionBeatsToQuarterNote(time : number) : number {
+        if (this._metaEvents.length == 1) {
+            return time / this._metaEvents[0].quarterNoteMultiplier;
+        }
+        else {
+            // More than one event, find out which one it is part of.
+            if (this._metaEventBarLengths[0] > time) { // It's in the first event
+                return time / this._metaEvents[0].quarterNoteMultiplier;
+            }
+            // It's in the middle event
+            for (let i = 0; i < this._metaEventBeatLengths.length - 1; i++) {
+                if (this._metaEventBarLengths[i] > time) {
+                    // Add the previous number of quarter notes with the exact number of quarter notes that bars value represents in the current bpm/time sig pair.
+                    return this._metaEvents[i].startPosition + ((time - this._metaEventBeatLengths[i-1]) / this._metaEvents[i].quarterNoteMultiplier);
+                }
+            }
+            // It didn't match to anything in the lengths array, it has to be part of the last bpm/time sig pair.
+            let event = this._metaEvents[this._metaEvents.length - 1];
+            return event.startPosition + (((time - this._metaEventBeatLengths[this._metaEvents.length - 2]) * event.timeSignature[0]) / event.quarterNoteMultiplier);
         }
     }
 
@@ -219,8 +273,7 @@ export default class SongMetadata {
         this._metaEventSecondLengths = [];
         this._metaEventBarLengths = [];
         if (this._metaEvents.length > 1) {
-            let totalSecondsDuration = 0;
-            let totalBarsDuration = 0;
+            let totalSecondsDuration, totalBarsDuration, totalBeatsDuration = 0;
             for (let i = 0; i < (this._metaEvents.length - 1); i++) {
                 let quarterNoteDuration = this._metaEvents[i+1].startPosition - this._metaEvents[i].startPosition;
                 totalSecondsDuration += quarterNoteDuration * this._metaEvents[i].quarterNoteMultiplier * this._metaEvents[i].secondsPerBeat;
@@ -228,6 +281,9 @@ export default class SongMetadata {
 
                 totalBarsDuration += (quarterNoteDuration * this._metaEvents[i].quarterNoteMultiplier) / this._metaEvents[i].timeSignature[0];
                 this._metaEventBarLengths.push(totalBarsDuration);
+
+                totalBeatsDuration += (quarterNoteDuration * this._metaEvents[i].quarterNoteMultiplier);
+                this._metaEventBeatLengths.push(totalBeatsDuration);
             }
         }
     }

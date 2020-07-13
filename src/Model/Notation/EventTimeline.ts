@@ -129,6 +129,35 @@ export class EventTimeline {
         return eventsToSchedule;
     }
 
+
+    /**
+     * Returns all events within a time period
+     *
+     * @param {number} startTime The time to return events from (quarter notes)
+     * @param {number} endTime The time to return events to (quarter notes)
+     * @returns {BaseEvent[]} The events within the time period
+     * @memberof EventTimeline
+     */
+    public getEventsBetweenTimes(startTime : number, endTime : number) : BaseEvent[] {
+        let index = 0;
+        while(index < this._events.length && this._events[index].startPosition < startTime){
+            console.log(this._events[index]);
+            index++;
+        }
+        if (index >= this._events.length) {
+            return null;
+        }
+
+        let startIndex = index;
+        index = this._events.length - 1;
+        while(index > startIndex && (this._events[index].startPosition + this._events[index].duration) > endTime) {
+            index--;
+        }
+        let endIndex = index+1;
+
+        return this._events.slice(startIndex, endIndex);
+    }
+
     /**
      * Serialises the events in the timeline by returning an array of data objects
      *

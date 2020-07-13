@@ -1,7 +1,8 @@
 import * as PIXI from "pixi.js";
 import { TimelineView } from "./View/Timeline/TimelineView.js";
 import { SongManager } from "./Model/SongManagement/SongManager.js";
-import { UITrack } from "./View/UIObjects/UITrack.js";
+import { UITrack, NoteUITrack } from "./View/UIObjects/UITrack.js";
+import { OscillatorTrack } from "./Model/Tracks/OscillatorTrack.js";
 
 // Testing code
 let songManager : SongManager = new SongManager();
@@ -24,7 +25,14 @@ window.onload = function () {
     app.renderer.backgroundColor = 0x303030;
     let newUITracks : UITrack[] = [];
     for (let i = 0; i < songManager.tracks.length; i++) {
-        newUITracks.push(new UITrack("", 250, songManager.tracks[i]));
+        let newTrack = null;
+        if (songManager.tracks[i] instanceof OscillatorTrack) {
+            newTrack = new NoteUITrack("", 250 * i, 250, songManager.tracks[i], [[0, 4]]);
+        }
+        else {
+            newTrack = new UITrack("", 250 * i, 250, songManager.tracks[i]);
+        }
+        newUITracks.push(newTrack);
     }
 
     let timeline = new TimelineView(app.renderer, newUITracks, songManager.metadata);
