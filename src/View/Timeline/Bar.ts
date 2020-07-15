@@ -45,7 +45,9 @@ export class Bar extends PIXI.Container {
 
         this._graphics.clear();
         this._graphics.beginFill(UIColors.fgColor);
-        this._graphics.drawRect(0, 0, 2, height);
+
+        // Drawing the first line 1 pixel in fixes the bar draw drift.
+        this._graphics.drawRect(1, 0, 2, height);
         for (let i = 1; i < numberOfBeats + 1; i++) {
             this._graphics.drawRect(scaledBeatWidth * i, 0, 1, height);
         }
@@ -55,7 +57,7 @@ export class Bar extends PIXI.Container {
         this._numberOfBeats = numberOfBeats;
         // Add 1 to bar number display text because indexing and calculations start from 0.
         this._barText.text = (barNumber+1).toString();
-        this._barText.x = 12;
+        this._barText.x = Math.min(widthScale, 1) * 7 + 5;
         this._barText.y = 10;
 
         return this;

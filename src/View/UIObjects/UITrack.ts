@@ -31,15 +31,23 @@ export class NoteUITrack extends UITrack {
         this._noteGroups = noteGroups;
     }
 
-    public getNoteGroups() {
+    get noteGroups() {
         return this._noteGroups;
     }
 
-    public getNoteGroupsBetweenTime(startTime : number, endTime : number) : number[][] {
+    /**
+     * Gets all note groups that start within a time period
+     *
+     * @param {number} startTime The start time (quarter notes)
+     * @param {number} endTime The end time (quarter notes)
+     * @returns {number[][]} The note groups that start within that time period.
+     * @memberof NoteUITrack
+     */
+    public getNoteGroupsStartingBetweenTime(startTime : number, endTime : number) : number[][] {
         let noteGroupsInRange = [];
         for(let i = 0; i < this._noteGroups.length; i++) {
             let noteGroup = this._noteGroups[i];
-            if (noteGroup[0] > startTime && noteGroup[1] < endTime) {
+            if (noteGroup[0] >= startTime && noteGroup[0] <= endTime) {
                 noteGroupsInRange.push(noteGroup);
             }
             else if (noteGroup[0] > endTime) {
@@ -47,6 +55,28 @@ export class NoteUITrack extends UITrack {
             }
         }
         return noteGroupsInRange;
+    }
+
+    /**
+     * Gets the note groups that start within a time period
+     *
+     * @param {number} startTime The start time (quarter notes)
+     * @param {number} endTime The end time (quarter notes)
+     * @returns {number[][]} The note groups that start within that time period.
+     * @memberof NoteUITrack
+     */
+    public getNoteGroupsWithinTime(startTime : number, endTime : number) : number[] {
+        let noteGroupsToReturn = []
+        for(let i = 0; i < this._noteGroups.length; i++) {
+            let noteGroup = this._noteGroups[i];
+            if (noteGroup[1] >= startTime && noteGroup[0] <= endTime ) {
+                noteGroupsToReturn.push(noteGroup);
+            }
+            else if (noteGroup[0] > endTime) {
+                break;
+            }
+        }
+        return noteGroupsToReturn;
     }
 
     /**

@@ -7,11 +7,16 @@ import { NoteUITrack } from "../UIObjects/UITrack.js";
 
 export abstract class TrackTimelineEvent extends PIXI.Graphics {
 
-    // Border around content inside the event (pixels)
-    static contentBorder = 2;
-
     public assignedWidth : number;
     public assignedHeight : number;
+
+    get leftBound() {
+        return this.x;
+    }
+
+    get rightBound() {
+        return this.x + this.width;
+    }
 
     constructor(x : number, y : number, width : number, height : number) {
         super();
@@ -29,24 +34,19 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
     private _noteRange : number;
 
-    constructor(x : number, y : number, width : number, height : number, notes : NoteEvent[], highestNote : string, lowestNote : string) {
+    constructor(x : number, y : number, width : number, height : number, notes : NoteEvent[], highestNote : string, lowestNote : string, noteGroup : number[]) {
         super(x, y, width, height);
-        this.setNotes(notes, highestNote, lowestNote);
+        this.setNotes(notes, highestNote, lowestNote, noteGroup);
     }
 
-    public setNotes(notes : NoteEvent[], highestNote : string, lowestNote : string) {
+    public setNotes(notes : NoteEvent[], highestNote : string, lowestNote : string, noteGroup : number[]) {
         // TODO: border around all content
         // Borders around all notes, currently notes merge together
         this._noteRange = NoteHelper.distanceBetweenNotes(highestNote, lowestNote) + 1;
 
-        let start = notes[0].startPosition;
-        let end = start;
-        notes.forEach(note => {
-            if (note.startPosition + note.duration > end) {
-                end = note.startPosition + note.duration
-            }
-        });
-        let noteHeight = this.assignedHeight  / this._noteRange;
+        let start = noteGroup[0];
+        let end = noteGroup[1];
+        let noteHeight = this.assignedHeight/ this._noteRange;
         let positionMap = position => {
             return (position - start)/(end - start);
         }
@@ -56,7 +56,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
             let endX = positionMap(note.startPosition + note.duration) * this.assignedWidth;
             this.drawRect(startX, 
                           NoteHelper.distanceBetweenNotes(highestNote, note.pitchString) * noteHeight, 
-                          endX - startX, 
+                          endX - startX - 2, 
                           noteHeight);
         });
         this.endFill();

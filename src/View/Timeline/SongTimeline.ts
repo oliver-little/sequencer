@@ -22,14 +22,15 @@ export class SongTimeline extends PIXI.Container {
     public endX: number;
     public endY: number;
 
-
     public metadata: SongMetadata;
     public tracks: UITrack[];
 
+    private _barContainer : PIXI.Container;
+    private _eventContainer : PIXI.Container;
 
     private _objectPool: ObjectPool<Bar>;
     private _bars: Bar[];
-    private _trackEvents: {[startTime : number] : {[id : string] : TrackTimelineEvent}};
+    private _trackEvents: Map<string, TrackTimelineEvent>;
 
     // Beat position variables
     private _zoomScale = 1;
@@ -56,51 +57,24 @@ export class SongTimeline extends PIXI.Container {
 
         this._objectPool = new ObjectPool(Bar);
         this._bars = [];
+        this._trackEvents = new Map<string, TrackTimelineEvent>();
 
-        let currentXPosition = this.startX;
-        let barNumber = 0;
-        while (currentXPosition < this.endX) {
-            let bar = this._initialiseBar(currentXPosition, barNumber);
-            this._bars.push(bar);
-            currentXPosition = bar.rightBound;
-            barNumber++;
-        }
+        this._barContainer = new PIXI.Container();
+        this._eventContainer = new PIXI.Container();
+        this.addChild(this._barContainer, this._eventContainer);
 
-        this._trackEvents = {};
-
-        this.tracks.forEach(track => {
-            if (track instanceof NoteUITrack) {
-                let noteGroups = track.getNoteGroups();
-                for(let i = 0; i < noteGroups.length; i++) {
-                    let event = new NoteGroupTimelineEvent(this.metadata.positionQuarterNoteToBeats(noteGroups[i][0]) * SongTimeline.beatWidth + this.startX,
-                                                           track.startY, 
-                                                           this.metadata.positionQuarterNoteToBeats(noteGroups[i][1]) * SongTimeline.beatWidth, 
-                                                           track.height, 
-                                                           track.track.timeline.getEventsBetweenTimes(noteGroups[i][0], noteGroups[i][1]) as NoteEvent[],
-                                                           track.track.highestPitch,
-                                                           track.track.lowestPitch);
-                    this.addChild(event);
-
-                    if (this._trackEvents[noteGroups[i][0]] === undefined) {
-                        this._trackEvents[noteGroups[i][0]] = {};
-                    }
-                    this._trackEvents[noteGroups[i][0]][track.track.id] = event;
-                }
-            }
-        });
+        this._regenerateTimeline(0);
     }
 
     get isDragging() {
         return this._isDragging;
     }
 
-
     public pointerDownHandler(event: PIXI.InteractionEvent) {
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
         this._startXPosition = this.x;
         this._isDragging = true;
     }
-
 
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
         if (this._isDragging) {
@@ -121,7 +95,8 @@ export class SongTimeline extends PIXI.Container {
             while (rightSideOffset < 100) { // If the right side is too close, need to add a new bar.
                 let bar = this._initialiseBar(this._bars[this._bars.length - 1].rightBound, this._bars[this._bars.length - 1].barNumber + 1);
                 this._bars.push(bar);
-                 // Recalculate where the right side is.
+
+                // Recalculate where the right side is.
                 rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.endX;
             }
             while (rightSideOffset > 800) {
@@ -131,11 +106,13 @@ export class SongTimeline extends PIXI.Container {
                 rightSideOffset = this.x + this._bars[this._bars.length - 1].rightBound - this.endX;
             }
 
+
             // Check left side for adding or removing bars offscreen
             let leftSideOffset = this.startX - this.x - this._bars[0].leftBound;
             while (leftSideOffset < 100 && this._bars[0].barNumber != 0) {
                 let bar = this._initialiseBar(this._bars[0].leftBound, this._bars[0].barNumber - 1, false);
                 this._bars.splice(0, 0, bar);
+
                 leftSideOffset = this.startX - this.x - this._bars[0].leftBound;
             }
             while (leftSideOffset > 800) {
@@ -175,7 +152,7 @@ export class SongTimeline extends PIXI.Container {
             // Change the scaling
             this._zoomScale = Math.max(0.5, Math.min(5.0, this._zoomScale - event.deltaY / 1000));
             // Regenerate the bars (at least until the bar we need)
-            this._regenerateBars(this._bars[0].barNumber, Math.floor(mouseBarPosition));
+            this._regenerateTimeline(this._bars[0].barNumber, Math.floor(mouseBarPosition));
             // Get the offset required to put the original position under the mouse
             let offset = this.getStageCoordinatesFromBar(mouseBarPosition) - stageX;
             // If the first bar is bar 0, check the offset won't cause it to go past the left side of the timeline view.
@@ -209,16 +186,18 @@ export class SongTimeline extends PIXI.Container {
     }
 
     /**
-     * Adds a given pixel offset to all children of this object.
+     * Adds a given pixel offset to the x coordinate all children of this object.
      *
      * @private
      * @param {number} pixelOffset The number of pixels to offset by
      * @memberof BarTimeline
      */
-
     private _offsetChildren(pixelOffset: number) {
-        for (let i = 0; i < this.children.length; i++) {
-            this.children[i].x -= pixelOffset;
+        for (let i = 0; i < this._barContainer.children.length; i++) {
+            this._barContainer.children[i].x -= pixelOffset;
+        }
+        for (let i = 0; i < this._eventContainer.children.length; i++) {
+            this._eventContainer.children[i].x -= pixelOffset;
         }
 
         // After offsetting, ensure the screen is still filled with bars
@@ -232,13 +211,12 @@ export class SongTimeline extends PIXI.Container {
      * @param {number} quarterNote The quarter note to start at
      * @memberof BarTimeline
      */
-
     private _scrollToPosition(quarterNote: number) {
         // Get the quarter note position as a bar + percentage
         let barPosition = this.metadata.positionQuarterNoteToBars(quarterNote);
         // Regenerate the bars starting at the bar given by the metadata.
         let barNumber = Math.floor(barPosition);
-        this._regenerateBars(barNumber);
+        this._regenerateTimeline(barNumber);
 
         // Calculate the number of pixels to scroll by using the time signature (to get the number of beats)
         let scrollAmount = this.metadata.getTimeSignature(quarterNote)[0] * (barPosition % 1) * SongTimeline.beatWidth * this._zoomScale;
@@ -247,37 +225,54 @@ export class SongTimeline extends PIXI.Container {
 
 
     /**
-     * Clears the screen and regenerates all bars from a given bar number - places the first bar at startX.
+     * Clears the screen and regenerates the timeline from a given bar number - places the first bar at startX.
      *
      * @private
      * @param {number} fromBar The bar to start generating from
      * @param {number} toBar The bar to which generation should at least run to
      * @memberof BarTimeline
      */
-
-
-    private _regenerateBars(fromBar: number, toBar?: number) {
+    private _regenerateTimeline(fromBar: number, toBar?: number) {
+        let currentBar = fromBar;
+        // Clear existing timeline
         while (this._bars.length > 0) {
             this._returnBar(this._bars[0]);
             this._bars.splice(0, 1);
         }
 
+        for (let event of this._trackEvents.values()) {
+            this.removeChild(event);
+            event.destroy();
+        }
+
+        // Generate new timeline
         let currentXPosition = this.startX;
         while (currentXPosition < this.endX) {
-            let bar = this._initialiseBar(currentXPosition, fromBar);
+            let bar = this._initialiseBar(currentXPosition, currentBar);
             this._bars.push(bar);
-            fromBar++;
+            currentBar++;
             currentXPosition = bar.rightBound;
         }
 
         if (toBar != undefined) {
-            while (fromBar <= toBar) {
-                let bar = this._initialiseBar(currentXPosition, fromBar);
+            while (currentBar <= toBar) {
+                let bar = this._initialiseBar(currentXPosition, currentBar);
                 this._bars.push(bar);
-                fromBar++;
+                currentBar++;
                 currentXPosition = bar.rightBound;
             }
         }
+
+        for(let i = 0; i < this.tracks.length; i++) {
+            let track = this.tracks[i];
+            if (track instanceof NoteUITrack) {
+                // Get all note groups that should be generated in the current bar range
+                track.noteGroups.forEach(group => {
+                    let event = this._initialiseNoteGroup(group, track as NoteUITrack, this._bars[0].leftBound, fromBar)
+                    this._trackEvents.set(track.track.id + group[0].toString(), event);
+                });
+            }
+        };
     }
 
     /**
@@ -286,7 +281,6 @@ export class SongTimeline extends PIXI.Container {
      * @private
      * @memberof BarTimeline
      */
-
     private _checkBarsFillScreen() {
         // Fill left (to 0)
         while (this._bars[0].leftBound > this.startX && this._bars[0].barNumber != 0) {
@@ -307,7 +301,6 @@ export class SongTimeline extends PIXI.Container {
      * @returns {Bar}
      * @memberof BarTimeline
      */
-
     private _getBar(): Bar {
         if (this._objectPool.objectCount > 0) {
             let bar = this._objectPool.getObject();
@@ -316,7 +309,7 @@ export class SongTimeline extends PIXI.Container {
         }
         else {
             let bar = new Bar();
-            this.addChild(bar);
+            this._barContainer.addChild(bar);
             return bar;
         }
     }
@@ -328,14 +321,13 @@ export class SongTimeline extends PIXI.Container {
      * @param {Bar} instance
      * @memberof BarTimeline
      */
-
     private _returnBar(instance: Bar) {
         instance.visible = false;
         this._objectPool.returnObject(instance);
     }
 
     /**
-     * Initialises a new bar with the given values.
+     * Initialises a new bar with the given values, and generates any events that exist at this bar.
      *
      * @private
      * @param {number} xPosition The x coordinate to initialise the new bar at
@@ -344,13 +336,35 @@ export class SongTimeline extends PIXI.Container {
      * @returns {Bar}
      * @memberof BarTimeline
      */
-
     private _initialiseBar(xPosition: number, barNumber: number, leftSide = true): Bar {
         let bar = this._getBar();
         let quarterNotePosition = this.metadata.positionBarsToQuarterNote(barNumber);
         let numberOfBeats = this.metadata.getTimeSignature(quarterNotePosition)[0];
         bar.initialise(xPosition, this.endY, barNumber, numberOfBeats, this._zoomScale, leftSide);
-        
         return bar;
+    }
+
+    /**
+     * Initialises a new note group
+     *
+     * @private
+     * @param {number[]} noteGroup The note group to initialise
+     * @param {NoteUITrack} track The track to initialise the note group in
+     * @param {number} barNumber The bar number this track will be initialised at.
+     * @param {number} xPosition The x position the bar starts at.
+     * @memberof SongTimeline
+     */
+    private _initialiseNoteGroup(noteGroup : number[], track : NoteUITrack, xPosition : number,  barNumber : number) : TrackTimelineEvent {
+        let event = new NoteGroupTimelineEvent(
+            this.metadata.positionQuarterNoteToBeats(noteGroup[0] - this.metadata.positionBarsToQuarterNote(barNumber)) * SongTimeline.beatWidth + xPosition,
+            track.startY, 
+            this.metadata.positionQuarterNoteToBeats(noteGroup[1]) * SongTimeline.beatWidth * this._zoomScale, 
+            track.height, 
+            track.track.timeline.getEventsBetweenTimes(noteGroup[0], noteGroup[1]) as NoteEvent[],
+            track.track.highestPitch,
+            track.track.lowestPitch,
+            noteGroup);
+        this._eventContainer.addChild(event);
+        return event;
     }
 }
