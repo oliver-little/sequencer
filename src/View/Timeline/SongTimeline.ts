@@ -6,6 +6,8 @@ import { Bar } from "./Bar.js";
 import { TrackTimelineEvent, NoteGroupTimelineEvent } from "./TrackTimelineEvent.js";
 import { NoteEvent } from "../../Model/Notation/SongEvents.js";
 
+
+
 /**
  * Generates a timeline containing bars and note events.
  *
@@ -17,7 +19,7 @@ export class SongTimeline extends PIXI.Container {
 
     // Stores the width of 1 beat in pixels.
     static beatWidth = 50;
-
+    
     public startX: number;
     public endX: number;
     public endY: number;
@@ -30,7 +32,6 @@ export class SongTimeline extends PIXI.Container {
 
     private _objectPool: ObjectPool<Bar>;
     private _bars: Bar[];
-    private _trackEvents: Map<string, TrackTimelineEvent>;
 
     // Beat position variables
     private _zoomScale = 1;
@@ -39,6 +40,7 @@ export class SongTimeline extends PIXI.Container {
     private _startPointerPosition: PIXI.Point;
     private _startXPosition: number;
     private _isDragging: boolean;
+    private _interactivityRect : PIXI.Graphics;
 
     /**
      * Creates an instance of SongTimeline.
@@ -57,17 +59,38 @@ export class SongTimeline extends PIXI.Container {
 
         this._objectPool = new ObjectPool(Bar);
         this._bars = [];
-        this._trackEvents = new Map<string, TrackTimelineEvent>();
+
+        this._interactivityRect = new PIXI.Graphics();
+        this.interactive = true;
+        this.resizeInteractiveArea();
+        this.addChild(this._interactivityRect);
 
         this._barContainer = new PIXI.Container();
         this._eventContainer = new PIXI.Container();
         this.addChild(this._barContainer, this._eventContainer);
 
         this._regenerateTimeline(0);
+
+        this.on("pointerdown", this.pointerDownHandler.bind(this));
+        this.on("pointermove", this.pointerMoveHandler.bind(this));
+        this.on("pointerup", this.pointerUpHandler.bind(this));
+        this.on("pointerupoutside", this.pointerUpHandler.bind(this));
+    }
+
+    get beatWidth() {
+        return SongTimeline.beatWidth * this._zoomScale;
     }
 
     get isDragging() {
         return this._isDragging;
+    }
+
+    public resizeInteractiveArea() {
+        this._interactivityRect.clear();
+        this._interactivityRect.beginFill(0x000000, 1.0);
+        this._interactivityRect.drawRect(this.startX, 0, this.endX, this.endY);
+        this._interactivityRect.endFill();
+        this._interactivityRect.alpha = 0.0;
     }
 
     public pointerDownHandler(event: PIXI.InteractionEvent) {
@@ -142,10 +165,6 @@ export class SongTimeline extends PIXI.Container {
             return;
         }
         else if (!this._isDragging) {
-            // TODO: this functions correctly, but it needs some work.
-            // Right now, the regenerate function generates a lot of extra bars to the before the bar to scroll to
-            // Which is quite wasteful
-            // TODO: fix track events when zooming occurs (probably just need to regenerate them if that's not too expensive).
 
             // Get the mouse's position in bars (based on the screen)
             let mouseBarPosition = this.getBarFromStageCoordinates(stageX);
@@ -169,7 +188,7 @@ export class SongTimeline extends PIXI.Container {
         for (let i = 0; i < this._bars.length; i++) {
             if (this._bars[i].leftBound < stageX && this._bars[i].rightBound > stageX) {
                 // Calculate the bar number + the percentage through the bar that the mouse position
-                return this._bars[i].barNumber + ((stageX - this._bars[i].leftBound) / (SongTimeline.beatWidth * this._zoomScale) / this._bars[i].numberOfBeats);
+                return this._bars[i].barNumber + ((stageX - this._bars[i].leftBound) / this.beatWidth / this._bars[i].numberOfBeats);
             }
         }
     }
@@ -179,7 +198,7 @@ export class SongTimeline extends PIXI.Container {
         for (let i = 0; i < this._bars.length; i++) {
             if (this._bars[i].barNumber === Math.floor(barNumber)) {
                 // Get the left bound of the current bar and add 
-                return this._bars[i].leftBound + (barNumber % 1) * this._bars[i].numberOfBeats * SongTimeline.beatWidth * this._zoomScale;
+                return this._bars[i].leftBound + (barNumber % 1) * this._bars[i].numberOfBeats * this.beatWidth;
             }
         }
         return -1;
@@ -219,7 +238,7 @@ export class SongTimeline extends PIXI.Container {
         this._regenerateTimeline(barNumber);
 
         // Calculate the number of pixels to scroll by using the time signature (to get the number of beats)
-        let scrollAmount = this.metadata.getTimeSignature(quarterNote)[0] * (barPosition % 1) * SongTimeline.beatWidth * this._zoomScale;
+        let scrollAmount = this.metadata.getTimeSignature(quarterNote)[0] * (barPosition % 1) * this.beatWidth;
         this._offsetChildren(scrollAmount);
     }
 
@@ -240,10 +259,9 @@ export class SongTimeline extends PIXI.Container {
             this._bars.splice(0, 1);
         }
 
-        for (let event of this._trackEvents.values()) {
-            this.removeChild(event);
-            event.destroy();
-        }
+        this._eventContainer.children.forEach(child => {
+            child.destroy();
+        });
 
         // Generate new timeline
         let currentXPosition = this.startX;
@@ -267,9 +285,8 @@ export class SongTimeline extends PIXI.Container {
             let track = this.tracks[i];
             if (track instanceof NoteUITrack) {
                 // Get all note groups that should be generated in the current bar range
-                track.noteGroups.forEach(group => {
-                    let event = this._initialiseNoteGroup(group, track as NoteUITrack, this._bars[0].leftBound, fromBar)
-                    this._trackEvents.set(track.track.id + group[0].toString(), event);
+                track.noteGroups.forEach((group, index) => {
+                    let event = this._initialiseNoteGroup(index, track as NoteUITrack)
                 });
             }
         };
@@ -350,21 +367,23 @@ export class SongTimeline extends PIXI.Container {
      * @private
      * @param {number[]} noteGroup The note group to initialise
      * @param {NoteUITrack} track The track to initialise the note group in
-     * @param {number} barNumber The bar number this track will be initialised at.
-     * @param {number} xPosition The x position the bar starts at.
      * @memberof SongTimeline
      */
-    private _initialiseNoteGroup(noteGroup : number[], track : NoteUITrack, xPosition : number,  barNumber : number) : TrackTimelineEvent {
+    private _initialiseNoteGroup(noteGroup : number, track : NoteUITrack) : TrackTimelineEvent {
+        // starting x position is calculated as follows:
+        // (Position of note group start in beats - the position of the first DISPLAYED bar in beats) * beat width * zoom + the start position of the first DISPLAYED bar in pixels
+        let noteGroupArray = track.noteGroups[noteGroup];
         let event = new NoteGroupTimelineEvent(
-            this.metadata.positionQuarterNoteToBeats(noteGroup[0] - this.metadata.positionBarsToQuarterNote(barNumber)) * SongTimeline.beatWidth + xPosition,
-            track.startY, 
-            this.metadata.positionQuarterNoteToBeats(noteGroup[1]) * SongTimeline.beatWidth * this._zoomScale, 
-            track.height, 
-            track.track.timeline.getEventsBetweenTimes(noteGroup[0], noteGroup[1]) as NoteEvent[],
-            track.track.highestPitch,
-            track.track.lowestPitch,
+            this,
+            (this.metadata.positionQuarterNoteToBeats(noteGroupArray[0]) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._bars[0].barNumber))) * this.beatWidth + this._bars[0].leftBound,
+            this.metadata.positionQuarterNoteToBeats(noteGroupArray[1]) * this.beatWidth, 
+            track, 
             noteGroup);
         this._eventContainer.addChild(event);
         return event;
+    }
+
+    private _eventDragCallback(track : TrackTimelineEvent, dragDistance : number) {
+
     }
 }

@@ -3,18 +3,11 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
-- Generate note groups in the UI - essentially treat them as bars - 
-    check which note group is the next to add for all tracks, add it when it gets too close to the right
-    and remove it when it gets too far from the left, etc.
-- This would then work the same for mp3 tracks.
-- Then need to support adding note groups and mp3 track playbacks
-- Possibly do this by storing beat width in the bartimeline? Then the scroll position could be calculated virtually even though the x is reset after every scroll event.
-- Scrolling in general needs to be made more robust, need to be able to arbitrarily scroll to a given location 
-    (can kind of do that at the moment using regenerate bars - possibly redo this function to support not only a bar number,
-    but a beat position in general)
-- Zooming needs to zoom at the mouse position (use mouseover and mouseoff to track whether mouse scroll events should activate on the timeline or not)
-
-- GENERALLY, the scrolling should all be done using a beat position, then the backend should support converting that and displaying it correctly 
-
+- TrackTimelineEvents for MP3 objects
+- Add a timeline marker that moves with the current position of the song in the songManager (likely needs to be done using GetAnimationFrame)
+- Scrollbars, both vertical and horizontal
+- Make note groups interactable which would then take the user to a sequencer style page where the current note group is loaded and the user can edit it
+- Ability to add time signature and bpm changes at the top of the screen
+- zooming still has rare bugs resulting in all bars disappearing then errors
 
 - Connections for tracks with chains and global bus - https://github.com/lukasoppermann/html5sortable

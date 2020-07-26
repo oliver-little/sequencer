@@ -23,7 +23,8 @@ export class SongManager {
     protected _playing = false;
 
     protected _startTime = 0; // Stores the AudioContext time at which the song started playing.
-    protected _quarterNotePosition = 0; // Stores the current quarter note position of the song.
+    protected _quarterNotePosition = 0;
+    protected _quarterNoteChangedEvent : SimpleEvent;
 
     protected playingIntervalID = null;
 
@@ -32,6 +33,7 @@ export class SongManager {
         this.context = (context === undefined) ? new AudioContext() : context;
         this.connectionManager = new ConnectionManager(this.context);
         this.scheduleEvent = new SimpleEvent();
+        this._quarterNoteChangedEvent = new SimpleEvent();
         this._tracks = [];
     }
 
@@ -39,9 +41,27 @@ export class SongManager {
         return this._playing;
     }
 
+    get quarterNotePosition() {
+        return this.quarterNotePosition;
+    }
+
+    set quarterNotePosition(value : number) {
+        this._quarterNotePosition = value;
+        this._quarterNoteChangedEvent.emit(value);
+    }
+
     get tracks() {
         return this._tracks;
     }
+
+    public addQuarterNotePositionChangedListener(callback : Function) {
+        this._quarterNoteChangedEvent.addListener(callback);
+    }
+
+    public removeQuarterNotePositionChangedListener(callback : Function) {
+        this._quarterNoteChangedEvent.removeListener(callback);
+    }
+
 
     /**
      * Adds a new oscillator track to the song
@@ -84,13 +104,13 @@ export class SongManager {
      * @param {number} [startPosition=this._quarterNotePosition]
      * @memberof SongManager
      */
-    public async start(startPosition = this._quarterNotePosition) {
+    public async start(startPosition = this.quarterNotePosition) {
         if (this.context.state === "suspended") {
             await this.context.resume();
         }
 
         this._playing = true;
-        this._quarterNotePosition = startPosition;
+        this.quarterNotePosition = startPosition;
         if (startPosition == 0) {
             this._startTime = this.context.currentTime;
         }
@@ -196,9 +216,9 @@ export class SongManager {
 
     protected scheduleNotes() { // Calculates the current quarter note position and updates tracks.
         let timeSinceStart = this.context.currentTime - this._startTime;
-        this._quarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
-        let quarterNoteTime = this._quarterNotePosition + ((this.lookaheadTime / this.metadata.getSecondsPerBeat(this._quarterNotePosition))
-            / this.metadata.getQuarterNoteMultiplier(this._quarterNotePosition));
+        this.quarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
+        let quarterNoteTime = this.quarterNotePosition + ((this.lookaheadTime / this.metadata.getSecondsPerBeat(this.quarterNotePosition))
+            / this.metadata.getQuarterNoteMultiplier(this.quarterNotePosition));
         this.scheduleEvent.emit(quarterNoteTime);
     }
 }
