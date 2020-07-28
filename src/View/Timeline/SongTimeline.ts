@@ -4,9 +4,13 @@ import SongMetadata from "../../Model/SongManagement/SongMetadata.js";
 import { UITrack, NoteUITrack } from "../UIObjects/UITrack.js";
 import { Bar } from "./Bar.js";
 import { TrackTimelineEvent, NoteGroupTimelineEvent } from "./TrackTimelineEvent.js";
-import { NoteEvent } from "../../Model/Notation/SongEvents.js";
+import { PointHelper } from "../../HelperModules/PointHelper.js";
 
-
+enum ClickState {
+    None,
+    Dragging,
+    ChildDragging
+}
 
 /**
  * Generates a timeline containing bars and note events.
@@ -37,10 +41,14 @@ export class SongTimeline extends PIXI.Container {
     private _zoomScale = 1;
 
     // Scrolling variables
+    private _clickState = ClickState.None;
     private _startPointerPosition: PIXI.Point;
     private _startXPosition: number;
-    private _isDragging: boolean;
     private _interactivityRect : PIXI.Graphics;
+
+    // Event variables
+    private _pressed : TrackTimelineEvent;
+    private _selected : TrackTimelineEvent[] = [];
 
     /**
      * Creates an instance of SongTimeline.
@@ -60,14 +68,14 @@ export class SongTimeline extends PIXI.Container {
         this._objectPool = new ObjectPool(Bar);
         this._bars = [];
 
+        this._barContainer = new PIXI.Container();
+        this._eventContainer = new PIXI.Container();
+        this.addChild(this._barContainer, this._eventContainer);
+
         this._interactivityRect = new PIXI.Graphics();
         this.interactive = true;
         this.resizeInteractiveArea();
         this.addChild(this._interactivityRect);
-
-        this._barContainer = new PIXI.Container();
-        this._eventContainer = new PIXI.Container();
-        this.addChild(this._barContainer, this._eventContainer);
 
         this._regenerateTimeline(0);
 
@@ -81,8 +89,8 @@ export class SongTimeline extends PIXI.Container {
         return SongTimeline.beatWidth * this._zoomScale;
     }
 
-    get isDragging() {
-        return this._isDragging;
+    get clickState() {
+        return this._clickState;
     }
 
     public resizeInteractiveArea() {
@@ -94,13 +102,40 @@ export class SongTimeline extends PIXI.Container {
     }
 
     public pointerDownHandler(event: PIXI.InteractionEvent) {
+        let hit = false;
+        this._pressed = null;
+
+        for (let i = 0; i < this._eventContainer.children.length; i++) {
+            let child = this._eventContainer.children[i] as TrackTimelineEvent;
+            let pos = event.data.getLocalPosition(child);
+            if (pos.x > 0 && pos.x < child.width && pos.y > 0 && pos.y < child.height) {
+                this._pressed = child;
+                hit = true;
+                break;
+            }
+        }
+
+        if (hit && this._selected.length > 0 && this._pressed == this._selected[0]) {
+            console.log("Passing events to selected child");
+            this._clickState = ClickState.ChildDragging;
+            this._selected[0].pointerDownHandler(event);
+            return;
+        }
+        else if (!hit) {
+            // Remove selected objects
+            this._selected.forEach(selectedObj => {
+                selectedObj.selected = false;
+            });
+            this._selected = []; 
+        }
+
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
         this._startXPosition = this.x;
-        this._isDragging = true;
+        this._clickState = ClickState.Dragging;
     }
 
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
-        if (this._isDragging) {
+        if (this._clickState == ClickState.Dragging) {
             let moveDelta = event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x;
             this.x = this._startXPosition + moveDelta;
 
@@ -144,17 +179,40 @@ export class SongTimeline extends PIXI.Container {
                 leftSideOffset = this.startX - this.x - this._bars[0].leftBound;
             }
         }
+        else if (this._clickState == ClickState.ChildDragging) {
+            this._selected[0].pointerMoveHandler(event);
+            return;
+        }
     }
 
 
     public pointerUpHandler(event: PIXI.InteractionEvent) {
-        this._startXPosition = undefined;
-        this._startPointerPosition = undefined;
-        this._isDragging = false;
+        if (this._clickState == ClickState.Dragging) {
+            if (PointHelper.distanceSquared(event.data.getLocalPosition(this.parent), this._startPointerPosition) < 10) {
+                // This was a click, not a drag as the distance was very small
+                this.x = this._startXPosition;
+                if (this._pressed != null) {
+                    // Clicked pressed object
+                    this._selected = [this._pressed];
+                    this._pressed.selected = true;
+                    this._pressed = null;
+                }            
+            } 
+            else {
+                // Normal drag
+                this._offsetChildren(-this.x);
+                this.x = 0;
+            }
+            
+            this._startXPosition = undefined;
+            this._startPointerPosition = undefined;
+        }
+        else if (this._clickState == ClickState.ChildDragging) {
+            // Dragging a child, pass the event down
+            this._selected[0].pointerUpHandler(event);
+        }
 
-        this._offsetChildren(-this.x);
-        this.x = 0;
-
+        this._clickState = ClickState.None;
     }
 
 
@@ -164,7 +222,7 @@ export class SongTimeline extends PIXI.Container {
         if (stageX < this.startX || stageX > this.endX || stageY < 0 || stageY > this.endY) {
             return;
         }
-        else if (!this._isDragging) {
+        else if (this._clickState == ClickState.None) {
 
             // Get the mouse's position in bars (based on the screen)
             let mouseBarPosition = this.getBarFromStageCoordinates(stageX);

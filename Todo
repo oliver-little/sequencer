@@ -3,6 +3,8 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
+- OBJECT SELECTION CODE, ADD SELECTED/UNSELECTED STATE AND UPDATE UI TO REFLECT THAT
+- MOVE CALCULATIONS FROM TRACKTIMELINEEVENT TO SONGTIMELINE TO PREPARE FOR MULTIPLE OBJECT SELECTION
 - TrackTimelineEvents for MP3 objects
 - Add a timeline marker that moves with the current position of the song in the songManager (likely needs to be done using GetAnimationFrame)
 - Scrollbars, both vertical and horizontal

@@ -14,7 +14,9 @@ export enum EventDragType {
     None
 }
 
-export abstract class TrackTimelineEvent extends PIXI.Graphics {
+export abstract class TrackTimelineEvent extends PIXI.Container {
+
+    static borderWidth = 5;
 
     static dragType : EventDragType = EventDragType.Beat;
 
@@ -25,16 +27,12 @@ export abstract class TrackTimelineEvent extends PIXI.Graphics {
     public isDragging = false;
     public eventStartPosition : number;
 
+    protected _selected : boolean = false;
+    protected _contentGraphics : PIXI.Graphics;
+    protected _selectedGraphics : PIXI.Graphics;
+
     private _startPointerPosition : PIXI.Point;
     private _startXPosition : number;
-
-    get leftBound() {
-        return this.x;
-    }
-
-    get rightBound() {
-        return this.x + this.width;
-    }
 
     constructor(timeline : SongTimeline, x : number, width : number, track : UITrack, eventStartPosition : number) {
         super();
@@ -44,12 +42,29 @@ export abstract class TrackTimelineEvent extends PIXI.Graphics {
         this.assignedWidth = width;
         this.track = track;
         this.eventStartPosition = eventStartPosition;
-        this.interactive = true;
 
-        this.on("pointerdown", this._pointerDownHandler.bind(this));
-        this.on("pointermove", this._pointerMoveHandler.bind(this));
-        this.on("pointerup", this._pointerUpHandler.bind(this));
-        this.on("pointerupoutside", this._pointerUpHandler.bind(this));
+        this._contentGraphics = new PIXI.Graphics();
+        this._selectedGraphics = new PIXI.Graphics();
+        this._selectedGraphics.zIndex = 1;
+        this.addChild(this._contentGraphics, this._selectedGraphics);
+    }
+
+    get leftBound() {
+        return this.x;
+    }
+
+    get rightBound() {
+        return this.x + this.width;
+    }
+
+    get selected() {
+        return this._selected;
+    }
+
+    set selected(value : boolean) {
+        console.log("Selected: " + value);
+        this._selected = value;
+        this.redraw(this._selected);
     }
 
     /**
@@ -57,21 +72,36 @@ export abstract class TrackTimelineEvent extends PIXI.Graphics {
      *
      * @memberof TrackTimelineEvent
      */
-    public redraw() {
-        this.beginFill(UIColors.trackEventColor);
-        this.drawRect(0, 0, this.assignedWidth, this.track.height);
-        this.endFill();
+    public redraw(selected : boolean = this._selected) {
+        this._contentGraphics.clear();
+        this._selectedGraphics.clear();
+        if (selected) {
+            let border = TrackTimelineEvent.borderWidth;
+            this._contentGraphics.beginFill(UIColors.trackEventColor)
+                .drawRect(border, border, this.assignedWidth - border * 2, this.track.height - border * 2)
+                .endFill();
+            this._selectedGraphics.beginFill(UIColors.trackEventSelectedColor)
+                .drawRect(0, 0, this.assignedWidth, this.track.height)
+                .endFill()
+                .beginHole()
+                .drawRect(border, border, this.assignedWidth - border * 2, this.track.height - border * 2)
+                .endHole();
+        }
+        else {
+            this._contentGraphics.beginFill(UIColors.trackEventColor)
+                .drawRect(0, 0, this.assignedWidth, this.track.height)
+                .endFill();
+        }
     }
 
     /**
      * Handler for pointer down events
      *
-     * @protected
+     * @public
      * @param {PIXI.InteractionEvent} event
      * @memberof TrackTimelineEvent
      */
-    protected _pointerDownHandler(event : PIXI.InteractionEvent) {
-        event.stopPropagation();
+    public pointerDownHandler(event : PIXI.InteractionEvent) {
         this.isDragging = true;
         
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
@@ -81,11 +111,11 @@ export abstract class TrackTimelineEvent extends PIXI.Graphics {
     /**
      * Handler for pointer move events
      *
-     * @protected
+     * @public
      * @param {PIXI.InteractionEvent} event
      * @memberof TrackTimelineEvent
      */
-    protected _pointerMoveHandler(event : PIXI.InteractionEvent) {
+    public pointerMoveHandler(event : PIXI.InteractionEvent) {
         if (this.isDragging) {
             event.stopPropagation();
             // Calculate snapped moveDelta
@@ -104,11 +134,11 @@ export abstract class TrackTimelineEvent extends PIXI.Graphics {
     /**
      * Handler for pointer up events
      *
-     * @protected
+     * @public
      * @param {PIXI.InteractionEvent} event
      * @memberof TrackTimelineEvent
      */
-    protected _pointerUpHandler(event : PIXI.InteractionEvent) {
+    public pointerUpHandler(event : PIXI.InteractionEvent) {
         if (this.isDragging) {
             event.stopPropagation();
             this.isDragging = false;
@@ -170,8 +200,8 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
         this.redraw();
     }
 
-    public redraw() {
-        super.redraw();
+    public redraw(selected : boolean = this._selected) {
+        super.redraw(selected);
         let noteGroup = this.track.noteGroups[this._noteGroup];
         this._notes = this.track.track.timeline.getEventsBetweenTimes(noteGroup[0], noteGroup[1]) as NoteEvent[];
         this.setNotes(this._notes, this.track.track.highestPitch, this.track.track.lowestPitch, noteGroup);
@@ -185,20 +215,20 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
         let start = noteGroup[0];
         let end = noteGroup[1];
-        let noteHeight = this.track.height / noteRange;
+        let noteHeight = (this.track.height - TrackTimelineEvent.borderWidth * 2) / noteRange;
         let positionMap = position => {
             return (position - start)/(end - start);
         }
-        this.beginFill(UIColors.trackEventHighlightColor);
+        this._contentGraphics.beginFill(UIColors.trackEventHighlightColor);
         notes.forEach(note => {
             let startX = positionMap(note.startPosition) * this.assignedWidth;
             let endX = positionMap(note.startPosition + note.duration) * this.assignedWidth;
-            this.drawRect(startX, 
-                          NoteHelper.distanceBetweenNotes(highestNote, note.pitchString) * noteHeight, 
+            this._contentGraphics.drawRect(startX, 
+                          NoteHelper.distanceBetweenNotes(highestNote, note.pitchString) * noteHeight + TrackTimelineEvent.borderWidth, 
                           endX - startX - 2, 
                           noteHeight);
         });
-        this.endFill();
+        this._contentGraphics.endFill();
     }
 
     protected dragHandler(dragDistance : number) {
@@ -211,7 +241,6 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
         this.track.noteGroups[this._noteGroup][0] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(this.track.noteGroups[this._noteGroup][0]) + beatChange);
         this.track.noteGroups[this._noteGroup][1] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(this.track.noteGroups[this._noteGroup][1]) + beatChange);
         this.eventStartPosition = this.track.noteGroups[this._noteGroup][0];
-        console.log("start pos: " + this.eventStartPosition);
         this.redraw();
     }
 }
