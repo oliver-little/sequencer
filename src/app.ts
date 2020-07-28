@@ -27,7 +27,7 @@ window.onload = function () {
     for (let i = 0; i < songManager.tracks.length; i++) {
         let newTrack = null;
         if (songManager.tracks[i] instanceof OscillatorTrack) {
-            newTrack = new NoteUITrack("", 250 * i, 250, songManager.tracks[i], [[0, 100]]);
+            newTrack = new NoteUITrack("", 250 * i, 250, songManager.tracks[i], [[0, 4]]);
         }
         else {
             newTrack = new UITrack("", 250 * i, 250, songManager.tracks[i]);

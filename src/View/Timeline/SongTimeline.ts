@@ -12,6 +12,14 @@ enum ClickState {
     ChildDragging
 }
 
+export enum EventDragType {
+    Beat,
+    HalfBeat,
+    QuarterBeat,
+    EighthBeat,
+    None
+}
+
 /**
  * Generates a timeline containing bars and note events.
  *
@@ -23,7 +31,7 @@ export class SongTimeline extends PIXI.Container {
 
     // Stores the width of 1 beat in pixels.
     static beatWidth = 50;
-    
+
     public startX: number;
     public endX: number;
     public endY: number;
@@ -31,8 +39,10 @@ export class SongTimeline extends PIXI.Container {
     public metadata: SongMetadata;
     public tracks: UITrack[];
 
-    private _barContainer : PIXI.Container;
-    private _eventContainer : PIXI.Container;
+    public dragType: EventDragType = EventDragType.Beat;
+
+    private _barContainer: PIXI.Container;
+    private _eventContainer: PIXI.Container;
 
     private _objectPool: ObjectPool<Bar>;
     private _bars: Bar[];
@@ -44,11 +54,11 @@ export class SongTimeline extends PIXI.Container {
     private _clickState = ClickState.None;
     private _startPointerPosition: PIXI.Point;
     private _startXPosition: number;
-    private _interactivityRect : PIXI.Graphics;
+    private _interactivityRect: PIXI.Graphics;
 
     // Event variables
-    private _pressed : TrackTimelineEvent;
-    private _selected : TrackTimelineEvent[] = [];
+    private _pressed: TrackTimelineEvent;
+    private _selected: TrackTimelineEvent[] = [];
 
     /**
      * Creates an instance of SongTimeline.
@@ -115,23 +125,25 @@ export class SongTimeline extends PIXI.Container {
             }
         }
 
+        this._startPointerPosition = event.data.getLocalPosition(this.parent);
+        this._startXPosition = this.x;
+
         if (hit && this._selected.length > 0 && this._pressed == this._selected[0]) {
             console.log("Passing events to selected child");
             this._clickState = ClickState.ChildDragging;
-            this._selected[0].pointerDownHandler(event);
-            return;
+
+            this._selected.forEach(selectedObj => {
+                selectedObj.pointerDownHandler();
+            });
         }
-        else if (!hit) {
+        else {
+            this._clickState = ClickState.Dragging;
             // Remove selected objects
             this._selected.forEach(selectedObj => {
                 selectedObj.selected = false;
             });
-            this._selected = []; 
+            this._selected = [];
         }
-
-        this._startPointerPosition = event.data.getLocalPosition(this.parent);
-        this._startXPosition = this.x;
-        this._clickState = ClickState.Dragging;
     }
 
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
@@ -180,7 +192,13 @@ export class SongTimeline extends PIXI.Container {
             }
         }
         else if (this._clickState == ClickState.ChildDragging) {
-            this._selected[0].pointerMoveHandler(event);
+            // Calculate snapped moveDelta
+            let moveDelta = this.snapToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
+
+            // Pass it to selected children
+            this._selected.forEach(selectedObj => {
+                selectedObj.pointerMoveHandler(moveDelta);
+            });
             return;
         }
     }
@@ -192,27 +210,43 @@ export class SongTimeline extends PIXI.Container {
                 // This was a click, not a drag as the distance was very small
                 this.x = this._startXPosition;
                 if (this._pressed != null) {
-                    // Clicked pressed object
+                    // Select pressed object
                     this._selected = [this._pressed];
                     this._pressed.selected = true;
                     this._pressed = null;
-                }            
-            } 
+                }
+            }
             else {
                 // Normal drag
                 this._offsetChildren(-this.x);
                 this.x = 0;
             }
-            
-            this._startXPosition = undefined;
-            this._startPointerPosition = undefined;
         }
         else if (this._clickState == ClickState.ChildDragging) {
-            // Dragging a child, pass the event down
-            this._selected[0].pointerUpHandler(event);
+            if (PointHelper.distanceSquared(event.data.getLocalPosition(this.parent), this._startPointerPosition) < 10) {
+                // This was a click, activate click on the pressed object and unselect all other objects.
+                for (let i = 0; i < this._selected.length; i++) {
+                    if (this._selected[i] == this._pressed) {
+                        this._pressed.pointerUpClickHandler();
+                    }
+                    else {
+                        this._selected[i].selected = false;
+                    }
+                }
+                this._selected = [this._pressed];
+            }
+            else {
+                // Dragging a child, calculate distance and pass it down
+                let moveDelta = this.snapToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
+                this._selected.forEach(selectedObj => {
+                    selectedObj.pointerUpHandler(moveDelta);
+                });
+            }
         }
 
         this._clickState = ClickState.None;
+        this._startXPosition = undefined;
+        this._startPointerPosition = undefined;
     }
 
 
@@ -317,10 +351,6 @@ export class SongTimeline extends PIXI.Container {
             this._bars.splice(0, 1);
         }
 
-        this._eventContainer.children.forEach(child => {
-            child.destroy();
-        });
-
         // Generate new timeline
         let currentXPosition = this.startX;
         while (currentXPosition < this.endX) {
@@ -339,15 +369,28 @@ export class SongTimeline extends PIXI.Container {
             }
         }
 
-        for(let i = 0; i < this.tracks.length; i++) {
-            let track = this.tracks[i];
-            if (track instanceof NoteUITrack) {
-                // Get all note groups that should be generated in the current bar range
-                track.noteGroups.forEach((group, index) => {
-                    let event = this._initialiseNoteGroup(index, track as NoteUITrack)
-                });
-            }
-        };
+        if (this._eventContainer.children.length == 0) {
+            for (let i = 0; i < this.tracks.length; i++) {
+                let track = this.tracks[i];
+                if (track instanceof NoteUITrack) {
+                    // Get all note groups that should be generated in the current bar range
+                    track.noteGroups.forEach((group, index) => {
+                        this._initialiseNoteGroup(index, track as NoteUITrack);
+                    });
+                }
+            };
+        } 
+        else {
+            this._eventContainer.children.forEach(event => {
+                if (event instanceof TrackTimelineEvent) {
+                    console.log(event.eventDuration);
+                    event.reinitialise(
+                        (this.metadata.positionQuarterNoteToBeats(event.eventStartPosition) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._bars[0].barNumber))) * this.beatWidth + this._bars[0].leftBound,
+                        this.metadata.positionQuarterNoteToBeats(event.eventDuration) * this.beatWidth,
+                    );
+                }
+            });
+        }
     }
 
     /**
@@ -427,21 +470,40 @@ export class SongTimeline extends PIXI.Container {
      * @param {NoteUITrack} track The track to initialise the note group in
      * @memberof SongTimeline
      */
-    private _initialiseNoteGroup(noteGroup : number, track : NoteUITrack) : TrackTimelineEvent {
+    private _initialiseNoteGroup(noteGroup: number, track: NoteUITrack): TrackTimelineEvent {
         // starting x position is calculated as follows:
         // (Position of note group start in beats - the position of the first DISPLAYED bar in beats) * beat width * zoom + the start position of the first DISPLAYED bar in pixels
         let noteGroupArray = track.noteGroups[noteGroup];
         let event = new NoteGroupTimelineEvent(
             this,
             (this.metadata.positionQuarterNoteToBeats(noteGroupArray[0]) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._bars[0].barNumber))) * this.beatWidth + this._bars[0].leftBound,
-            this.metadata.positionQuarterNoteToBeats(noteGroupArray[1]) * this.beatWidth, 
-            track, 
+            this.metadata.positionQuarterNoteToBeats(noteGroupArray[1] - noteGroupArray[0]) * this.beatWidth,
+            track,
             noteGroup);
         this._eventContainer.addChild(event);
         return event;
     }
 
-    private _eventDragCallback(track : TrackTimelineEvent, dragDistance : number) {
-
+    /**
+     *
+     *
+     * @private
+     * @param {number} value
+     * @returns
+     * @memberof SongTimeline
+     */
+    private snapToDragType(value: number) {
+        switch (this.dragType) {
+            case EventDragType.Beat:
+                return value - (value % this.beatWidth);
+            case EventDragType.HalfBeat:
+                return value - (value % (this.beatWidth / 2));
+            case EventDragType.QuarterBeat:
+                return value - (value % (this.beatWidth / 4));
+            case EventDragType.EighthBeat:
+                return value - (value % (this.beatWidth / 8));
+            case EventDragType.None:
+                return value;
+        }
     }
 }
