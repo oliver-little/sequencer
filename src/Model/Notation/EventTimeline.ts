@@ -44,9 +44,10 @@ export class EventTimeline {
      * Adds an event to the timeline
      *
      * @param {BaseEvent} event
+     * @returns The index the event was added at
      * @memberof EventTimeline
      */
-    public addEvent(event: BaseEvent) : void {
+    public addEvent(event: BaseEvent) : number {
         let index = this._events.insert(event);
 
         // Check if this event is the new longest event
@@ -56,6 +57,25 @@ export class EventTimeline {
         else {
             this.longestEventIndex = 0;
         }
+
+        return index;
+    }
+
+    /**
+     * Edits an existing BaseEvent to have a new startPosition and duration, then moves it within the timeline to the correct location.
+     *
+     * @param {number} index The index of the event to edit
+     * @param {number} startPosition The new startPosition of the event 
+     * @param {number} duration The new duration of the event
+     * @returns {number} The new index of the event
+     * @memberof EventTimeline
+     */
+    public editEvent(index : number, startPosition : number, duration : number) : number {
+        let event = this.events[index];
+        this.removeAt(index);
+        event.startPosition = startPosition;
+        event.duration = duration;
+        return this.addEvent(event);
     }
 
     /**
@@ -64,9 +84,8 @@ export class EventTimeline {
      * @param {BaseEvent} event
      * @memberof EventTimeline
      */
-    // TODO: add uuid to baseevents and remove using uuid
     public removeEvent(event : BaseEvent) : void {
-        let index = this._events.binarySearch(event);
+        let index = this.getIndexOfEvent(event);
         if (index == -1) {
             throw new Error("Event doesn't exist.");
         }
@@ -94,6 +113,9 @@ export class EventTimeline {
         }
     }
 
+    public getIndexOfEvent(event : BaseEvent) {
+        return this.events.map(function(x : BaseEvent) {return x.id}).indexOf(event.id);
+    }
 
     /**
      * Call this to signify that playback has begun.

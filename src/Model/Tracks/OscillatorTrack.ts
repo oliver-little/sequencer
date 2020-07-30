@@ -66,10 +66,12 @@ export class OscillatorTrack extends BaseTrack {
      * @param {number} startPosition
      * @param {(string)} pitch
      * @param {(string|number)} duration
+     * @returns {NoteEvent} The NoteEvent that was added to the timeline
      * @memberof OscillatorTrack
      */
-    public addNote(startPosition: number, pitch: string, duration: string | number) {
-        this._timeline.addEvent(new NoteEvent(startPosition, pitch, duration));
+    public addNote(startPosition: number, pitch: string, duration: string | number) : NoteEvent {
+        let event = new NoteEvent(startPosition, pitch, duration);
+        this._timeline.addEvent(event);
 
         if (pitch in this._pitchStrings) {
             this._pitchStrings[pitch] += 1
@@ -77,25 +79,19 @@ export class OscillatorTrack extends BaseTrack {
         else {
             this._pitchStrings[pitch] = 1
         }
+
+        return event;
     }
 
     /**
-     * Removes a note from this track by it's details
+     * Removes a NoteEvent from the timeline
      *
-     * @param {number} startPosition
-     * @param {(string|number)} pitch
-     * @param {(string|number)} duration
+     * @param {NoteEvent} event
+     * @returns
      * @memberof OscillatorTrack
      */
     public removeNote(event: NoteEvent) {
-        let index = -1;
-        for (let i = 0; i < this._timeline.events.length; i++) {
-            let curEvent = this._timeline.events[i] as NoteEvent;
-            if (curEvent.startPosition == event.startPosition && curEvent.duration == event.duration && curEvent.pitch == event.pitch) {
-                this._timeline.removeAt(index);
-                return;
-            }
-        }
+        this.timeline.removeEvent(event);
 
         if (event.pitch in this._pitchStrings) {
             this._pitchStrings[event.pitch] -= 1
@@ -106,7 +102,7 @@ export class OscillatorTrack extends BaseTrack {
     }
 
     /**
-     * Removes a note from this track 
+     * Removes a note from this track using its index.
      *
      * @param {number} index
      * @memberof OscillatorTrack

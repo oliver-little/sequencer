@@ -1,5 +1,6 @@
 import SongMetadata from "../SongManagement/SongMetadata.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
+import {v4 as uuid} from "uuid";
 
 export interface ISongEvent {
     "eventType" : string,
@@ -10,6 +11,7 @@ export interface ISongEvent {
 export class BaseEvent {
 
     public startPosition: number;
+    public id : string;
 
     // Basic duration, has a different meaning for different kinds of events.
     protected _duration = 0; 
@@ -17,6 +19,7 @@ export class BaseEvent {
     constructor (startPosition: number, duration = 0) {
         this.startPosition = startPosition;
         this.duration = duration;
+        this.id = uuid();
     }
 
     /**
