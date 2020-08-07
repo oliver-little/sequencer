@@ -39,8 +39,15 @@ export class SongTimeline extends PIXI.Container {
     public metadata: SongMetadata;
     public tracks: UITrack[];
 
+    /**
+     * Represents how dragging of child objects should be snapped (to the beat, to the half beat, etc)
+     *
+     * @type {EventDragType}
+     * @memberof SongTimeline
+     */
     public dragType: EventDragType = EventDragType.Beat;
 
+    // Separate bars and events for z indexing
     private _barContainer: PIXI.Container;
     private _eventContainer: PIXI.Container;
 
@@ -61,11 +68,13 @@ export class SongTimeline extends PIXI.Container {
     private _selected: TrackTimelineEvent[] = [];
 
     /**
-     * Creates an instance of SongTimeline.
+     *Creates an instance of SongTimeline.
      * @param {number} startX The x coordinate in the parent where this timeline should start (pixels)
      * @param {number} viewWidth The width of the view (pixels)
      * @param {number} viewHeight The height of the view (pixels)
-     * @memberof BarTimeline
+     * @param {SongMetadata} metadata The metadata this SongTimeline is a part of
+     * @param {UITrack[]} tracks The tracks this timeline should display
+     * @memberof SongTimeline
      */
     constructor(startX: number, viewWidth: number, viewHeight: number, metadata: SongMetadata, tracks: UITrack[]) {
         super();
@@ -369,6 +378,7 @@ export class SongTimeline extends PIXI.Container {
             }
         }
 
+        // If no events have been generated, create all the NoteUITracks
         if (this._eventContainer.children.length == 0) {
             for (let i = 0; i < this.tracks.length; i++) {
                 let track = this.tracks[i];
@@ -380,10 +390,10 @@ export class SongTimeline extends PIXI.Container {
                 }
             };
         } 
+        // Otherwise, reposition them to the correct location.
         else {
             this._eventContainer.children.forEach(event => {
                 if (event instanceof TrackTimelineEvent) {
-                    console.log(event.eventDuration);
                     event.reinitialise(
                         (this.metadata.positionQuarterNoteToBeats(event.eventStartPosition) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._bars[0].barNumber))) * this.beatWidth + this._bars[0].leftBound,
                         this.metadata.positionQuarterNoteToBeats(event.eventDuration) * this.beatWidth,

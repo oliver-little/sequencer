@@ -1,5 +1,6 @@
 import { BaseTrack } from "../../Model/Tracks/BaseTrack.js";
 import { OscillatorTrack } from "../../Model/Tracks/OscillatorTrack.js";
+import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 
 export class UITrack {
     public name: string;
@@ -26,7 +27,7 @@ export class NoteUITrack extends UITrack {
 
     private _noteGroups: number[][];
 
-    constructor(name: string, startY : number, height: number, baseTrack: BaseTrack, noteGroups?: number[][]) {
+    constructor(name: string, startY : number, height: number, baseTrack: OscillatorTrack, noteGroups?: number[][]) {
         super(name, startY, height, baseTrack);
         this._noteGroups = noteGroups;
     }
@@ -69,7 +70,7 @@ export class NoteUITrack extends UITrack {
         let noteGroupsToReturn = []
         for(let i = 0; i < this._noteGroups.length; i++) {
             let noteGroup = this._noteGroups[i];
-            if (noteGroup[1] >= startTime && noteGroup[0] <= endTime ) {
+            if (noteGroup[1] > startTime && noteGroup[0] < endTime) {
                 noteGroupsToReturn.push(noteGroup);
             }
             else if (noteGroup[0] > endTime) {
@@ -97,19 +98,21 @@ export class NoteUITrack extends UITrack {
 
         if (this._noteGroups.length === 0) {
             this._noteGroups.push([startTime, endTime]);
+            return 0;
         }
-        else {// This could possibly be done with a binary search?
-            if (endTime < this._noteGroups[0][0]) { // Handle case where region is less than first value.
+        else { // This could possibly be done with a binary search?
+            if (endTime <= this._noteGroups[0][0]) { // Handle case where region is less than first value.
                 this._noteGroups.splice(0, 0, [startTime, endTime]);
-                return;
+                return 0;
             }
-            else if (startTime > this._noteGroups[this._noteGroups.length - 1][1]) { // Handle case where region is greater than last value
+            else if (startTime >= this._noteGroups[this._noteGroups.length - 1][1]) { // Handle case where region is greater than last value
                 this._noteGroups.push([startTime, endTime]);
-                return;
+                return this._noteGroups.length - 1;
             }
             for (let i = 0; i < this._noteGroups.length - 1; i++) { // Handle case where it's somewhere in the middle
-                if (startTime > this._noteGroups[i][1] && endTime < this._noteGroups[i+1][0]) {
+                if (startTime >= this._noteGroups[i][1] && endTime <= this._noteGroups[i+1][0]) {
                     this._noteGroups.splice(i+1, 0, [startTime, endTime]);
+                    return i;
                 }
             }
 
@@ -147,4 +150,3 @@ export class NoteUITrack extends UITrack {
         throw new RangeError("Element with given startTime does not exist.");
     }
 }
-

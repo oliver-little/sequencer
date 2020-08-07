@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js";
 import { UIColors } from "../UIColors.js";
 import { TrackList } from "./TrackList.js";
-import { NoteEvent } from "../../Model/Notation/SongEvents.js";
+import { NoteEvent, BaseEvent } from "../../Model/Notation/SongEvents.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
 import { SongTimeline } from "./SongTimeline.js";
 import { UITrack, NoteUITrack } from "../UIObjects/UITrack.js";
@@ -27,8 +27,18 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
 
     protected _assignedHeight : number;
 
-    private _startXPosition: number;
+    protected _startXPosition: number;
 
+    /**
+     *Creates an instance of TrackTimelineEvent.
+     * @param {SongTimeline} timeline The timeline object this TrackTimelineEvent is part of
+     * @param {number} x The x position this even should start at (pixels)
+     * @param {number} width The width of this event (pixels)
+     * @param {UITrack} track The UITrack this TrackTimelineEvent represents an event of
+     * @param {number} eventStartPosition The start position of this event (quarter notes)
+     * @param {number} eventDuration The duration of this event (quarter notes)
+     * @memberof TrackTimelineEvent
+     */
     constructor(timeline: SongTimeline, x: number, width: number, track: UITrack, eventStartPosition: number, eventDuration : number) {
         super();
         this.timeline = timeline;
@@ -46,6 +56,13 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
         this.y = track.startY + TrackList.trackStartOffset + TrackTimelineEvent.borderHeight;
     }
 
+    /**
+     * Reinitialises this TrackTimelineEvent in a new position
+     *
+     * @param {number} x The new x position (pixels)
+     * @param {number} width The new width (pixels)
+     * @memberof TrackTimelineEvent
+     */
     public reinitialise(x : number, width : number) {
         this.x = x + TrackTimelineEvent.borderWidth;
         this.assignedWidth = width - TrackTimelineEvent.borderWidth;
@@ -70,7 +87,8 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
     }
 
     /**
-     * Redraws the current TrackTimelineEvent
+     * Redraws the current TrackTimelineEvent 
+     * (should be called when any variables relating to how this object should be drawn are changed)
      *
      * @memberof TrackTimelineEvent
      */
@@ -150,8 +168,8 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
     public pointerUpClickHandler() {
         // Reset x position
         this.x = this._startXPosition;
-        this._startXPosition = undefined;
         this.clickHandler();
+        this._startXPosition = undefined;
     }
 
     /**
@@ -164,9 +182,24 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      */
     protected abstract dragHandler(dragDistance: number);
 
+    /**
+     * Called once a drag event finishes, and the distance is small enough that it is considered a click.
+     * Should be implemented by subclasses depending on the required functionality.
+     *
+     * @protected
+     * @abstract
+     * @memberof TrackTimelineEvent
+     */
     protected abstract clickHandler();
 }
 
+/**
+ * TimelineEvent representing a group of notes.
+ *
+ * @export
+ * @class NoteGroupTimelineEvent
+ * @extends {TrackTimelineEvent}
+ */
 export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
     public track: NoteUITrack;
@@ -222,22 +255,103 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
     }
 
     protected dragHandler(dragDistance: number) {
-        let beatChange = dragDistance / this.timeline.beatWidth;
         let metadata = this.timeline.metadata;
-        // Update note position by converting to beats, adding the change, then converting back.
-        this._notes.forEach(note => {
-            note.startPosition = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(note.startPosition) + beatChange);
-        });
-        this.track.noteGroups[this._noteGroup][0] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(this.track.noteGroups[this._noteGroup][0]) + beatChange);
-        this.track.noteGroups[this._noteGroup][1] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(this.track.noteGroups[this._noteGroup][1]) + beatChange);
         
-        this.eventStartPosition = this.track.noteGroups[this._noteGroup][0];
-        this.eventDuration = this.track.noteGroups[this._noteGroup][1] - this.track.noteGroups[this._noteGroup][0];
+        // Get a deep copy of the current noteGroup, then update the set of notegroups
+        let noteGroup = Object.assign([], this.track.noteGroups[this._noteGroup]);
 
-        this.redraw();
+        let beatChange = dragDistance / this.timeline.beatWidth;
+
+        noteGroup[0] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(noteGroup[0]) + beatChange);
+        noteGroup[1] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(noteGroup[1]) + beatChange);
+        
+        // Check if new position is clear
+        let groups = this.track.getNoteGroupsWithinTime(noteGroup[0], noteGroup[1]);
+        let timePeriodClear = true;
+
+        // Check if any groups were found that aren't this noteGroup (as we're currently using a copy)
+        for(let i = 0; i < groups.length; i++) {
+            if (!(groups[i][0] == this.track.noteGroups[this._noteGroup][0] && groups[i][1] == this.track.noteGroups[this._noteGroup][1])) {
+                timePeriodClear = false;
+                break;
+            }
+        }
+
+        // If not clear, reset to the starting position
+        if (!timePeriodClear) {
+            this.x = this._startXPosition;
+        }
+        else {
+            // FIXME: test this with different time signatures.
+            // Update note position by converting to beats, adding the change, then converting back.
+            this._notes.forEach(note => {
+                note.startPosition = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(note.startPosition) + beatChange);
+            });
+            this.eventStartPosition = noteGroup[0];
+            this.eventDuration = noteGroup[1] - noteGroup[0];
+
+            // Remove and readd the noteGroup to make sure it is in the right position in the list of groups
+            this.track.noteGroups.splice(this._noteGroup, 1);
+            this.track.addNoteGroup(noteGroup[0], noteGroup[1]);
+        }
     }
 
     protected clickHandler() {
         console.log("Clicked NoteTrackTimelineEvent");
+    }
+}
+
+/**
+ * TimelineEvent representing one playback of a track which can only play one sound
+ *
+ * @export
+ * @class OneShotTimelineEvent
+ * @extends {TrackTimelineEvent}
+ */
+export class OneShotTimelineEvent extends TrackTimelineEvent {
+
+    public event : BaseEvent;
+
+    /**
+     * Creates an instance of OneShotTimelineEvent.
+     * @param {SongTimeline} timeline The timeline object this event is part of.
+     * @param {number} x The x position this object should start at (pixels)
+     * @param {number} width The width of this object (pixels)
+     * @param {UITrack} track The UITrack this event is part of
+     * @param {BaseEvent} event
+     * @memberof OneShotTimelineEvent
+     */
+    constructor(timeline: SongTimeline, x: number, width: number, track: UITrack, event : BaseEvent) {
+        super(timeline, x, width, track, event.startPosition, event.duration);
+
+        this.event = event;
+    }
+
+    // FIXME: this needs testing
+    protected dragHandler(dragDistance : number) {
+        // Get the events that occur within 
+        let beatChange = dragDistance / this.timeline.beatWidth;
+        let newStartPosition = this.timeline.metadata.positionQuarterNoteToBeats(this.event.startPosition) + beatChange;
+        let eventsInPeriod = this.track.track.timeline.getEventsBetweenTimes(newStartPosition, newStartPosition + this.event.duration);
+
+        let timePeriodClear = true;
+        for(let i = 0; i < eventsInPeriod.length; i++) {
+            if (eventsInPeriod[i] != this.event) {
+                timePeriodClear = false;
+                break;
+            }
+        }
+
+        if (!timePeriodClear) {
+            this.x = this._startXPosition;
+        }
+        else {
+            let eventIndex = this.track.track.timeline.getIndexOfEvent(this.event);
+            this.track.track.timeline.editEvent(eventIndex, newStartPosition);
+        }
+    }
+
+    protected clickHandler() {
+        console.log("Clicked OneShotTimelineEvent");
     }
 }

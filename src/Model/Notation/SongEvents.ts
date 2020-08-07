@@ -86,12 +86,12 @@ export class SecondsBaseEvent extends BaseEvent {
     }
 
     /**
-     * NOT USED.
+     * Set duration in quarter notes.
      *
      * @memberof SecondsBaseEvent
      */
     public set duration(value : number) {
-        this._duration = value;
+        this._duration = this._metadata.positionQuarterNoteToSeconds(this._duration);
     }
 
     /**

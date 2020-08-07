@@ -15,6 +15,7 @@ oscillatorTrack.addNote(2, "C6", "2n");
 oscillatorTrack.addNote(2, "G5", "2n");
 oscillatorTrack.addNote(3, "G6", "32n");
 
+
 songManager.metadata.addMetadataEvent(0, 180, [4,4]);
 
 window.onload = function () {
@@ -27,7 +28,7 @@ window.onload = function () {
     for (let i = 0; i < songManager.tracks.length; i++) {
         let newTrack = null;
         if (songManager.tracks[i] instanceof OscillatorTrack) {
-            newTrack = new NoteUITrack("", 250 * i, 250, songManager.tracks[i], [[0, 4]]);
+            newTrack = new NoteUITrack("", 250 * i, 250, songManager.tracks[i] as OscillatorTrack, [[0, 2], [2, 4]]);
         }
         else {
             newTrack = new UITrack("", 250 * i, 250, songManager.tracks[i]);

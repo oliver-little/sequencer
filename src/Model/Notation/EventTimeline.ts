@@ -62,19 +62,21 @@ export class EventTimeline {
     }
 
     /**
-     * Edits an existing BaseEvent to have a new startPosition and duration, then moves it within the timeline to the correct location.
+     * Repositions an event by editing it, removing it from the timeline and adding it again.
      *
      * @param {number} index The index of the event to edit
-     * @param {number} startPosition The new startPosition of the event 
-     * @param {number} duration The new duration of the event
+     * @param {number} startPosition The new startPosition of the event (quarter notes)
+     * @param {number} duration The new duration of the event (quarter notes)
      * @returns {number} The new index of the event
      * @memberof EventTimeline
      */
-    public editEvent(index : number, startPosition : number, duration : number) : number {
+    public editEvent(index : number, startPosition : number, duration? : number) : number {
         let event = this.events[index];
-        this.removeAt(index);
         event.startPosition = startPosition;
-        event.duration = duration;
+        if (duration != undefined) {
+            event.duration = duration;
+        }
+        this.removeAt(index);
         return this.addEvent(event);
     }
 
@@ -163,7 +165,6 @@ export class EventTimeline {
     public getEventsBetweenTimes(startTime : number, endTime : number) : BaseEvent[] {
         let index = 0;
         while(index < this._events.length && this._events[index].startPosition < startTime){
-            console.log(this._events[index]);
             index++;
         }
         if (index >= this._events.length) {
