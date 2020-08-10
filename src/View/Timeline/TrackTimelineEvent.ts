@@ -204,7 +204,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
     public track: NoteUITrack;
 
-    private _noteGroup: number;
+    private _noteGroup: number[];
     private _notes: NoteEvent[];
 
     /**
@@ -213,24 +213,23 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
      * @param {number} x The x position of this object (pixels)
      * @param {number} width The width of this object (pixels)
      * @param {NoteUITrack} track The UITrack this event represents one of the note groups of
-     * @param {number[]} noteGroup Index of the note group in track.noteGroups this object represents
+     * @param {number[]} noteGroup The NoteGroup this event represents
      * @memberof NoteGroupTimelineEvent
      */
-    constructor(timeline: SongTimeline, x: number, width: number, track: NoteUITrack, noteGroup: number) {
-        super(timeline, x, width, track, track.noteGroups[noteGroup][0], track.noteGroups[noteGroup][1] - track.noteGroups[noteGroup][0]);
+    constructor(timeline: SongTimeline, x: number, width: number, track: NoteUITrack, noteGroup: number[]) {
+        super(timeline, x, width, track, noteGroup[0], noteGroup[1] - noteGroup[0]);
         this._noteGroup = noteGroup;
         this.redraw();
     }
 
     get noteGroup() {
-        return this.track.noteGroups[this.noteGroup];
+        return this._noteGroup;
     }
 
     public redraw(selected: boolean = this._selected) {
         super.redraw(selected);
-        let noteGroup = this.track.noteGroups[this._noteGroup];
-        this._notes = this.track.track.timeline.getEventsBetweenTimes(noteGroup[0], noteGroup[1]) as NoteEvent[];
-        this.setNotes(this._notes, this.track.track.highestPitch, this.track.track.lowestPitch, noteGroup);
+        this._notes = this.track.track.timeline.getEventsBetweenTimes(this._noteGroup[0], this._noteGroup[1]) as NoteEvent[];
+        this.setNotes(this._notes, this.track.track.highestPitch, this.track.track.lowestPitch, this._noteGroup);
     }
 
     public setNotes(notes: NoteEvent[], highestNote: string, lowestNote: string, noteGroup: number[]) {
@@ -258,7 +257,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
         let metadata = this.timeline.metadata;
         
         // Get a deep copy of the current noteGroup, then update the set of notegroups
-        let noteGroup = Object.assign([], this.track.noteGroups[this._noteGroup]);
+        let noteGroup = Object.assign([], this._noteGroup);
 
         let beatChange = dragDistance / this.timeline.beatWidth;
 
@@ -271,7 +270,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
         // Check if any groups were found that aren't this noteGroup (as we're currently using a copy)
         for(let i = 0; i < groups.length; i++) {
-            if (!(groups[i][0] == this.track.noteGroups[this._noteGroup][0] && groups[i][1] == this.track.noteGroups[this._noteGroup][1])) {
+            if (!(groups[i][0] == this._noteGroup[0] && groups[i][1] == this._noteGroup[1])) {
                 timePeriodClear = false;
                 break;
             }
@@ -285,14 +284,17 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
             // FIXME: test this with different time signatures.
             // Update note position by converting to beats, adding the change, then converting back.
             this._notes.forEach(note => {
+                this.track.track.timeline.removeEvent(note);
                 note.startPosition = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(note.startPosition) + beatChange);
+                this.track.track.timeline.addEvent(note);
             });
             this.eventStartPosition = noteGroup[0];
             this.eventDuration = noteGroup[1] - noteGroup[0];
 
             // Remove and readd the noteGroup to make sure it is in the right position in the list of groups
-            this.track.noteGroups.splice(this._noteGroup, 1);
+            this.track.removeNoteGroup(this._noteGroup[0]);
             this.track.addNoteGroup(noteGroup[0], noteGroup[1]);
+            this._noteGroup = noteGroup;
         }
     }
 

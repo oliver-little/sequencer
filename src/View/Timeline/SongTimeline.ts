@@ -489,7 +489,7 @@ export class SongTimeline extends PIXI.Container {
             (this.metadata.positionQuarterNoteToBeats(noteGroupArray[0]) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._bars[0].barNumber))) * this.beatWidth + this._bars[0].leftBound,
             this.metadata.positionQuarterNoteToBeats(noteGroupArray[1] - noteGroupArray[0]) * this.beatWidth,
             track,
-            noteGroup);
+            noteGroupArray);
         this._eventContainer.addChild(event);
         return event;
     }

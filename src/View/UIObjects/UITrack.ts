@@ -80,6 +80,16 @@ export class NoteUITrack extends UITrack {
         return noteGroupsToReturn;
     }
 
+    public getNoteGroupIndex(noteGroup : number[]) : number {
+        for (let i = 0; i < this._noteGroups.length; i++) {
+            if (noteGroup[0] == this._noteGroups[i][0] && noteGroup[1] == this._noteGroups[i][1]) {
+                return i; 
+            }
+        }
+
+        throw new RangeError("NoteGroup does not exist.");
+    }
+
     /**
      * Adds a note grouping using the start time and end time (quarter notes)
      * This will fail if either the start or end time falls under another note grouping.
