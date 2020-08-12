@@ -1,4 +1,6 @@
 import SongMetadata from "../SongManagement/SongMetadata.js";
+import NoteHelper from "../../HelperModules/NoteHelper.js";
+import {v4 as uuid} from "uuid";
 
 export interface ISongEvent {
     "eventType" : string,
@@ -9,6 +11,7 @@ export interface ISongEvent {
 export class BaseEvent {
 
     public startPosition: number;
+    public id : string;
 
     // Basic duration, has a different meaning for different kinds of events.
     protected _duration = 0; 
@@ -16,6 +19,7 @@ export class BaseEvent {
     constructor (startPosition: number, duration = 0) {
         this.startPosition = startPosition;
         this.duration = duration;
+        this.id = uuid();
     }
 
     /**
@@ -82,12 +86,12 @@ export class SecondsBaseEvent extends BaseEvent {
     }
 
     /**
-     * NOT USED.
+     * Set duration in quarter notes.
      *
      * @memberof SecondsBaseEvent
      */
     public set duration(value : number) {
-        this._duration = value;
+        this._duration = this._metadata.positionQuarterNoteToSeconds(this._duration);
     }
 
     /**
@@ -126,7 +130,8 @@ export class NoteEvent extends BaseEvent {
      */
     public pitch: number;
 
-    static notes =  ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    private _pitchString;
+
     static durationPattern = new RegExp("^(1|2|4|8|16|32|64)(t|n|\\.)$");
 
     /**
@@ -138,9 +143,9 @@ export class NoteEvent extends BaseEvent {
      */
     constructor (startPosition: number, pitch : number|string, duration: number|string) {
         super(startPosition);
-        
+    
         if (typeof(pitch) ==="string") {
-            this.setPitchString(pitch);
+            this.pitchString = pitch;
         }
         else {
             this.pitch = pitch;
@@ -153,28 +158,19 @@ export class NoteEvent extends BaseEvent {
         }
     }
 
+    get pitchString() : string {
+        return this._pitchString;
+    }
+
     /**
      * Sets the pitch of the note with pitch-octave notation
      *
      * @param {string} value The pitch-octave notation string
      * @memberof NoteEvent
      */
-    public setPitchString(value: string) : void {
-        let octave = 0;
-        if (value.length == 2) {
-            octave = parseInt(value.charAt(1));
-        }
-        else if (value.length === 3) {
-            octave = parseInt(value.charAt(2));
-        }
-        else {
-            throw new RangeError("String is invalid (incorrect length)");
-        }
-
-        let noteNumber = NoteEvent.notes.indexOf(value.slice(0, -1)) + 3;
-        noteNumber = noteNumber + ((octave - 1) * 12) + 1; 
-
-        this.pitch = 440 * Math.pow(2, (noteNumber - 49) / 12);
+    set pitchString(value: string) {
+        this._pitchString = value;
+        this.pitch = NoteHelper.noteStringToFrequency(value);
     }
 
     /**

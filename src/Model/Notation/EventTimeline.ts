@@ -44,9 +44,10 @@ export class EventTimeline {
      * Adds an event to the timeline
      *
      * @param {BaseEvent} event
+     * @returns The index the event was added at
      * @memberof EventTimeline
      */
-    public addEvent(event: BaseEvent) : void {
+    public addEvent(event: BaseEvent) : number {
         let index = this._events.insert(event);
 
         // Check if this event is the new longest event
@@ -56,6 +57,27 @@ export class EventTimeline {
         else {
             this.longestEventIndex = 0;
         }
+
+        return index;
+    }
+
+    /**
+     * Repositions an event by editing it, removing it from the timeline and adding it again.
+     *
+     * @param {number} index The index of the event to edit
+     * @param {number} startPosition The new startPosition of the event (quarter notes)
+     * @param {number} duration The new duration of the event (quarter notes)
+     * @returns {number} The new index of the event
+     * @memberof EventTimeline
+     */
+    public editEvent(index : number, startPosition : number, duration? : number) : number {
+        let event = this.events[index];
+        event.startPosition = startPosition;
+        if (duration != undefined) {
+            event.duration = duration;
+        }
+        this.removeAt(index);
+        return this.addEvent(event);
     }
 
     /**
@@ -64,9 +86,8 @@ export class EventTimeline {
      * @param {BaseEvent} event
      * @memberof EventTimeline
      */
-    // TODO: add uuid to baseevents and remove using uuid
     public removeEvent(event : BaseEvent) : void {
-        let index = this._events.binarySearch(event);
+        let index = this.getIndexOfEvent(event);
         if (index == -1) {
             throw new Error("Event doesn't exist.");
         }
@@ -94,6 +115,9 @@ export class EventTimeline {
         }
     }
 
+    public getIndexOfEvent(event : BaseEvent) {
+        return this.events.map(function(x : BaseEvent) {return x.id}).indexOf(event.id);
+    }
 
     /**
      * Call this to signify that playback has begun.
@@ -127,6 +151,34 @@ export class EventTimeline {
         }
 
         return eventsToSchedule;
+    }
+
+
+    /**
+     * Returns all events within a time period
+     *
+     * @param {number} startTime The time to return events from (quarter notes)
+     * @param {number} endTime The time to return events to (quarter notes)
+     * @returns {BaseEvent[]} The events within the time period
+     * @memberof EventTimeline
+     */
+    public getEventsBetweenTimes(startTime : number, endTime : number) : BaseEvent[] {
+        let index = 0;
+        while(index < this._events.length && this._events[index].startPosition < startTime){
+            index++;
+        }
+        if (index >= this._events.length) {
+            return null;
+        }
+
+        let startIndex = index;
+        index = this._events.length - 1;
+        while(index > startIndex && (this._events[index].startPosition + this._events[index].duration) > endTime) {
+            index--;
+        }
+        let endIndex = index+1;
+
+        return this._events.slice(startIndex, endIndex);
     }
 
     /**

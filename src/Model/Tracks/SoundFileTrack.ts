@@ -25,6 +25,16 @@ export class SoundFileTrack extends BaseTrack {
     }
 
     /**
+     * Gets the duration of the sound file (quarter notes)
+     *
+     * @readonly
+     * @memberof SoundFileTrack
+     */
+    get soundFileDuration() {
+        return this._metadata.positionSecondsToQuarterNote(this.audioSource.duration);
+    }
+
+    /**
      *Creates an instance of SoundFileTrack. initialise **must** be called alongside this to handle asynchronous setup.
      * @param {SongMetadata} metadata
      * @param {(AudioContext|OfflineAudioContext)} context
@@ -41,12 +51,31 @@ export class SoundFileTrack extends BaseTrack {
     }
 
 
-    public addOneShot(startPosition : number) {
-        this._timeline.addEvent(new SecondsBaseEvent(startPosition, this._metadata, this.audioSource.duration));
+    /**
+     * Adds a playback event for the sound file
+     *
+     * @param {number} startPosition The time to start at (quarter notes)
+     * @returns {SecondsBaseEvent} The event that was added to the timeline 
+     * @memberof SoundFileTrack
+     */
+    public addOneShot(startPosition : number) : SecondsBaseEvent {
+        // Check if there are any events occurring within the new location
+        if (this._timeline.getEventsBetweenTimes(startPosition, this._metadata.positionSecondsToQuarterNote(this.audioSource.duration)).length > 0) {
+            throw new RangeError("Invalid location: a playback event already occurs in the duration of the new event.");
+        }
+        let event = new SecondsBaseEvent(startPosition, this._metadata, this.audioSource.duration);
+        this._timeline.addEvent(event);
+        return event;
     }
 
-    public removeOneShot(startPosition : number) {
-        this._timeline.removeEvent(new SecondsBaseEvent(startPosition, this._metadata, this.audioSource.duration));
+    /**
+     * Removes a playback event for the sound file
+     *
+     * @param {number} startPosition The time to remove the event at (quarter notes)
+     * @memberof SoundFileTrack
+     */
+    public removeOneShot(event : SecondsBaseEvent) {
+        this._timeline.removeEvent(event);
     }
 
     /**

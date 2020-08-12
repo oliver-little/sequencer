@@ -14,7 +14,6 @@ interface IOscillatorSettings extends IInstrumentSettings {
     "type" : "oscillator",
     "oscillatorType" : string,
     "gain" : number,
-    // TODO: add getters and setters to oscillatorinstrument then make settings private on all objects.
     "envelopeEnabled" : boolean,
     "envelope" : IAmplitudeEnvelope,
 }

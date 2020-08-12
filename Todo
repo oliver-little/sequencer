@@ -1,5 +1,13 @@
-To Add:
+To Add backend:
 - Add magic header to save file
+- Finish TODOs
 
-Fixes:
-- General error handling
+To Add UI: 
+- Ability to add note groups and one shot playbacks (depending on the track) from the timeline view
+- Add a timeline marker that moves with the current position of the song in the songManager (likely needs to be done using GetAnimationFrame)
+- Scrollbars, both vertical and horizontal
+- Make note groups interactable which would then take the user to a sequencer style page where the current note group is loaded and the user can edit it
+- Ability to add time signature and bpm changes at the top of the screen
+- zooming still has rare bugs resulting in all bars disappearing then errors
+
+- Connections for tracks with chains and global bus - https://github.com/lukasoppermann/html5sortable
