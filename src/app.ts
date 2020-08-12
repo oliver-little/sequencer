@@ -28,10 +28,10 @@ window.onload = function () {
     for (let i = 0; i < songManager.tracks.length; i++) {
         let newTrack = null;
         if (songManager.tracks[i] instanceof OscillatorTrack) {
-            newTrack = new NoteUITrack("", 250 * i, 250, songManager.tracks[i] as OscillatorTrack, [[0, 2], [2, 4]]);
+            newTrack = new NoteUITrack("", 40 + (250 * i), 250, songManager.tracks[i] as OscillatorTrack, [[0, 2], [2, 4]]);
         }
         else {
-            newTrack = new UITrack("", 250 * i, 250, songManager.tracks[i]);
+            newTrack = new UITrack("", 40 + (250 * i), 250, songManager.tracks[i]);
         }
         newUITracks.push(newTrack);
     }

@@ -3,6 +3,7 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
+- Ability to add note groups and one shot playbacks (depending on the track) from the timeline view
 - Add a timeline marker that moves with the current position of the song in the songManager (likely needs to be done using GetAnimationFrame)
 - Scrollbars, both vertical and horizontal
 - Make note groups interactable which would then take the user to a sequencer style page where the current note group is loaded and the user can edit it

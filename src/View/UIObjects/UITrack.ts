@@ -160,3 +160,32 @@ export class NoteUITrack extends UITrack {
         throw new RangeError("Element with given startTime does not exist.");
     }
 }
+
+/**
+ * Adds support for tracks that can play sound files.
+ *
+ * @export
+ * @class OneShotUITrack
+ */
+export class SoundFileUITrack extends UITrack {
+
+    public track : SoundFileTrack;
+
+    constructor(name : string, startY : number, height : number, track : SoundFileTrack) {
+        super(name, startY, height, track);
+    }
+
+    /**
+     * Gets the event duration (quarter notes)
+     *
+     * @readonly
+     * @memberof SoundFileUITrack
+     */
+    get eventDuration() {
+        return this.track.soundFileDuration;
+    }
+
+    public getOneShotsBetweenTime(startTime : number, endTime : number) {
+        return this.track.timeline.getEventsBetweenTimes(startTime, endTime);
+    }
+}

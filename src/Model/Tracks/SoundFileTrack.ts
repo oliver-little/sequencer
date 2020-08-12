@@ -25,6 +25,16 @@ export class SoundFileTrack extends BaseTrack {
     }
 
     /**
+     * Gets the duration of the sound file (quarter notes)
+     *
+     * @readonly
+     * @memberof SoundFileTrack
+     */
+    get soundFileDuration() {
+        return this._metadata.positionSecondsToQuarterNote(this.audioSource.duration);
+    }
+
+    /**
      *Creates an instance of SoundFileTrack. initialise **must** be called alongside this to handle asynchronous setup.
      * @param {SongMetadata} metadata
      * @param {(AudioContext|OfflineAudioContext)} context

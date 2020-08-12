@@ -11,8 +11,6 @@ import { UIColors } from "../UIColors.js";
  */
 export class TrackList extends PIXI.Container {
 
-    public static trackStartOffset = 40;
-
     public tracks : UITrack[];
 
     private _width : number;
@@ -33,12 +31,11 @@ export class TrackList extends PIXI.Container {
         this._width = width;
         this._height = height;
         
-        let yPosition = TrackList.trackStartOffset;
+        let yPosition = 0;
         this._lines.beginFill(UIColors.fgColor);
         this._lines.drawRect(0, yPosition, width, 2);
         this.tracks.forEach(track => {
-            this.addChild(new TrackSettings(yPosition, width, track));
-            yPosition += track.height;
+            this.addChild(new TrackSettings(track.startY, width, track));
         });
     }
 }
@@ -77,11 +74,9 @@ export class TrackHorizontalLines extends PIXI.Graphics {
     constructor(tracks : UITrack[], viewWidth : number) {
         super();
         this.beginFill(UIColors.fgColor);
-        let yPosition = TrackList.trackStartOffset;
         tracks.forEach(track => {
-            this.drawRect(0, yPosition, viewWidth, 2);
-            yPosition += track.height;
+            this.drawRect(0, track.startY, viewWidth, 2);
         });
-        this.drawRect(0, yPosition, viewWidth, 2);
+        this.drawRect(0, tracks[tracks.length - 1].startY + tracks[tracks.length - 1].height, viewWidth, 2);
     }
 }

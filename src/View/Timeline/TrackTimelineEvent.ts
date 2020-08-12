@@ -53,7 +53,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
 
         this.x = x + TrackTimelineEvent.borderWidth;
         this.assignedWidth = width - TrackTimelineEvent.borderWidth;
-        this.y = track.startY + TrackList.trackStartOffset + TrackTimelineEvent.borderHeight;
+        this.y = track.startY +  TrackTimelineEvent.borderHeight;
     }
 
     /**
@@ -281,7 +281,6 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
             this.x = this._startXPosition;
         }
         else {
-            // FIXME: test this with different time signatures.
             // Update note position by converting to beats, adding the change, then converting back.
             this._notes.forEach(note => {
                 this.track.track.timeline.removeEvent(note);
@@ -329,7 +328,6 @@ export class OneShotTimelineEvent extends TrackTimelineEvent {
         this.event = event;
     }
 
-    // FIXME: this needs testing
     protected dragHandler(dragDistance : number) {
         // Get the events that occur within 
         let beatChange = dragDistance / this.timeline.beatWidth;
