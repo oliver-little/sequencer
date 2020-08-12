@@ -17,7 +17,7 @@
   },
   "scripts": {
     "dev": "tsc -p ./tsconfig.json & webpack --mode development",
-    "build": "webpack --mode production",
+    "build": "tsc -p ./tsconfig.json & webpack --mode production",
     "start": "webpack-dev-server --mode development --open"
   },
   "repository": {
