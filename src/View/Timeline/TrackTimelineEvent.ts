@@ -9,7 +9,8 @@ import { UITrack, NoteUITrack } from "../UIObjects/UITrack.js";
 
 export abstract class TrackTimelineEvent extends PIXI.Container {
 
-    static borderWidth = 3;
+    static borderLeft = 1;
+    static borderRight = 2;
     static borderHeight = 2;
     static paddingHeight = 4;
     static selectedBorderWidth = 4;
@@ -18,8 +19,8 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
     public assignedWidth: number;
     public track: UITrack;
 
-    public eventStartPosition: number;
-    public eventDuration: number
+    public abstract readonly eventStartPosition: number;
+    public abstract readonly eventDuration: number
 
     protected _selected: boolean = false;
     protected _contentGraphics: PIXI.Graphics;
@@ -39,20 +40,18 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      * @param {number} eventDuration The duration of this event (quarter notes)
      * @memberof TrackTimelineEvent
      */
-    constructor(timeline: SongTimeline, x: number, width: number, track: UITrack, eventStartPosition: number, eventDuration : number) {
+    constructor(timeline: SongTimeline, x: number, width: number, track: UITrack) {
         super();
         this.timeline = timeline;
         this.track = track;
-        this.eventStartPosition = eventStartPosition;
-        this.eventDuration = eventDuration;
 
         this._contentGraphics = new PIXI.Graphics();
         this._selectedGraphics = new PIXI.Graphics();
         this._selectedGraphics.zIndex = 1;
         this.addChild(this._contentGraphics, this._selectedGraphics);
 
-        this.x = x + TrackTimelineEvent.borderWidth;
-        this.assignedWidth = width - TrackTimelineEvent.borderWidth;
+        this.x = x + TrackTimelineEvent.borderLeft;
+        this.assignedWidth = Math.max(width - TrackTimelineEvent.borderRight, 2);
         this.y = track.startY +  TrackTimelineEvent.borderHeight;
     }
 
@@ -64,8 +63,8 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      * @memberof TrackTimelineEvent
      */
     public reinitialise(x : number, width : number) {
-        this.x = x + TrackTimelineEvent.borderWidth;
-        this.assignedWidth = width - TrackTimelineEvent.borderWidth;
+        this.x = x + TrackTimelineEvent.borderLeft;
+        this.assignedWidth = Math.max(width - TrackTimelineEvent.borderRight, 2);
         this.redraw();
     }
 
@@ -217,13 +216,21 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
      * @memberof NoteGroupTimelineEvent
      */
     constructor(timeline: SongTimeline, x: number, width: number, track: NoteUITrack, noteGroup: number[]) {
-        super(timeline, x, width, track, noteGroup[0], noteGroup[1] - noteGroup[0]);
+        super(timeline, x, width, track);
         this._noteGroup = noteGroup;
         this.redraw();
     }
 
     get noteGroup() {
         return this._noteGroup;
+    }
+
+    get eventStartPosition() {
+        return this._noteGroup[0];
+    }
+
+    get eventDuration() {
+        return this._noteGroup[1] - this._noteGroup[0];
     }
 
     public redraw(selected: boolean = this._selected) {
@@ -287,8 +294,6 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
                 note.startPosition = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(note.startPosition) + beatChange);
                 this.track.track.timeline.addEvent(note);
             });
-            this.eventStartPosition = noteGroup[0];
-            this.eventDuration = noteGroup[1] - noteGroup[0];
 
             // Remove and readd the noteGroup to make sure it is in the right position in the list of groups
             this.track.removeNoteGroup(this._noteGroup[0]);
@@ -323,9 +328,18 @@ export class OneShotTimelineEvent extends TrackTimelineEvent {
      * @memberof OneShotTimelineEvent
      */
     constructor(timeline: SongTimeline, x: number, width: number, track: UITrack, event : BaseEvent) {
-        super(timeline, x, width, track, event.startPosition, event.duration);
+        super(timeline, x, width, track);
 
         this.event = event;
+        this.redraw();
+    }
+
+    get eventStartPosition() {
+        return this.event.startPosition;
+    }
+
+    get eventDuration() {
+        return this.event.duration;
     }
 
     protected dragHandler(dragDistance : number) {

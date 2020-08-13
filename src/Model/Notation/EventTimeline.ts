@@ -168,7 +168,7 @@ export class EventTimeline {
             index++;
         }
         if (index >= this._events.length) {
-            return null;
+            return [];
         }
 
         let startIndex = index;

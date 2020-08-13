@@ -87,7 +87,7 @@ export class SoundFileTrack extends BaseTrack {
     public async setSoundFile(file : Blob) {
         await this.audioSource.setSoundFile(file);
         this._timeline.events.forEach(event => {
-            event.duration = this._metadata.positionQuarterNoteToSeconds(this.audioSource.duration);
+            event.secondsDuration = this.audioSource.duration;
         });
         this._timeline.updatePlaybackTime();
     }

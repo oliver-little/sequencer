@@ -16,9 +16,11 @@ export class BaseEvent {
     // Basic duration, has a different meaning for different kinds of events.
     protected _duration = 0; 
 
-    constructor (startPosition: number, duration = 0) {
+    constructor (startPosition: number, duration? : number) {
         this.startPosition = startPosition;
-        this.duration = duration;
+        if (duration != undefined) {
+            this.duration = duration;
+        }
         this.id = uuid();
     }
 
@@ -91,7 +93,7 @@ export class SecondsBaseEvent extends BaseEvent {
      * @memberof SecondsBaseEvent
      */
     public set duration(value : number) {
-        this._duration = this._metadata.positionQuarterNoteToSeconds(this._duration);
+        this._duration = this._metadata.positionQuarterNoteToSeconds(value);
     }
 
     /**

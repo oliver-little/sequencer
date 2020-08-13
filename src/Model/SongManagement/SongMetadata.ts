@@ -72,8 +72,8 @@ export default class SongMetadata {
      * @memberof SongMetadata
      */
     public positionQuarterNoteToSeconds(time : number) : number {
-        if (time < 0) {
-            throw new RangeError("Cannot have negative time");
+        if (time === undefined || time < 0) {
+            throw new RangeError("Time is invalid");
         }
 
         // Find the meta event this quarter note position is within.
@@ -126,8 +126,8 @@ export default class SongMetadata {
      * @memberof SongMetadata
      */
     public positionQuarterNoteToBars(time : number) : number {
-        if (time < 0) {
-            throw new RangeError("Cannot have negative time");
+        if (time === undefined || time < 0) {
+            throw new RangeError("Time is invalid");
         }
 
         // Find the meta event this quarter note position is within.
@@ -179,8 +179,8 @@ export default class SongMetadata {
      * @memberof SongMetadata
      */
     public positionQuarterNoteToBeats(time : number) : number {
-        if (time < 0) {
-            throw new RangeError("Cannot have negative time");
+        if (time === undefined || time < 0) {
+            throw new RangeError("Time is invalid");
         }
 
         // Find the meta event this quarter note position is within.
