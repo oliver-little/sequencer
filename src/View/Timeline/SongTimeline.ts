@@ -27,6 +27,11 @@ export enum SongTimelineMode {
     Edit
 }
 
+export enum SongTimelineEditMode {
+    Add,
+    Remove
+}
+
 interface INewEventData {
     track : UITrack,
     startPosition : number
@@ -52,6 +57,7 @@ export class SongTimeline extends PIXI.Container {
     public tracks: UITrack[];
 
     public timelineMode: SongTimelineMode = SongTimelineMode.Edit;
+    public timelineEditMode: SongTimelineEditMode = SongTimelineEditMode.Remove;
 
     /**
      * Represents how dragging of child objects should be snapped (to the beat, to the half beat, etc)
@@ -84,6 +90,7 @@ export class SongTimeline extends PIXI.Container {
     // Event variables
     private _pressed: TrackTimelineEvent;
     private _selected: TrackTimelineEvent[] = [];
+    private _hovered: TrackTimelineEvent;
 
     /**
      *Creates an instance of SongTimeline.
@@ -142,34 +149,24 @@ export class SongTimeline extends PIXI.Container {
     }
 
     public pointerDownHandler(event: PIXI.InteractionEvent) {
-        let hit = false;
-        this._pressed = null;
-
-        for (let i = 0; i < this._eventContainer.children.length; i++) {
-            let child = this._eventContainer.children[i] as TrackTimelineEvent;
-            let pos = event.data.getLocalPosition(child);
-            if (pos.x > 0 && pos.x < child.width && pos.y > 0 && pos.y < child.height) {
-                this._pressed = child;
-                hit = true;
-                break;
-            }
-        }
+        this._pressed = this._getTimelineEventHit(event);
 
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
         this._startXPosition = this.x;
 
-        if (hit && this._selected.length > 0 && this._pressed == this._selected[0]) {
+        if (this._pressed != null && this._selected.length > 0 && this._pressed == this._selected[0]) {
             this._clickState = ClickState.ChildDragging;
 
             this._selected.forEach(selectedObj => {
                 selectedObj.pointerDownHandler();
+
             });
         }
         else {
             this._clickState = ClickState.Dragging;
             // Remove selected objects
             this._selected.forEach(selectedObj => {
-                selectedObj.selected = false;
+                selectedObj.pointerDownHandler();
             });
             this._selected = [];
         }
@@ -233,7 +230,7 @@ export class SongTimeline extends PIXI.Container {
                     selectedObj.pointerMoveHandler(moveDelta);
                 });
             }
-            else {
+            else if (this.timelineEditMode == SongTimelineEditMode.Add) {
                 this._newEventData = undefined;
                 // Display new event outline (set width for note events, same length as soundfile for soundfile)
                 let mousePos = event.data.getLocalPosition(this.parent);
@@ -241,8 +238,12 @@ export class SongTimeline extends PIXI.Container {
                     if (this.tracks[i].startY < mousePos.y && this.tracks[i].startY + this.tracks[i].height > mousePos.y) {
                         let track = this.tracks[i];
 
+                        if (mousePos.x < this.startX || mousePos.x > this.endX) {
+                            return;
+                        }
+
                         // Get mouse position as bar position
-                        let [barPosition, beatPosition, numBeats] = this.getBarFromStageCoordinates(mousePos.x);
+                        let [barPosition, beatPosition, numBeats] = this._getBarFromStageCoordinates(mousePos.x);
                         // Snap beat position
                         switch (this.dragType) {
                             case EventDragType.None:
@@ -267,7 +268,7 @@ export class SongTimeline extends PIXI.Container {
                         barPosition += beatPosition / numBeats;
 
                         let startPosition = this.metadata.positionBarsToQuarterNote(barPosition);
-                        let x = this.getStageCoordinatesFromBar(barPosition);
+                        let x = this._getStageCoordinatesFromBar(barPosition);
                         let y = track.startY;
                         let width = 0;
                         let height = track.height;
@@ -299,9 +300,11 @@ export class SongTimeline extends PIXI.Container {
                     }
                 }
             }
+            else if (this.timelineEditMode == SongTimelineEditMode.Remove) {
+                this._hoverHandler(this._getTimelineEventHit(event));
+            }
         }
     }
-
 
     public pointerUpHandler(event: PIXI.InteractionEvent) {
         // Check if event was a click
@@ -311,11 +314,12 @@ export class SongTimeline extends PIXI.Container {
                 if (this._pressed != null) {
                     // Select pressed object
                     this._selected = [this._pressed];
+                    this._hoverHandler(this._pressed);
                     this._pressed.selected = true;
                     this._pressed = null;
                 }
                 else if (this.timelineMode == SongTimelineMode.Edit) {
-                    if (this._newEventData != undefined) {
+                    if (this.timelineEditMode == SongTimelineEditMode.Add && this._newEventData != undefined) {
                         let track = this._newEventData.track;
                         let startPosition = this._newEventData.startPosition;
                         console.log("adding at: " + startPosition);
@@ -334,7 +338,15 @@ export class SongTimeline extends PIXI.Container {
                 // This was a click on a child, activate click on the pressed object and unselect all other objects.
                 for (let i = 0; i < this._selected.length; i++) {
                     if (this._selected[i] == this._pressed) {
-                        this._pressed.pointerUpClickHandler();
+                        if (this.timelineEditMode == SongTimelineEditMode.Remove) {
+                            this._pressed.deleteEvent();
+                            this._pressed, this._hovered = null;
+                            this._selected.splice(i, 1);
+                        }
+                        else {
+                            this._pressed.pointerUpClickHandler();
+                        }
+                        return;
                     }
                     else {
                         this._selected[i].selected = false;
@@ -376,14 +388,14 @@ export class SongTimeline extends PIXI.Container {
         else if (this._clickState == ClickState.None) {
 
             // Get the mouse's position in bars (based on the screen)
-            let [barPosition, beatPosition, numBeats] = this.getBarFromStageCoordinates(stageX);
+            let [barPosition, beatPosition, numBeats] = this._getBarFromStageCoordinates(stageX);
             barPosition += beatPosition / numBeats
             // Change the scaling
             this._zoomScale = Math.max(0.5, Math.min(5.0, this._zoomScale - event.deltaY / 1000));
             // Regenerate the bars (at least until the bar we need)
             this._regenerateTimeline(this._bars[0].barNumber, Math.floor(barPosition));
             // Get the offset required to put the original position under the mouse
-            let offset = this.getStageCoordinatesFromBar(barPosition) - stageX;
+            let offset = this._getStageCoordinatesFromBar(barPosition) - stageX;
             // If the first bar is bar 0, check the offset won't cause it to go past the left side of the timeline view.
             if (this._bars[0].barNumber === 0 && this._bars[0].leftBound - offset > this.startX) {
                 // If it will, instead set the offset at most to the offset needed to put bar 0 at the start of the timeline view.
@@ -391,6 +403,43 @@ export class SongTimeline extends PIXI.Container {
             }
             this._offsetChildren(offset);
         }
+    }
+
+    private _hoverHandler(newHover : TrackTimelineEvent) {
+        if (this._hovered != null && this._hovered != newHover) {
+            this._hovered.hoveredColor = null;
+            this._hovered.hovered = false;
+        }
+        this._hovered = newHover;
+        if (this._hovered == null) {
+            return;
+        }
+        this._hovered.hovered = true;
+
+        if (this.timelineMode == SongTimelineMode.Edit && this.timelineEditMode == SongTimelineEditMode.Remove) {
+            if (this._hovered != null && this._selected.includes(this._hovered)) {
+                this._hovered.hoveredColor = 0xFF0000;
+            }
+        }
+    }
+
+    /**
+     * Returns if a timelineEvent is under a given PIXI InteractionEvent
+     *
+     * @private
+     * @param {PIXI.InteractionEvent} event
+     * @returns {TrackTimelineEvent} The child that was hit (null if none was hit)
+     * @memberof SongTimeline
+     */
+    private _getTimelineEventHit(event : PIXI.InteractionEvent) : TrackTimelineEvent {
+        for (let i = 0; i < this._eventContainer.children.length; i++) {
+            let child = this._eventContainer.children[i] as TrackTimelineEvent;
+            let pos = event.data.getLocalPosition(child);
+            if (pos.x > 0 && pos.x < child.width && pos.y > 0 && pos.y < child.height) {
+                return child;
+            }
+        }
+        return null;
     }
 
 
@@ -402,7 +451,7 @@ export class SongTimeline extends PIXI.Container {
      * @returns {number[]} An array of the form [bar number, number of beats through bar, number of beats in bar]
      * @memberof SongTimeline
      */
-    private getBarFromStageCoordinates(stageX: number) : number[] {
+    private _getBarFromStageCoordinates(stageX: number) : number[] {
         for (let i = 0; i < this._bars.length; i++) {
             if (this._bars[i].leftBound <= stageX && this._bars[i].rightBound > stageX) {
                 // Calculate the bar number + the percentage through the bar that the mouse position
@@ -412,7 +461,7 @@ export class SongTimeline extends PIXI.Container {
     }
 
 
-    private getStageCoordinatesFromBar(barNumber: number) {
+    private _getStageCoordinatesFromBar(barNumber: number) {
         for (let i = 0; i < this._bars.length; i++) {
             if (this._bars[i].barNumber === Math.floor(barNumber)) {
                 // Get the left bound of the current bar and add 

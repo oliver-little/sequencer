@@ -12,7 +12,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
     static borderLeft = 1;
     static borderRight = 2;
     static borderHeight = 2;
-    static paddingHeight = 4;
+    static paddingHeight = 6;
     static selectedBorderWidth = 4;
 
     public timeline: SongTimeline;
@@ -23,8 +23,11 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
     public abstract readonly eventDuration: number
 
     protected _selected: boolean = false;
+    protected _hovered: boolean = false;
+    protected _opacity: number = 1;
     protected _contentGraphics: PIXI.Graphics;
     protected _selectedGraphics: PIXI.Graphics;
+    protected _hoveredColor: number = UIColors.trackEventHoveredColor;
 
     protected _assignedHeight : number;
 
@@ -82,7 +85,40 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
 
     set selected(value: boolean) {
         this._selected = value;
-        this.redraw(this._selected);
+        this.redrawSelected();
+    }
+
+    get hovered() {
+        return this._hovered;
+    }
+
+    set hovered(value: boolean) {
+        this._hovered = value;
+        this.redrawSelected();
+    }
+
+    get hoveredColor() {
+        return this._hoveredColor;
+    }
+
+    set hoveredColor(value : number) {
+        if (value == null) {
+            value = UIColors.trackEventHoveredColor;
+        }
+        this._hoveredColor = value;
+        this.redrawSelected();
+    }
+
+    get opacity() {
+        return this._opacity;
+    }
+
+    set opacity(value : number) {
+        if (value < 0 || value > 1) {
+            throw new RangeError("Opacity must be between 0 and 1.");
+        }
+        this._opacity = value;
+        this.redraw();
     }
 
     /**
@@ -91,26 +127,30 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      *
      * @memberof TrackTimelineEvent
      */
-    public redraw(selected: boolean = this._selected) {
+    public redraw() {
         this._assignedHeight = this.track.height - TrackTimelineEvent.borderHeight;
 
         this._contentGraphics.clear();
+        this._contentGraphics.beginFill(UIColors.trackEventColor, this._opacity)
+            .drawRect(0, 0, this.assignedWidth, this._assignedHeight)
+            .endFill();
+        this.redrawSelected();
+    }
+
+    /**
+     * Just redraws the selected outline of the current TrackTimelineEvent
+     *
+     * @memberof TrackTimelineEvent
+     */
+    public redrawSelected() {
         this._selectedGraphics.clear();
-        if (selected) {
-            this._contentGraphics.beginFill(UIColors.trackEventColor)
-                .drawRect(TrackTimelineEvent.paddingHeight, TrackTimelineEvent.paddingHeight, this.assignedWidth - TrackTimelineEvent.paddingHeight * 2, this._assignedHeight - TrackTimelineEvent.paddingHeight * 2)
-                .endFill();
-            this._selectedGraphics.beginFill(UIColors.trackEventSelectedColor)
+        if (this.hovered || this.selected) {
+        this._selectedGraphics.beginFill(this.hovered ? this._hoveredColor : UIColors.trackEventSelectedColor, this.opacity)
                 .drawRect(0, 0, this.assignedWidth, this._assignedHeight)
                 .endFill()
                 .beginHole()
                 .drawRect(TrackTimelineEvent.selectedBorderWidth, TrackTimelineEvent.selectedBorderWidth, this.assignedWidth - TrackTimelineEvent.selectedBorderWidth * 2, this._assignedHeight - TrackTimelineEvent.selectedBorderWidth * 2)
                 .endHole();
-        }
-        else {
-            this._contentGraphics.beginFill(UIColors.trackEventColor)
-                .drawRect(0, 0, this.assignedWidth, this._assignedHeight)
-                .endFill();
         }
     }
 
@@ -169,6 +209,15 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
         this.x = this._startXPosition;
         this.clickHandler();
         this._startXPosition = undefined;
+    }
+
+    /**
+     * Handles deletion of this event
+     *
+     * @memberof TrackTimelineEvent
+     */
+    public deleteEvent() {
+        this.destroy({children:true});
     }
 
     /**
@@ -233,8 +282,8 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
         return this._noteGroup[1] - this._noteGroup[0];
     }
 
-    public redraw(selected: boolean = this._selected) {
-        super.redraw(selected);
+    public redraw() {
+        super.redraw();
         this._notes = this.track.track.timeline.getEventsBetweenTimes(this._noteGroup[0], this._noteGroup[1]) as NoteEvent[];
         this.setNotes(this._notes, this.track.track.highestPitch, this.track.track.lowestPitch, this._noteGroup);
     }
@@ -248,7 +297,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
         let positionMap = position => {
             return (position - start) / (end - start);
         }
-        this._contentGraphics.beginFill(UIColors.trackEventHighlightColor);
+        this._contentGraphics.beginFill(UIColors.trackEventHighlightColor, this._opacity);
         notes.forEach(note => {
             let startX = positionMap(note.startPosition) * this.assignedWidth;
             let endX = positionMap(note.startPosition + note.duration) * this.assignedWidth;
@@ -300,6 +349,15 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
             this.track.addNoteGroup(noteGroup[0], noteGroup[1]);
             this._noteGroup = noteGroup;
         }
+    }
+
+    public deleteEvent() {
+        this._notes.forEach(note => {
+            this.track.track.timeline.removeEvent(note);
+        });
+        delete this._notes;
+        this.track.removeNoteGroup(this.noteGroup[0]);
+        super.deleteEvent();
     }
 
     protected clickHandler() {
@@ -363,6 +421,11 @@ export class OneShotTimelineEvent extends TrackTimelineEvent {
             let eventIndex = this.track.track.timeline.getIndexOfEvent(this.event);
             this.track.track.timeline.editEvent(eventIndex, newStartPosition);
         }
+    }
+
+    public deleteEvent() {
+        this.track.track.timeline.removeEvent(this.event);
+        super.deleteEvent();
     }
 
     protected clickHandler() {
