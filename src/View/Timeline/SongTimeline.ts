@@ -59,7 +59,7 @@ export class SongTimeline extends PIXI.Container {
     public tracks: UITrack[];
 
     public timelineMode: SongTimelineMode = SongTimelineMode.Edit;
-    public timelineEditMode: SongTimelineEditMode = SongTimelineEditMode.Remove;
+    public timelineEditMode: SongTimelineEditMode = SongTimelineEditMode.Add;
 
     /**
      * Represents how dragging of child objects should be snapped (to the beat, to the half beat, etc)
@@ -179,7 +179,7 @@ export class SongTimeline extends PIXI.Container {
             this._clickState = ClickState.Dragging;
             // Remove selected objects
             this._selected.forEach(selectedObj => {
-                selectedObj.pointerDownHandler();
+                selectedObj.selected = false;
             });
             this._selected = [];
         }
@@ -299,6 +299,9 @@ export class SongTimeline extends PIXI.Container {
                             }
                             width = this.metadata.positionQuarterNoteToBeats(track.eventDuration) * this.beatWidth;
                         }
+                        
+                        // Fixes a bug where very small events won't display properly.
+                        width = Math.max(width, 3);
 
                         this._newEventGraphics.clear();
                         this._newEventGraphics.beginFill(UIColors.trackEventColor)

@@ -54,7 +54,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
         this.addChild(this._contentGraphics, this._selectedGraphics);
 
         this.x = x + TrackTimelineEvent.borderLeft;
-        this.assignedWidth = Math.max(width - TrackTimelineEvent.borderRight, 2);
+        this.assignedWidth = Math.max(width - TrackTimelineEvent.borderRight, 3);
         this.y = track.startY +  TrackTimelineEvent.borderHeight;
     }
 
@@ -67,7 +67,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      */
     public reinitialise(x : number, width : number) {
         this.x = x + TrackTimelineEvent.borderLeft;
-        this.assignedWidth = Math.max(width - TrackTimelineEvent.borderRight, 2);
+        this.assignedWidth = Math.max(width - TrackTimelineEvent.borderRight, 3);
         this.redraw();
     }
 
