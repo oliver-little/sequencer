@@ -63,6 +63,7 @@ export class SongTimeline extends ScrollableTimeline {
 
     // Separate bars and events for z indexing
     private _eventContainer: PIXI.Container;
+    private _barContainer: PIXI.Container;
 
     protected _objectPool: ObjectPool<Bar>;
     protected _scrollObjects: Bar[];
@@ -100,11 +101,11 @@ export class SongTimeline extends ScrollableTimeline {
         this._objectPool = new ObjectPool(Bar);
         this._scrollObjects = [];
 
+        this._barContainer = new PIXI.Container();
         this._eventContainer = new PIXI.Container();
-        this.addChild(this._eventContainer);
-
         this._newEventGraphics = new PIXI.Graphics();
-        this.addChild(this._newEventGraphics);
+        this.addChild(this._barContainer, this._eventContainer, this._newEventGraphics);
+
 
         this._regenerateTimeline(0);
 
@@ -306,6 +307,11 @@ export class SongTimeline extends ScrollableTimeline {
         this._clickState = ClickState.None;
     }
 
+    public mouseWheelHandler(event: WheelEvent, canvasX: number, canvasY: number) {
+        this._newEventGraphics.visible = false;
+        super.mouseWheelHandler(event, canvasX, canvasY);
+    }
+
     private _hoverHandler(newHover : TrackTimelineEvent) {
         if (this._hovered != null && this._hovered != newHover) {
             this._hovered.hoveredColor = null;
@@ -318,7 +324,7 @@ export class SongTimeline extends ScrollableTimeline {
         this._hovered.hovered = true;
 
         if (this.timelineMode == SongTimelineMode.Edit && this.timelineEditMode == SongTimelineEditMode.Remove) {
-            if (this._hovered != null && this._selected.includes(this._hovered)) {
+            if (this._hovered != null && this._selected.indexOf(this._hovered) != -1) {
                 this._hovered.hoveredColor = 0xFF0000;
             }
         }
@@ -419,14 +425,14 @@ export class SongTimeline extends ScrollableTimeline {
 
     protected _initialiseScrollableBar(xPosition: number, barNumber: number, leftSide: boolean): Bar {
         // Get a bar object
-        let bar = null;
+        let bar : Bar = null;
         if (this._objectPool.objectCount > 0) {
             bar = this._objectPool.getObject();
             bar.visible = true;
         }
         else {
             bar = new Bar();
-            this._scrollObjectContainer.addChild(bar);
+            this._barContainer.addChild(bar);
         }
         
         // Positions the bar object

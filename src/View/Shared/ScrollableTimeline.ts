@@ -22,7 +22,6 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     protected _zoomScale = 1;
 
     protected _scrollObjects: ScrollableBar[];
-    protected _scrollObjectContainer : PIXI.Container;
     protected _objectPool: ObjectPool<ScrollableBar>;
 
     protected _startPointerPosition: PIXI.Point;
@@ -41,8 +40,7 @@ export abstract class ScrollableTimeline extends PIXI.Container {
         this.resizeInteractiveArea();
         this.addChild(this._interactivityRect);
 
-        this._scrollObjectContainer = new PIXI.Container();
-        this.addChild(this._scrollObjectContainer);
+        
 
         this.on("pointerdown", this.pointerDownHandler.bind(this));
         this.on("pointermove", this.pointerMoveHandler.bind(this));
@@ -199,12 +197,11 @@ export abstract class ScrollableTimeline extends PIXI.Container {
      * @memberof ScrollableTimeline
      */
     protected _offsetChildren(pixelOffset: number) {
-        this._scrollObjectContainer.children.forEach(child => {
+        this._scrollObjects.forEach(child => {
             child.x -= pixelOffset;
-            
-            // After offsetting, ensure the screen is still filled with bars
-            this._checkBarsFillScreen();
         });
+        // After offsetting, ensure the screen is still filled with bars
+        this._checkBarsFillScreen();
     }
 
     /**
@@ -251,6 +248,7 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     protected _checkBarsFillScreen() {
         // Fill left (to 0)
         while (this._scrollObjects[0].leftBound > this.startX && this._scrollObjects[0].barNumber != 0) {
+            console.log(this._scrollObjects[0].barNumber, this._scrollObjects[0].leftBound);
             let bar = this._initialiseScrollableBar(this._scrollObjects[0].leftBound, this._scrollObjects[0].barNumber - 1, false);
             this._scrollObjects.splice(0, 0, bar);
         }
