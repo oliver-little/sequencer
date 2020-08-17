@@ -1,8 +1,9 @@
 import * as PIXI from "pixi.js";
 import { UIColors } from "../UIColors.js";
 import { SongTimeline } from "./SongTimeline";
+import { ScrollableBar } from "../Shared/ScrollableTimeline.js";
 
-export class Bar extends PIXI.Container {
+export class Bar extends PIXI.Container implements ScrollableBar {
 
     private _graphics: PIXI.Graphics;
     private _barText: PIXI.Text;
