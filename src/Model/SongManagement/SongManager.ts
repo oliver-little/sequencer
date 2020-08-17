@@ -18,6 +18,7 @@ export class SongManager {
     public connectionManager : ConnectionManager;
     public context: AudioContext|OfflineAudioContext;
     public scheduleEvent: SimpleEvent;
+    public playingChangedEvent: SimpleEvent;
 
     protected _tracks: BaseTrack[];
     protected _playing = false;
@@ -32,6 +33,7 @@ export class SongManager {
         this.context = (context === undefined) ? new AudioContext() : context;
         this.connectionManager = new ConnectionManager(this.context);
         this.scheduleEvent = new SimpleEvent();
+        this.playingChangedEvent = new SimpleEvent();
         this._tracks = [];
     }
 
@@ -98,6 +100,7 @@ export class SongManager {
         }
 
         this._playing = true;
+        this.playingChangedEvent.emit(this._playing);
         this.quarterNotePosition = startPosition;
         if (startPosition == 0) {
             this._startTime = this.context.currentTime;
@@ -118,6 +121,7 @@ export class SongManager {
      */
     public stop() {
         this._playing = false;
+        this.playingChangedEvent.emit(this._playing);
         clearInterval(this.playingIntervalID);
         this._tracks.forEach(element => {
             element.stop();
