@@ -139,6 +139,9 @@ export class SoundFileInstrument implements IInstrument {
         else {
             bufferSource.connect(this._masterGain);
         }
+        if (offset < 0) {
+            offset = 0;
+        }
         bufferSource.start(startTime, offset);
     }
 
