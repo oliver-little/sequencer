@@ -66,7 +66,19 @@ window.onload = async function () {
         newUITracks.push(newTrack);
     }
 
-    let timeline = new TimelineView(app.renderer, newUITracks, songManager.metadata);
+    let btn = document.getElementById("startButton");
+    btn.onclick = function() {
+        if (!songManager.playing) {
+            songManager.start();
+            btn.innerHTML = "Stop";
+        }
+        else {
+            songManager.stop();
+            btn.innerHTML = "Start";
+        }
+    }
+
+    let timeline = new TimelineView(app.renderer, newUITracks, songManager);
     app.view.addEventListener("wheel", event => timeline.timeline.mouseWheelHandler(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));
     app.stage.addChild(timeline);
 

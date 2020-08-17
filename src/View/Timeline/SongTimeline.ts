@@ -7,6 +7,8 @@ import { TrackTimelineEvent, NoteGroupTimelineEvent, OneShotTimelineEvent } from
 import { PointHelper } from "../../HelperModules/PointHelper.js";
 import { UIColors } from "../UIColors.js";
 import { BaseEvent } from "../../Model/Notation/SongEvents.js";
+import { SongManager } from "../../Model/SongManagement/SongManager.js";
+import { TimelineMarker } from "./TimelineMarker.js";
 
 enum ClickState {
     None,
@@ -53,7 +55,7 @@ export class SongTimeline extends PIXI.Container {
     public endX: number;
     public endY: number;
 
-    public metadata: SongMetadata;
+    public songManager: SongManager;
     public tracks: UITrack[];
 
     public timelineMode: SongTimelineMode = SongTimelineMode.Edit;
@@ -82,6 +84,7 @@ export class SongTimeline extends PIXI.Container {
     private _startPointerPosition: PIXI.Point;
     private _startXPosition: number;
     private _interactivityRect: PIXI.Graphics;
+    private _timelineMarker: TimelineMarker;
 
     // Event creation variables
     private _newEventGraphics: PIXI.Graphics;
@@ -101,12 +104,12 @@ export class SongTimeline extends PIXI.Container {
      * @param {UITrack[]} tracks The tracks this timeline should display
      * @memberof SongTimeline
      */
-    constructor(startX: number, viewWidth: number, viewHeight: number, metadata: SongMetadata, tracks: UITrack[]) {
+    constructor(startX: number, viewWidth: number, viewHeight: number, songManager: SongManager, tracks: UITrack[]) {
         super();
         this.startX = startX;
         this.endX = viewWidth;
         this.endY = viewHeight;
-        this.metadata = metadata;
+        this.songManager = songManager;
         this.tracks = tracks;
 
         this._objectPool = new ObjectPool(Bar);
@@ -126,10 +129,20 @@ export class SongTimeline extends PIXI.Container {
 
         this._regenerateTimeline(0);
 
+        this._timelineMarker = new TimelineMarker();
+        this.addChild(this._timelineMarker);
+        this._redrawTimelineMarker();
+        this.songManager.playingChangedEvent.addListener(value => {this._playingStateChanged(value[0])});
+
+
         this.on("pointerdown", this.pointerDownHandler.bind(this));
         this.on("pointermove", this.pointerMoveHandler.bind(this));
         this.on("pointerup", this.pointerUpHandler.bind(this));
         this.on("pointerupoutside", this.pointerUpHandler.bind(this));
+    }
+
+    get metadata() {
+        return this.songManager.metadata;
     }
 
     get beatWidth() {
@@ -485,6 +498,8 @@ export class SongTimeline extends PIXI.Container {
         for (let i = 0; i < this._eventContainer.children.length; i++) {
             this._eventContainer.children[i].x -= pixelOffset;
         }
+
+        this._repositionTimelineMarker(this.songManager.quarterNotePosition);
         
 
         // After offsetting, ensure the screen is still filled with bars
@@ -669,6 +684,47 @@ export class SongTimeline extends PIXI.Container {
         return timelineEvent;
     }
 
+    private _playingStateChanged(value : boolean) {
+        if (value == true) {
+            requestAnimationFrame(this._timelineMarkerAnim.bind(this));
+        }
+    }
+
+    private _timelineMarkerAnim(timestamp : number) {
+        this._repositionTimelineMarker(this.songManager.quarterNotePosition);
+
+        if (this.songManager.playing == true) {
+            requestAnimationFrame(this._timelineMarkerAnim.bind(this));
+        }
+    }
+
+    /**
+     * Redraws the timeline marker
+     *
+     * @private
+     * @memberof SongTimeline
+     */
+    private _redrawTimelineMarker() {
+        this._timelineMarker.redraw(
+            0,
+            this.tracks[0].startY,
+            5 * this._zoomScale,
+            Math.max((this.tracks[this.tracks.length - 1].startY + this.tracks[this.tracks.length - 1].height), this.endY)
+        );
+        this._repositionTimelineMarker(this.songManager.quarterNotePosition);
+    }
+
+    /**
+     * Repositions the timeline marker over a given quarter note position
+     *
+     * @private
+     * @param {number} position
+     * @memberof SongTimeline
+     */
+    private _repositionTimelineMarker(position : number) {
+        this._timelineMarker.x = this._getTimelineEventX(position);
+    }
+
     /**
      * Gets the x coordinate and the width of a timeline event
      *
@@ -679,9 +735,13 @@ export class SongTimeline extends PIXI.Container {
      * @memberof SongTimeline
      */
     private _getTimelineEventXWidth(startPosition: number, endPosition : number) : number[] {
-        let x = (this.metadata.positionQuarterNoteToBeats(startPosition) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._bars[0].barNumber))) * this.beatWidth + this._bars[0].leftBound;
+        let x = this._getTimelineEventX(startPosition);
         let width = (this.metadata.positionQuarterNoteToBeats(endPosition) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
         return [x, width]
+    }
+
+    private _getTimelineEventX(position : number) : number {
+        return (this.metadata.positionQuarterNoteToBeats(position) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._bars[0].barNumber))) * this.beatWidth + this._bars[0].leftBound;
     }
 
     /**

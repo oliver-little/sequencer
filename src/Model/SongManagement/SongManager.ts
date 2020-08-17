@@ -26,7 +26,7 @@ export class SongManager {
     protected _startTime = 0; // Stores the AudioContext time at which the song started playing.
     protected _quarterNotePosition = 0;
 
-    protected playingIntervalID = null;
+    protected playingIntervalIDs = null;
 
     constructor(context? : AudioContext|OfflineAudioContext) {
         this.metadata = new SongMetadata();
@@ -108,7 +108,10 @@ export class SongManager {
         else {
             this._startTime = this.context.currentTime - this.metadata.positionQuarterNoteToSeconds(startPosition);
         }
-        this.playingIntervalID = setInterval(function () { this.scheduleNotes() }.bind(this), 50);
+        // Schedule notes separately from quarter note update
+        this.playingIntervalIDs = setInterval(function () { this.scheduleNotes() }.bind(this), 50);
+        // Schedule quarter note update function until playing stops using animation frame (to keep animations smooth)
+        requestAnimationFrame(this.quarterNoteUpdateFunction.bind(this));
         this._tracks.forEach(element => {
             element.start(startPosition);
         });
@@ -122,7 +125,8 @@ export class SongManager {
     public stop() {
         this._playing = false;
         this.playingChangedEvent.emit(this._playing);
-        clearInterval(this.playingIntervalID);
+        clearInterval(this.playingIntervalIDs[0])
+        clearInterval(this.playingIntervalIDs[1]);
         this._tracks.forEach(element => {
             element.stop();
         });
@@ -206,12 +210,18 @@ export class SongManager {
         return longestEvent;
     }
 
-    protected scheduleNotes() { // Calculates the current quarter note position and updates tracks.
-        let timeSinceStart = this.context.currentTime - this._startTime;
-        this.quarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
+    protected scheduleNotes() {
         let quarterNoteTime = this.quarterNotePosition + ((this.lookaheadTime / this.metadata.getSecondsPerBeat(this.quarterNotePosition))
             / this.metadata.getQuarterNoteMultiplier(this.quarterNotePosition));
         this.scheduleEvent.emit(quarterNoteTime);
+    }
+
+    protected quarterNoteUpdateFunction() {
+        let timeSinceStart = this.context.currentTime - this._startTime;
+        this.quarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
+        if (this.playing) {
+            requestAnimationFrame(this.quarterNoteUpdateFunction.bind(this));
+        }
     }
 }
 
