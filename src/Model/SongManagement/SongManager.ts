@@ -24,7 +24,6 @@ export class SongManager {
 
     protected _startTime = 0; // Stores the AudioContext time at which the song started playing.
     protected _quarterNotePosition = 0;
-    protected _quarterNoteChangedEvent : SimpleEvent;
 
     protected playingIntervalID = null;
 
@@ -33,7 +32,6 @@ export class SongManager {
         this.context = (context === undefined) ? new AudioContext() : context;
         this.connectionManager = new ConnectionManager(this.context);
         this.scheduleEvent = new SimpleEvent();
-        this._quarterNoteChangedEvent = new SimpleEvent();
         this._tracks = [];
     }
 
@@ -42,26 +40,16 @@ export class SongManager {
     }
 
     get quarterNotePosition() {
-        return this.quarterNotePosition;
+        return this._quarterNotePosition;
     }
 
     set quarterNotePosition(value : number) {
         this._quarterNotePosition = value;
-        this._quarterNoteChangedEvent.emit(value);
     }
 
     get tracks() {
         return this._tracks;
     }
-
-    public addQuarterNotePositionChangedListener(callback : Function) {
-        this._quarterNoteChangedEvent.addListener(callback);
-    }
-
-    public removeQuarterNotePositionChangedListener(callback : Function) {
-        this._quarterNoteChangedEvent.removeListener(callback);
-    }
-
 
     /**
      * Adds a new oscillator track to the song
