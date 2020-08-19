@@ -6,6 +6,7 @@ import { OscillatorTrack } from "../Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "../Tracks/SoundFileTrack.js";
 import { ConnectionManager } from "./ConnectionManager.js";
 import { ISongEvent } from "../Notation/SongEvents.js";
+import { AccessibilityManager } from "pixi.js";
 
 export class SongManager {
 
@@ -28,6 +29,8 @@ export class SongManager {
 
     protected playingIntervalIDs = null;
 
+    protected _boundQuarterNoteUpdateFunction : () => any;
+
     constructor(context? : AudioContext|OfflineAudioContext) {
         this.metadata = new SongMetadata();
         this.context = (context === undefined) ? new AudioContext() : context;
@@ -35,6 +38,8 @@ export class SongManager {
         this.scheduleEvent = new SimpleEvent();
         this.playingChangedEvent = new SimpleEvent();
         this._tracks = [];
+
+        this._boundQuarterNoteUpdateFunction = this.quarterNoteUpdateFunction.bind(this);
     }
 
     get playing() {
@@ -109,9 +114,9 @@ export class SongManager {
             this._startTime = this.context.currentTime - this.metadata.positionQuarterNoteToSeconds(startPosition);
         }
         // Schedule notes separately from quarter note update
-        this.playingIntervalIDs = setInterval(function () { this.scheduleNotes() }.bind(this), 50);
+        this.playingIntervalIDs = setInterval(() => {this.scheduleNotes()}, 50);
         // Schedule quarter note update function until playing stops using animation frame (to keep animations smooth)
-        requestAnimationFrame(this.quarterNoteUpdateFunction.bind(this));
+        requestAnimationFrame(this._boundQuarterNoteUpdateFunction);
         this._tracks.forEach(element => {
             element.start(startPosition);
         });
@@ -220,7 +225,7 @@ export class SongManager {
         let timeSinceStart = this.context.currentTime - this._startTime;
         this.quarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
         if (this.playing) {
-            requestAnimationFrame(this.quarterNoteUpdateFunction.bind(this));
+            requestAnimationFrame(this._boundQuarterNoteUpdateFunction);
         }
     }
 }

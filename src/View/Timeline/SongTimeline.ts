@@ -81,6 +81,8 @@ export class SongTimeline extends ScrollableTimeline {
     private _selected: TrackTimelineEvent[] = [];
     private _hovered: TrackTimelineEvent;
 
+    private _boundTimelineAnim : (time : number) => any;
+
     /**
      *Creates an instance of SongTimeline.
      * @param {number} startX The x coordinate in the parent where this timeline should start (pixels)
@@ -103,15 +105,17 @@ export class SongTimeline extends ScrollableTimeline {
 
         this._barContainer = new PIXI.Container();
         this._eventContainer = new PIXI.Container();
+
         this._newEventGraphics = new PIXI.Graphics();
         this.addChild(this._barContainer, this._eventContainer, this._newEventGraphics);
-
 
         this._regenerateTimeline(0);
 
         this._timelineMarker = new TimelineMarker();
         this.addChild(this._timelineMarker);
         this._redrawTimelineMarker();
+
+        this._boundTimelineAnim = this._timelineMarkerAnim.bind(this);
         this.songManager.playingChangedEvent.addListener(value => {this._playingStateChanged(value[0])});
     }
 
@@ -473,7 +477,7 @@ export class SongTimeline extends ScrollableTimeline {
 
     private _playingStateChanged(value : boolean) {
         if (value == true) {
-            requestAnimationFrame(this._timelineMarkerAnim.bind(this));
+            requestAnimationFrame(this._boundTimelineAnim);
         }
     }
 
@@ -481,7 +485,7 @@ export class SongTimeline extends ScrollableTimeline {
         this._repositionTimelineMarker(this.songManager.quarterNotePosition);
 
         if (this.songManager.playing == true) {
-            requestAnimationFrame(this._timelineMarkerAnim.bind(this));
+            requestAnimationFrame(this._boundTimelineAnim);
         }
     }
 
