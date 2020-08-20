@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import { UIColors } from "../UIColors.js";
+import { UIColors } from "../Shared/UITheme.js";
 import { SongTimeline } from "./SongTimeline";
 import { ScrollableBar } from "../Shared/ScrollableTimeline.js";
 

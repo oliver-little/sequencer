@@ -8,3 +8,12 @@ export class UIColors {
     public static trackEventHoveredColor = 0x666666;
     public static trackEventHighlightColor = 0xffe175;
 }
+
+export class UIFonts {
+    public static trackFont = {
+        fontFamily: "Arial",
+        fontSize: 15,
+        fill: 0xFFFFFF,
+        align: "left"
+    };
+}

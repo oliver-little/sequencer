@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
 import { UITrack } from "../UIObjects/UITrack.js";
-import { UIColors } from "../UIColors.js";
+import { UIColors } from "../Shared/UITheme.js";
 
 /**
  * Container for a the settings of a list of tracks.

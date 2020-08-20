@@ -3,7 +3,7 @@ import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { UITrack, NoteUITrack, SoundFileUITrack } from "../UIObjects/UITrack.js";
 import { Bar } from "./Bar.js";
 import { TrackTimelineEvent, NoteGroupTimelineEvent, OneShotTimelineEvent } from "./TrackTimelineEvent.js";
-import { UIColors } from "../UIColors.js";
+import { UIColors } from "../Shared/UITheme.js";
 import { BaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { TimelineMarker } from "./TimelineMarker.js";

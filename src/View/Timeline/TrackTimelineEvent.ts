@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import { UIColors } from "../UIColors.js";
+import { UIColors } from "../Shared/UITheme.js";
 import { TrackList } from "./TrackList.js";
 import { NoteEvent, BaseEvent } from "../../Model/Notation/SongEvents.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
