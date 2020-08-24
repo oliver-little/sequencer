@@ -74,13 +74,12 @@ export abstract class VerticalScrollView extends PIXI.Container {
             this.verticalScrollPosition = event.data.getLocalPosition(this).y - this._startPointerPosition.y + this._startVerticalScrollPosition;
             this.updateVerticalScroll(this.verticalScrollPosition);
         }
-
         if (this._sendPointerEventsTo != undefined) {
             this._sendPointerEventsTo.pointerMoveHandler(event);
         }
         else {
             if (event.data.getLocalPosition(this).x > this._sidebarPosition) {
-                this._sendPointerEventsTo = this.timeline;
+                this.timeline.pointerMoveHandler(event);
             }
         }
     }

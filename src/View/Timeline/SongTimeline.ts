@@ -260,22 +260,25 @@ export class SongTimeline extends ScrollableTimeline {
                         let event = track.track.addOneShot(startPosition);
                         this._initialiseTimelineEvent(event, track);
                     }
+                    this._newEventData = undefined;
                 }
             }
         }
         else if (this._clickState == ClickState.EventDragging) {
             // This was a click on a child, activate click on the pressed object and unselect all other objects.
+            let pressedIsSelected = false;
             for (let i = 0; i < this._selected.length; i++) {
                 if (this._selected[i] == this._pressed) {
                     if (this.timelineEditMode == SongTimelineEditMode.Remove) {
                         this._pressed.deleteEvent();
                         this._pressed, this._hovered = null;
                         this._selected.splice(i, 1);
+                        this._clickState = ClickState.None;
+                        return;
                     }
                     else {
                         this._pressed.pointerUpClickHandler();
                     }
-                    return;
                 }
                 else {
                     this._selected[i].selected = false;
