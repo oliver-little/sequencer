@@ -25,9 +25,9 @@ export class TimelineView extends VerticalScrollView {
         this.trackList = new TrackList(this._sidebarPosition, renderer.width, tracks);
         this.addChild(this.trackList);
 
-        /*if (tracks[tracks.length - 1].startY + tracks[tracks.length - 1].height < renderer.height) {
+        if (tracks[tracks.length - 1].startY + tracks[tracks.length - 1].height < renderer.height) {
             this.scrollingEnabled = false;
-        }*/
+        }
     }
 
     protected updateVerticalScroll(value : number) {

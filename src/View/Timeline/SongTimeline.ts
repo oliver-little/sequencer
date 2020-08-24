@@ -1,13 +1,12 @@
 import * as PIXI from "pixi.js";
-import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { UITrack, NoteUITrack, SoundFileUITrack } from "../UIObjects/UITrack.js";
-import { ScrollableBar } from "../Shared/ScrollableBar.js";
 import { TrackTimelineEvent, NoteGroupTimelineEvent, OneShotTimelineEvent } from "./TrackTimelineEvent.js";
 import { UIColors } from "../Shared/UITheme.js";
 import { BaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { TimelineMarker } from "./TimelineMarker.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
+import { ScrollableBar } from "../Shared/ScrollableBar.js";
 
 enum ClickState {
     None,
@@ -163,7 +162,7 @@ export class SongTimeline extends ScrollableTimeline {
                 // Display new event outline (set width for note events, same length as soundfile for soundfile)
                 let mousePos = event.data.getLocalPosition(this.parent);
                 for(let i = 0; i < this.tracks.length; i++) {
-                    if (this.tracks[i].startY < mousePos.y && this.tracks[i].startY + this.tracks[i].height > mousePos.y) {
+                    if (this.tracks[i].startY + this._verticalScrollPosition < mousePos.y && this.tracks[i].startY + this.tracks[i].height + this._verticalScrollPosition > mousePos.y) {
                         let track = this.tracks[i];
 
                         if (mousePos.x < this.startX || mousePos.x > this.endX) {
@@ -197,7 +196,7 @@ export class SongTimeline extends ScrollableTimeline {
 
                         let startPosition = this.metadata.positionBarsToQuarterNote(barPosition);
                         let x = this._getStageCoordinatesFromBar(barPosition);
-                        let y = track.startY;
+                        let y = track.startY + this._verticalScrollPosition;
                         let width = 0;
                         let height = track.height;
                         if (track instanceof NoteUITrack) {

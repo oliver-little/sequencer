@@ -79,8 +79,8 @@ window.onload = async function () {
         }
     }
 
-    //let timeline = new TimelineView(app.renderer, newUITracks, songManager);
-    let timeline = new SequencerView(app.renderer, newUITracks.filter(track => {track instanceof NoteUITrack})[0] as NoteUITrack, songManager);
+    let timeline = new TimelineView(app.renderer, newUITracks, songManager);
+    //let timeline = new SequencerView(app.renderer, newUITracks.filter(track => {track instanceof NoteUITrack})[0] as NoteUITrack, songManager);
     app.view.addEventListener("wheel", event => timeline.timeline.mouseWheelHandler(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));
     app.stage.addChild(timeline);
 

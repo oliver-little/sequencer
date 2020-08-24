@@ -3,8 +3,8 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
+- Refactor scrollablebar code in sequencerbar and timelinebar into scrollable bar as this code is identical
 - Refactor timeline marker in sequencer timeline and song timeline into scrollable timeline, as code is identical
-- Refactor common code from sequencerbar and bar into the same class
 - Scrollbars, both vertical and horizontal
 - Ability to add time signature and bpm changes at the top of the screen
 
