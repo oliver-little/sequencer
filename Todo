@@ -3,10 +3,9 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
-- Add a timeline marker that moves with the current position of the song in the songManager (likely needs to be done using GetAnimationFrame)
+- Refactor timeline marker in sequencer timeline and song timeline into scrollable timeline, as code is identical
+- Refactor common code from sequencerbar and bar into the same class
 - Scrollbars, both vertical and horizontal
-- Make note groups interactable which would then take the user to a sequencer style page where the current note group is loaded and the user can edit it
 - Ability to add time signature and bpm changes at the top of the screen
-- zooming still has rare bugs resulting in all bars disappearing then errors
 
 - Connections for tracks with chains and global bus - https://github.com/lukasoppermann/html5sortable

@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js";
 import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { UITrack, NoteUITrack, SoundFileUITrack } from "../UIObjects/UITrack.js";
-import { Bar } from "./Bar.js";
+import { ScrollableBar } from "../Shared/ScrollableBar.js";
 import { TrackTimelineEvent, NoteGroupTimelineEvent, OneShotTimelineEvent } from "./TrackTimelineEvent.js";
 import { UIColors } from "../Shared/UITheme.js";
 import { BaseEvent } from "../../Model/Notation/SongEvents.js";
@@ -62,11 +62,9 @@ export class SongTimeline extends ScrollableTimeline {
     public dragType: EventDragType = EventDragType.QuarterBeat;
 
     // Separate bars and events for z indexing
+    private _headerContainer: PIXI.Container;
     private _eventContainer: PIXI.Container;
     private _barContainer: PIXI.Container;
-
-    protected _objectPool: ObjectPool<Bar>;
-    protected _scrollObjects: Bar[];
 
     // Scrolling variables
     private _clickState = ClickState.None;
@@ -94,20 +92,15 @@ export class SongTimeline extends ScrollableTimeline {
      */
     constructor(startX: number, endX: number, endY: number, songManager: SongManager, tracks: UITrack[]) {
         super(startX, endX, 0, endY);
-        this.startX = startX;
-        this.endX = endX;
-        this.endY = endY;
         this.songManager = songManager;
         this.tracks = tracks;
 
-        this._objectPool = new ObjectPool(Bar);
-        this._scrollObjects = [];
-
         this._barContainer = new PIXI.Container();
         this._eventContainer = new PIXI.Container();
+        this._headerContainer = new PIXI.Container();
 
         this._newEventGraphics = new PIXI.Graphics();
-        this.addChild(this._barContainer, this._eventContainer, this._newEventGraphics);
+        this.addChild(this._barContainer, this._eventContainer, this._newEventGraphics, this._headerContainer);
 
         this._regenerateTimeline(0);
 
@@ -121,10 +114,6 @@ export class SongTimeline extends ScrollableTimeline {
 
     get metadata() {
         return this.songManager.metadata;
-    }
-
-    get beatWidth() {
-        return SongTimeline.beatWidth * this._zoomScale;
     }
 
     get clickState() {
@@ -316,6 +305,15 @@ export class SongTimeline extends ScrollableTimeline {
         super.mouseWheelHandler(event, canvasX, canvasY);
     }
 
+    public updateVerticalScroll(value : number) {
+        super.updateVerticalScroll(value);
+
+        // Also move the events
+        this._eventContainer.children.forEach(function(event : TrackTimelineEvent) {
+            event.verticalScrollPosition = value;
+        });
+    }
+
     private _hoverHandler(newHover : TrackTimelineEvent) {
         if (this._hovered != null && this._hovered != newHover) {
             this._hovered.hoveredColor = null;
@@ -427,22 +425,23 @@ export class SongTimeline extends ScrollableTimeline {
         }
     }
 
-    protected _initialiseScrollableBar(xPosition: number, barNumber: number, leftSide: boolean): Bar {
+    protected _initialiseScrollableBar(xPosition: number, barNumber: number, leftSide: boolean): ScrollableBar {
         // Get a bar object
-        let bar : Bar = null;
-        if (this._objectPool.objectCount > 0) {
-            bar = this._objectPool.getObject();
-            bar.visible = true;
+        let bar : ScrollableBar = null;
+        if (this._barPool.objectCount > 0) {
+            bar = this._barPool.getObject();
+            bar.setVisible(true);
         }
         else {
-            bar = new Bar();
+            bar = new ScrollableBar(this._headerContainer);
             this._barContainer.addChild(bar);
         }
         
         // Positions the bar object
         let quarterNotePosition = this.metadata.positionBarsToQuarterNote(barNumber);
         let numberOfBeats = this.metadata.getTimeSignature(quarterNotePosition)[0];
-        bar.initialise(xPosition, this.endY, barNumber, numberOfBeats, this._zoomScale, leftSide);
+        bar.initialise(xPosition, this.endY, barNumber, numberOfBeats, this.beatWidth, leftSide);
+        bar.verticalScrollPosition = this._verticalScrollPosition;
         return bar;
     }
 

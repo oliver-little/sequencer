@@ -1,13 +1,7 @@
 import * as PIXI from "pixi.js";
 import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { PointHelper } from "../../HelperModules/PointHelper.js";
-
-export interface ScrollableBar extends PIXI.Container {
-    barNumber: number;
-    numberOfBeats: number;
-    leftBound : number;
-    rightBound : number;
-}
+import { ScrollableBar } from "./ScrollableBar.js";
 
 export abstract class ScrollableTimeline extends PIXI.Container {
 
@@ -21,11 +15,14 @@ export abstract class ScrollableTimeline extends PIXI.Container {
 
     protected _zoomScale = 1;
 
+    protected _scrollableHeaders
     protected _scrollObjects: ScrollableBar[];
-    protected _objectPool: ObjectPool<ScrollableBar>;
+    protected _barPool: ObjectPool<ScrollableBar>;
 
     protected _startPointerPosition: PIXI.Point;
     protected _startXPosition: number;
+    protected _verticalScrollPosition : number = 0;
+
     protected _interactivityRect: PIXI.Graphics;
 
     constructor (startX : number, endX : number, startY : number, endY : number) {
@@ -35,29 +32,12 @@ export abstract class ScrollableTimeline extends PIXI.Container {
         this.endX = endX;
         this.endY = endY;
 
-        this._interactivityRect = new PIXI.Graphics();
-        this.interactive = true;
-        this.resizeInteractiveArea();
-        this.addChild(this._interactivityRect);
-
-        
-
-        this.on("pointerdown", this.pointerDownHandler.bind(this));
-        this.on("pointermove", this.pointerMoveHandler.bind(this));
-        this.on("pointerup", this.pointerUpHandler.bind(this));
-        this.on("pointerupoutside", this.pointerUpHandler.bind(this));
+        this._scrollObjects = [];
+        this._barPool = new ObjectPool();
     }
 
     get beatWidth() {
         return ScrollableTimeline.beatWidth * this._zoomScale;
-    }
-
-    public resizeInteractiveArea() {
-        this._interactivityRect.clear();
-        this._interactivityRect.beginFill(0x000000, 1.0);
-        this._interactivityRect.drawRect(this.startX, 0, this.endX, this.endY);
-        this._interactivityRect.endFill();
-        this._interactivityRect.alpha = 0.0;
     }
 
     public pointerDownHandler(event: PIXI.InteractionEvent) {
@@ -66,50 +46,54 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     }
 
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
+        if (this._startPointerPosition === undefined) {
+            return;
+        }
+
         let moveDelta = event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x;
-            this.x = this._startXPosition + moveDelta;
+        this.x = this._startXPosition + moveDelta;
 
-            // This solution is used because the container's x is reset to 0 after each scroll event,
-            // but while scrolling occurs the container's position rather than the child objects' positions is changed.
-            // Therefore, we have to find out if bar 0 is past where the timeline should start.
-            // If it is, calculate the offset required to position bar 0 at the start of the timeline.
-            if (this._scrollObjects[0].barNumber === 0 && this.x + this._scrollObjects[0].leftBound > this.startX) {
-                this.x = -this._scrollObjects[0].leftBound + this.startX;
-            }
+        // This solution is used because the container's x is reset to 0 after each scroll event,
+        // but while scrolling occurs the container's position rather than the child objects' positions is changed.
+        // Therefore, we have to find out if bar 0 is past where the timeline should start.
+        // If it is, calculate the offset required to position bar 0 at the start of the timeline.
+        if (this._scrollObjects[0].barNumber === 0 && this.x + this._scrollObjects[0].leftBound > this.startX) {
+            this.x = -this._scrollObjects[0].leftBound + this.startX;
+        }
 
-            // While loops are used in this section because extremely quick, large scrolls can cause bars to be missing
-            // Check right side for adding or removing bars offscreen
-            let rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
-            while (rightSideOffset < 100) { // If the right side is too close, need to add a new bar.
-                let lastBar = this._scrollObjects[this._scrollObjects.length - 1];
-                let bar = this._initialiseScrollableBar(lastBar.rightBound, lastBar.barNumber + 1, true);
-                this._scrollObjects.push(bar);
+        // While loops are used in this section because extremely quick, large scrolls can cause bars to be missing
+        // Check right side for adding or removing bars offscreen
+        let rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+        while (rightSideOffset < 100) { // If the right side is too close, need to add a new bar.
+            let lastBar = this._scrollObjects[this._scrollObjects.length - 1];
+            let bar = this._initialiseScrollableBar(lastBar.rightBound, lastBar.barNumber + 1, true);
+            this._scrollObjects.push(bar);
 
-                // Recalculate where the right side is.
-                rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
-            }
-            while (rightSideOffset > 800) {
-                let bar = this._scrollObjects.pop();
-                this._returnScrollableBar(bar);
+            // Recalculate where the right side is.
+            rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+        }
+        while (rightSideOffset > 800) {
+            let bar = this._scrollObjects.pop();
+            this._returnScrollableBar(bar);
 
-                rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
-            }
+            rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+        }
 
 
-            // Check left side for adding or removing bars offscreen
-            let leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
-            while (leftSideOffset < 100 && this._scrollObjects[0].barNumber != 0) {
-                let firstBar = this._scrollObjects[0];
-                let bar = this._initialiseScrollableBar(firstBar.leftBound, firstBar.barNumber - 1, false);
-                this._scrollObjects.splice(0, 0, bar);
+        // Check left side for adding or removing bars offscreen
+        let leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
+        while (leftSideOffset < 100 && this._scrollObjects[0].barNumber != 0) {
+            let firstBar = this._scrollObjects[0];
+            let bar = this._initialiseScrollableBar(firstBar.leftBound, firstBar.barNumber - 1, false);
+            this._scrollObjects.splice(0, 0, bar);
 
-                leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
-            }
-            while (leftSideOffset > 800) {
-                let bar = this._scrollObjects.splice(0, 1)[0];
-                this._returnScrollableBar(bar);
-                leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
-            }
+            leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
+        }
+        while (leftSideOffset > 800) {
+            let bar = this._scrollObjects.splice(0, 1)[0];
+            this._returnScrollableBar(bar);
+            leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
+        }
     }
 
     public pointerUpHandler(event: PIXI.InteractionEvent) {
@@ -157,6 +141,15 @@ export abstract class ScrollableTimeline extends PIXI.Container {
             offset = this.startX - this._scrollObjects[0].leftBound;
         }
         this._offsetChildren(offset);
+    }
+
+    public updateVerticalScroll(value : number) {
+        if (value < 0) {
+            this._scrollObjects.forEach(bar => {
+                bar.verticalScrollPosition = value;
+            });
+        }
+        this._verticalScrollPosition = value;
     }
 
     /**
@@ -248,7 +241,6 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     protected _checkBarsFillScreen() {
         // Fill left (to 0)
         while (this._scrollObjects[0].leftBound > this.startX && this._scrollObjects[0].barNumber != 0) {
-            console.log(this._scrollObjects[0].barNumber, this._scrollObjects[0].leftBound);
             let bar = this._initialiseScrollableBar(this._scrollObjects[0].leftBound, this._scrollObjects[0].barNumber - 1, false);
             this._scrollObjects.splice(0, 0, bar);
         }
@@ -279,7 +271,7 @@ export abstract class ScrollableTimeline extends PIXI.Container {
      * @memberof ScrollableTimeline
      */
     protected _returnScrollableBar(instance : ScrollableBar) {
-        instance.visible = false;
-        this._objectPool.returnObject(instance);
+        instance.setVisible(false);
+        this._barPool.returnObject(instance);
     }
 }

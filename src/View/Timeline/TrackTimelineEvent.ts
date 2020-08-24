@@ -32,6 +32,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
     protected _assignedHeight : number;
 
     protected _startXPosition: number;
+    protected _verticalScrollPosition: number;
 
     /**
      *Creates an instance of TrackTimelineEvent.
@@ -55,7 +56,16 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
 
         this.x = x + TrackTimelineEvent.borderLeft;
         this.assignedWidth = Math.max(width - TrackTimelineEvent.borderRight, 3);
-        this.y = track.startY +  TrackTimelineEvent.borderHeight;
+        this.y = track.startY + TrackTimelineEvent.borderHeight;
+    }
+
+    get verticalScrollPosition() : number {
+        return this._verticalScrollPosition;
+    }
+
+    set verticalScrollPosition(value : number) {
+        this._verticalScrollPosition = value;
+        this.y = this.track.startY + TrackTimelineEvent.borderHeight + value;
     }
 
     /**

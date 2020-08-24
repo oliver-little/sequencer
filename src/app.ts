@@ -4,6 +4,7 @@ import { SongManager } from "./Model/SongManagement/SongManager.js";
 import { UITrack, NoteUITrack, SoundFileUITrack } from "./View/UIObjects/UITrack.js";
 import { OscillatorTrack } from "./Model/Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "./Model/Tracks/SoundFileTrack.js";
+import { SequencerView } from "./View/Sequencer/SequencerView.js";
 
 /*const input = document.getElementById("soundFile");
     input.addEventListener("change", handleFiles, false);
@@ -78,7 +79,8 @@ window.onload = async function () {
         }
     }
 
-    let timeline = new TimelineView(app.renderer, newUITracks, songManager);
+    //let timeline = new TimelineView(app.renderer, newUITracks, songManager);
+    let timeline = new SequencerView(app.renderer, newUITracks.filter(track => {track instanceof NoteUITrack})[0] as NoteUITrack, songManager);
     app.view.addEventListener("wheel", event => timeline.timeline.mouseWheelHandler(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));
     app.stage.addChild(timeline);
 
