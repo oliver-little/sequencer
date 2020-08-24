@@ -26,11 +26,11 @@ export class BarHeader extends PIXI.Container {
         this.x = x;
         this._headerGraphics.clear();
         this._headerGraphics.beginFill(UIColors.bgColor)
-                            .drawRect(0, 0, width, 42)
+                            .drawRect(1, 0, width, 42)
                             .endFill()
                             .beginFill(UIColors.fgColor)
-                            .drawRect(0, 0, 2, 40)
-                            .drawRect(0, 40, width, 3)
+                            .drawRect(1, 0, 2, 40)
+                            .drawRect(1, 40, width, 2)
                             .endFill();
                             
 
