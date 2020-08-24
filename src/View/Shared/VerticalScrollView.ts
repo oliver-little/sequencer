@@ -11,17 +11,24 @@ export abstract class VerticalScrollView extends PIXI.Container {
     public timeline : ScrollableTimeline;
     public scrollingEnabled : boolean = true;
 
+    public endX : number;
+    public endY : number;
+
     protected _interactivityRect : PIXI.Graphics;
     protected _sendPointerEventsTo : pointerEventObject;
     
     protected _sidebarPosition = 100;
+    protected abstract readonly contentHeight: number;
 
     // Scrolling variables
     private _startPointerPosition : PIXI.Point;
     protected _verticalScrollPosition : number;
+    protected _startVerticalScrollPosition : number;
 
     constructor(width : number, height : number) {
         super();
+        this.endX = width;
+        this.endY = height;
         this._verticalScrollPosition = 0;
 
         this._interactivityRect = new PIXI.Graphics();
@@ -35,12 +42,13 @@ export abstract class VerticalScrollView extends PIXI.Container {
         this.on("pointerupoutside", this.pointerUpHandler.bind(this));
     }
 
+
     get verticalScrollPosition() : number {
         return this._verticalScrollPosition;
     }
 
     set verticalScrollPosition(value : number) {
-        this._verticalScrollPosition = Math.min(0, value);
+        this._verticalScrollPosition = Math.min(0, Math.max(-this.contentHeight + this.endY, value));
     }
 
     public resizeInteractiveArea(width: number, height: number) {
@@ -53,6 +61,7 @@ export abstract class VerticalScrollView extends PIXI.Container {
 
     public pointerDownHandler(event : PIXI.InteractionEvent) {
         this._startPointerPosition = event.data.getLocalPosition(this);
+        this._startVerticalScrollPosition = this._verticalScrollPosition;
 
         if (this._startPointerPosition.x > this._sidebarPosition) {
             this._sendPointerEventsTo = this.timeline;
@@ -62,8 +71,8 @@ export abstract class VerticalScrollView extends PIXI.Container {
 
     public pointerMoveHandler(event : PIXI.InteractionEvent) {
         if (this.scrollingEnabled && this._startPointerPosition != undefined) {
-            let newVerticalScroll = event.data.getLocalPosition(this).y - this._startPointerPosition.y + this._verticalScrollPosition;
-            this.updateVerticalScroll(newVerticalScroll);
+            this.verticalScrollPosition = event.data.getLocalPosition(this).y - this._startPointerPosition.y + this._startVerticalScrollPosition;
+            this.updateVerticalScroll(this.verticalScrollPosition);
         }
 
         if (this._sendPointerEventsTo != undefined) {
@@ -78,10 +87,12 @@ export abstract class VerticalScrollView extends PIXI.Container {
 
     public pointerUpHandler(event : PIXI.InteractionEvent) {
         if (this.scrollingEnabled && this._startPointerPosition != undefined) {
-            this.verticalScrollPosition = event.data.getLocalPosition(this).y - this._startPointerPosition.y + this._verticalScrollPosition;
+            this.verticalScrollPosition = event.data.getLocalPosition(this).y - this._startPointerPosition.y + this._startVerticalScrollPosition;
             this.updateVerticalScroll(this.verticalScrollPosition);
         }
-        this._sendPointerEventsTo.pointerUpHandler(event);
+        if (this._sendPointerEventsTo != undefined) {
+            this._sendPointerEventsTo.pointerUpHandler(event);
+        }
         this._sendPointerEventsTo = undefined;
         this._startPointerPosition = undefined;
     }

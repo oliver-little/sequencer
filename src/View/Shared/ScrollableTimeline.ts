@@ -2,22 +2,31 @@ import * as PIXI from "pixi.js";
 import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { PointHelper } from "../../HelperModules/PointHelper.js";
 import { ScrollableBar } from "./ScrollableBar.js";
+import { SongManager } from "../../Model/SongManagement/SongManager.js";
 
 export abstract class ScrollableTimeline extends PIXI.Container {
 
     // Stores the width of 1 beat in pixels.
     static beatWidth = 50;
 
+    // View boundaries
     public startX: number;
     public startY: number;
     public endX: number;
     public endY: number;
+    
+    public songManager : SongManager;
 
     protected _zoomScale = 1;
 
-    protected _scrollableHeaders
     protected _scrollObjects: ScrollableBar[];
     protected _barPool: ObjectPool<ScrollableBar>;
+
+    private _headerContainer: PIXI.Container;
+    private _barContainer: PIXI.Container;
+
+    // FIXME: content height is duplicated between verticalscrollview and this object, possibly not necessary?
+    protected abstract readonly contentHeight : number;
 
     protected _startPointerPosition: PIXI.Point;
     protected _startXPosition: number;
@@ -25,15 +34,24 @@ export abstract class ScrollableTimeline extends PIXI.Container {
 
     protected _interactivityRect: PIXI.Graphics;
 
-    constructor (startX : number, endX : number, startY : number, endY : number) {
+    constructor (startX : number, endX : number, startY : number, endY : number, songManager : SongManager) {
         super();
         this.startX = startX;
         this.startY = startY;
         this.endX = endX;
         this.endY = endY;
+        this.songManager = songManager;
 
         this._scrollObjects = [];
         this._barPool = new ObjectPool();
+
+        this._barContainer = new PIXI.Container();
+        this._headerContainer = new PIXI.Container();
+        this.addChild(this._barContainer, this._headerContainer);
+    }
+
+    get metadata() {
+        return this.songManager.metadata;
     }
 
     get beatWidth() {
@@ -98,12 +116,14 @@ export abstract class ScrollableTimeline extends PIXI.Container {
 
     public pointerUpHandler(event: PIXI.InteractionEvent) {
         // Check if event was a click
-        if (PointHelper.distanceSquared(event.data.getLocalPosition(this.parent), this._startPointerPosition) < 10) {
-            this.pointerUpClickHandler(event);
-        }
-        else {
-            this.pointerUpDragHandler(event);
-        }        
+        if (this._startPointerPosition != undefined) {
+            if (PointHelper.distanceSquared(event.data.getLocalPosition(this.parent), this._startPointerPosition) < 10) {
+                this.pointerUpClickHandler(event);
+            }
+            else {
+                this.pointerUpDragHandler(event);
+            }     
+        }   
 
         this._startXPosition = undefined;
         this._startPointerPosition = undefined;
@@ -144,11 +164,9 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     }
 
     public updateVerticalScroll(value : number) {
-        if (value < 0) {
-            this._scrollObjects.forEach(bar => {
-                bar.verticalScrollPosition = value;
-            });
-        }
+        this._scrollObjects.forEach(bar => {
+            bar.verticalScrollPosition = value;
+        });
         this._verticalScrollPosition = value;
     }
 
@@ -261,7 +279,25 @@ export abstract class ScrollableTimeline extends PIXI.Container {
      * @returns {ScrollableBar}
      * @memberof ScrollableTimeline
      */
-    protected abstract _initialiseScrollableBar(xPosition: number, barNumber: number, leftSide : boolean);
+    protected _initialiseScrollableBar(xPosition: number, barNumber: number, leftSide: boolean): ScrollableBar {
+        // Get a bar object
+        let bar : ScrollableBar = null;
+        if (this._barPool.objectCount > 0) {
+            bar = this._barPool.getObject();
+            bar.setVisible(true);
+        }
+        else {
+            bar = new ScrollableBar(this._headerContainer);
+            this._barContainer.addChild(bar);
+        }
+        
+        // Positions the bar object
+        let quarterNotePosition = this.metadata.positionBarsToQuarterNote(barNumber);
+        let numberOfBeats = this.metadata.getTimeSignature(quarterNotePosition)[0];
+        bar.initialise(xPosition, Math.max(this.contentHeight, this.endY), barNumber, numberOfBeats, this.beatWidth, leftSide);
+        bar.verticalScrollPosition = this._verticalScrollPosition;
+        return bar;
+    }
     
     /**
      * Returns a bar object to the pool

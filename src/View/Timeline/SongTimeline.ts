@@ -61,9 +61,7 @@ export class SongTimeline extends ScrollableTimeline {
     public dragType: EventDragType = EventDragType.QuarterBeat;
 
     // Separate bars and events for z indexing
-    private _headerContainer: PIXI.Container;
     private _eventContainer: PIXI.Container;
-    private _barContainer: PIXI.Container;
 
     // Scrolling variables
     private _clickState = ClickState.None;
@@ -90,16 +88,15 @@ export class SongTimeline extends ScrollableTimeline {
      * @memberof SongTimeline
      */
     constructor(startX: number, endX: number, endY: number, songManager: SongManager, tracks: UITrack[]) {
-        super(startX, endX, 0, endY);
+        super(startX, endX, 0, endY, songManager);
         this.songManager = songManager;
         this.tracks = tracks;
 
-        this._barContainer = new PIXI.Container();
+        
         this._eventContainer = new PIXI.Container();
-        this._headerContainer = new PIXI.Container();
 
         this._newEventGraphics = new PIXI.Graphics();
-        this.addChild(this._barContainer, this._eventContainer, this._newEventGraphics, this._headerContainer);
+        this.addChild(this._eventContainer, this._newEventGraphics);
 
         this._regenerateTimeline(0);
 
@@ -113,6 +110,10 @@ export class SongTimeline extends ScrollableTimeline {
 
     get metadata() {
         return this.songManager.metadata;
+    }
+
+    get contentHeight() {
+        return this.tracks[this.tracks.length - 1].startY + this.tracks[this.tracks.length - 1].height;
     }
 
     get clickState() {
@@ -424,26 +425,6 @@ export class SongTimeline extends ScrollableTimeline {
         }
     }
 
-    protected _initialiseScrollableBar(xPosition: number, barNumber: number, leftSide: boolean): ScrollableBar {
-        // Get a bar object
-        let bar : ScrollableBar = null;
-        if (this._barPool.objectCount > 0) {
-            bar = this._barPool.getObject();
-            bar.setVisible(true);
-        }
-        else {
-            bar = new ScrollableBar(this._headerContainer);
-            this._barContainer.addChild(bar);
-        }
-        
-        // Positions the bar object
-        let quarterNotePosition = this.metadata.positionBarsToQuarterNote(barNumber);
-        let numberOfBeats = this.metadata.getTimeSignature(quarterNotePosition)[0];
-        bar.initialise(xPosition, this.endY, barNumber, numberOfBeats, this.beatWidth, leftSide);
-        bar.verticalScrollPosition = this._verticalScrollPosition;
-        return bar;
-    }
-
     /**
      * Initialises a new note group
      *
@@ -498,7 +479,7 @@ export class SongTimeline extends ScrollableTimeline {
             0,
             this.tracks[0].startY,
             5 * this._zoomScale,
-            Math.max((this.tracks[this.tracks.length - 1].startY + this.tracks[this.tracks.length - 1].height), this.endY)
+            Math.max(this.contentHeight, this.endY)
         );
         this._repositionTimelineMarker(this.songManager.quarterNotePosition);
     }
