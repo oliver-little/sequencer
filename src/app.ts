@@ -50,6 +50,7 @@ window.onload = async function () {
     soundFileTrack.setSoundFile(await (await fetch(base64data)).blob());
     
     let app = new PIXI.Application({ width: window.innerWidth * 0.8, height: window.innerHeight * 0.8 });
+    app.view.setAttribute("oncontextmenu", "return false;");
 
     document.body.appendChild(app.view);
 
@@ -79,8 +80,8 @@ window.onload = async function () {
         }
     }
 
-    //let timeline = new TimelineView(app.renderer, newUITracks, songManager);
-    let timeline = new SequencerView(app.renderer, newUITracks.filter(track => {track instanceof NoteUITrack})[0] as NoteUITrack, songManager);
+    let timeline = new TimelineView(app.renderer, newUITracks, songManager);
+    //let timeline = new SequencerView(app.renderer, newUITracks.filter(track => {track instanceof NoteUITrack})[0] as NoteUITrack, songManager);
     app.view.addEventListener("wheel", event => timeline.timeline.mouseWheelHandler(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));
     app.stage.addChild(timeline);
 

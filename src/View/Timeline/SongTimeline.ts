@@ -5,36 +5,12 @@ import { UIColors } from "../Shared/UITheme.js";
 import { BaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { TimelineMarker } from "./TimelineMarker.js";
-import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
-import { ScrollableBar } from "../Shared/ScrollableBar.js";
-
-enum ClickState {
-    None,
-    Dragging,
-    EventDragging
-}
-
-export enum EventDragType {
-    Beat,
-    HalfBeat,
-    QuarterBeat,
-    EighthBeat,
-    None
-}
-
-export enum SongTimelineMode {
-    Playback,
-    Edit
-}
-
-export enum SongTimelineEditMode {
-    Add,
-    Remove
-}
+import { ScrollableTimeline, ClickState } from "../Shared/ScrollableTimeline.js";
+import { EventSnapType, TimelineMode, MouseClickType } from "../Shared/Enums.js";
 
 interface INewEventData {
-    track : UITrack,
-    startPosition : number
+    track: UITrack,
+    startPosition: number
 }
 
 /**
@@ -49,34 +25,30 @@ export class SongTimeline extends ScrollableTimeline {
     public songManager: SongManager;
     public tracks: UITrack[];
 
-    public timelineMode: SongTimelineMode = SongTimelineMode.Edit;
-    public timelineEditMode: SongTimelineEditMode = SongTimelineEditMode.Add;
+    public timelineMode: TimelineMode = TimelineMode.Edit;
 
     /**
      * Represents how dragging of child objects should be snapped (to the beat, to the half beat, etc)
      *
-     * @type {EventDragType}
+     * @type {EventSnapType}
      * @memberof SongTimeline
      */
-    public dragType: EventDragType = EventDragType.QuarterBeat;
+    public dragType: EventSnapType = EventSnapType.QuarterBeat;
 
     // Separate bars and events for z indexing
     private _eventContainer: PIXI.Container;
 
     // Scrolling variables
-    private _clickState = ClickState.None;
     private _timelineMarker: TimelineMarker;
 
     // Event creation variables
     private _newEventGraphics: PIXI.Graphics;
-    private _newEventData : INewEventData;
+    private _newEventData: INewEventData;
 
     // Event variables
-    private _pressed: TrackTimelineEvent;
     private _selected: TrackTimelineEvent[] = [];
-    private _hovered: TrackTimelineEvent;
 
-    private _boundTimelineAnim : (time : number) => any;
+    private _boundTimelineAnim: (time: number) => any;
 
     /**
      *Creates an instance of SongTimeline.
@@ -92,7 +64,7 @@ export class SongTimeline extends ScrollableTimeline {
         this.songManager = songManager;
         this.tracks = tracks;
 
-        
+
         this._eventContainer = new PIXI.Container();
 
         this._newEventGraphics = new PIXI.Graphics();
@@ -105,33 +77,37 @@ export class SongTimeline extends ScrollableTimeline {
         this._redrawTimelineMarker();
 
         this._boundTimelineAnim = this._timelineMarkerAnim.bind(this);
-        this.songManager.playingChangedEvent.addListener(value => {this._playingStateChanged(value[0])});
-    }
-
-    get metadata() {
-        return this.songManager.metadata;
+        this.songManager.playingChangedEvent.addListener(value => { this._playingStateChanged(value[0]) });
     }
 
     get contentHeight() {
         return this.tracks[this.tracks.length - 1].startY + this.tracks[this.tracks.length - 1].height;
     }
 
-    get clickState() {
-        return this._clickState;
-    }
-
     public pointerDownHandler(event: PIXI.InteractionEvent) {
         super.pointerDownHandler(event);
 
-        this._pressed = this._getTimelineEventHit(event);
+        let pressed = this._getTimelineEventHit(event);
 
-        if (this._pressed != null && this._selected.length > 0 && this._pressed == this._selected[0]) {
+        if (pressed != null) {
             this._clickState = ClickState.EventDragging;
 
-            this._selected.forEach(selectedObj => {
-                selectedObj.pointerDownHandler();
-
+            this._selected.forEach(timelineEvent => {
+                if (timelineEvent != pressed) {
+                    timelineEvent.selected = false;
+                }
             });
+            this._selected = [];
+
+            // Select pressed object
+            this._selected.push(pressed);
+            pressed.selected = true;
+
+            if (this._mouseClickType == MouseClickType.LeftClick) {
+                this._selected.forEach(timelineEvent => {
+                    timelineEvent.pointerDownHandler();
+                });
+            }
         }
         else {
             this._clickState = ClickState.Dragging;
@@ -145,162 +121,152 @@ export class SongTimeline extends ScrollableTimeline {
 
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
         this._newEventGraphics.visible = false;
-        if (this._clickState == ClickState.Dragging) {
-            super.pointerMoveHandler(event);
+        // Right Click
+        if (this._mouseClickType == MouseClickType.RightClick && this.timelineMode == TimelineMode.Edit) {
+            // Add hover here
         }
-        else if (this.timelineMode == SongTimelineMode.Edit) {
-            if (this._clickState == ClickState.EventDragging) {
-                // Calculate snapped moveDelta
-                let moveDelta = this.snapToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
-
-                // Pass it to selected children
-                this._selected.forEach(selectedObj => {
-                    selectedObj.pointerMoveHandler(moveDelta);
-                });
+        // Left click
+        else if (this._mouseClickType == MouseClickType.LeftClick) {
+            if (this._clickState == ClickState.Dragging) {
+                super.pointerMoveHandler(event);
             }
-            else if (this.timelineEditMode == SongTimelineEditMode.Add) {
-                this._newEventData = undefined;
-                // Display new event outline (set width for note events, same length as soundfile for soundfile)
-                let mousePos = event.data.getLocalPosition(this.parent);
-                for(let i = 0; i < this.tracks.length; i++) {
-                    if (this.tracks[i].startY + this._verticalScrollPosition < mousePos.y && this.tracks[i].startY + this.tracks[i].height + this._verticalScrollPosition > mousePos.y) {
-                        let track = this.tracks[i];
+            else if (this.timelineMode == TimelineMode.Edit) {
+                if (this._clickState == ClickState.EventDragging) {
+                    // Calculate snapped moveDelta
+                    let moveDelta = this.snapToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
 
-                        if (mousePos.x < this.startX || mousePos.x > this.endX) {
-                            return;
-                        }
-
-                        // Get mouse position as bar position
-                        let [barPosition, beatPosition, numBeats] = this._getBarFromStageCoordinates(mousePos.x);
-                        // Snap beat position
-                        switch (this.dragType) {
-                            case EventDragType.None:
-                                break;
-                            case EventDragType.Beat:
-                                beatPosition = beatPosition - (beatPosition % 1)
-                                break;
-                            case EventDragType.HalfBeat:
-                                beatPosition *= 2;
-                                beatPosition = (beatPosition - (beatPosition % 1)) / 2;
-                                break;
-                            case EventDragType.QuarterBeat:
-                                beatPosition *= 4;
-                                beatPosition = (beatPosition - (beatPosition % 1)) / 4;
-                                break;
-                            case EventDragType.EighthBeat:
-                                beatPosition *= 8;
-                                beatPosition = (beatPosition - (beatPosition % 1)) / 8;
-                                break;
-                        }
-                        // Add snapped beat position as percentage to barPosition
-                        barPosition += beatPosition / numBeats;
-
-                        let startPosition = this.metadata.positionBarsToQuarterNote(barPosition);
-                        let x = this._getStageCoordinatesFromBar(barPosition);
-                        let y = track.startY + this._verticalScrollPosition;
-                        let width = 0;
-                        let height = track.height;
-                        if (track instanceof NoteUITrack) {
-                            let endPosition = startPosition + 4;
-                            if (track.getNoteGroupsWithinTime(startPosition, endPosition).length > 0) {
-                                return;
-                            }
-                            width = (this.metadata.positionQuarterNoteToBeats(endPosition) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
-                        }
-                        else if (track instanceof SoundFileUITrack) {
-                            let endPosition = startPosition + track.eventDuration;
-                            if (track.getOneShotsBetweenTime(startPosition, endPosition).length > 0) {
-                                return;
-                            }
-                            width = this.metadata.positionQuarterNoteToBeats(track.eventDuration) * this.beatWidth;
-                        }
-                        
-                        // Fixes a bug where very small events won't display properly.
-                        width = Math.max(width, 3);
-
-                        this._newEventGraphics.clear();
-                        this._newEventGraphics.beginFill(UIColors.trackEventColor)
-                                                .drawRect(x, y, width, height)
-                                                .endFill()
-                                                .beginHole()
-                                                .drawRect(x+2, y+2, width-4, height-4)
-                                                .endHole();
-                        this._newEventGraphics.visible = true;
-                        this._newEventData = {track : track, startPosition : startPosition};
-                        break;
-                    }
+                    // Pass it to selected children
+                    this._selected.forEach(selectedObj => {
+                        selectedObj.pointerMoveHandler(moveDelta);
+                    });
                 }
             }
-            else if (this.timelineEditMode == SongTimelineEditMode.Remove) {
-                this._hoverHandler(this._getTimelineEventHit(event));
+        }
+        else if (this._mouseClickType == MouseClickType.None) {
+            this._newEventData = undefined;
+            // Display new event outline (set width for note events, same length as soundfile for soundfile)
+            let mousePos = event.data.getLocalPosition(this.parent);
+            for (let i = 0; i < this.tracks.length; i++) {
+                if (this.tracks[i].startY + this._verticalScrollPosition < mousePos.y && this.tracks[i].startY + this.tracks[i].height + this._verticalScrollPosition > mousePos.y) {
+                    let track = this.tracks[i];
+
+                    if (mousePos.x < this.startX || mousePos.x > this.endX) {
+                        return;
+                    }
+
+                    // Get mouse position as bar position
+                    let [barPosition, beatPosition, numBeats] = this._getBarFromStageCoordinates(mousePos.x);
+                    // Snap beat position
+                    switch (this.dragType) {
+                        case EventSnapType.None:
+                            break;
+                        case EventSnapType.Beat:
+                            beatPosition = beatPosition - (beatPosition % 1)
+                            break;
+                        case EventSnapType.HalfBeat:
+                            beatPosition *= 2;
+                            beatPosition = (beatPosition - (beatPosition % 1)) / 2;
+                            break;
+                        case EventSnapType.QuarterBeat:
+                            beatPosition *= 4;
+                            beatPosition = (beatPosition - (beatPosition % 1)) / 4;
+                            break;
+                        case EventSnapType.EighthBeat:
+                            beatPosition *= 8;
+                            beatPosition = (beatPosition - (beatPosition % 1)) / 8;
+                            break;
+                    }
+                    // Add snapped beat position as percentage to barPosition
+                    barPosition += beatPosition / numBeats;
+
+                    let startPosition = this.metadata.positionBarsToQuarterNote(barPosition);
+                    let x = this._getStageCoordinatesFromBar(barPosition);
+                    let y = track.startY + this._verticalScrollPosition;
+                    let width = 0;
+                    let height = track.height;
+                    if (track instanceof NoteUITrack) {
+                        let endPosition = startPosition + 4;
+                        if (track.getNoteGroupsWithinTime(startPosition, endPosition).length > 0) {
+                            return;
+                        }
+                        width = (this.metadata.positionQuarterNoteToBeats(endPosition) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
+                    }
+                    else if (track instanceof SoundFileUITrack) {
+                        let endPosition = startPosition + track.eventDuration;
+                        if (track.getOneShotsBetweenTime(startPosition, endPosition).length > 0) {
+                            return;
+                        }
+                        width = this.metadata.positionQuarterNoteToBeats(track.eventDuration) * this.beatWidth;
+                    }
+
+                    // Fixes a bug where very small events won't display properly.
+                    width = Math.max(width, 3);
+
+                    this._newEventGraphics.clear();
+                    this._newEventGraphics.beginFill(UIColors.trackEventColor)
+                        .drawRect(x, y, width, height)
+                        .endFill()
+                        .beginHole()
+                        .drawRect(x + 2, y + 2, width - 4, height - 4)
+                        .endHole();
+                    this._newEventGraphics.visible = true;
+                    this._newEventData = { track: track, startPosition: startPosition };
+                    break;
+                }
             }
         }
     }
 
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {
-        if (this._clickState == ClickState.Dragging) {
-            this.x = this._startXPosition;
-            if (this._pressed != null) {
-                // Select pressed object
-                this._selected = [this._pressed];
-                this._hoverHandler(this._pressed);
-                this._pressed.selected = true;
-                this._pressed = null;
-            }
-            else if (this.timelineMode == SongTimelineMode.Edit) {
-                if (this.timelineEditMode == SongTimelineEditMode.Add && this._newEventData != undefined) {
-                    let track = this._newEventData.track;
-                    let startPosition = this._newEventData.startPosition;
-                    console.log("adding at: " + startPosition);
-                    if (track instanceof NoteUITrack) {
-                        track.addNoteGroup(startPosition, startPosition + 4);
-                        this._initialiseNoteGroup([startPosition, startPosition + 4], track);
-                    }
-                    else if (track instanceof SoundFileUITrack) {
-                        let event = track.track.addOneShot(startPosition);
-                        this._initialiseTimelineEvent(event, track);
-                    }
-                    this._newEventData = undefined;
-                }
-            }
-        }
-        else if (this._clickState == ClickState.EventDragging) {
-            // This was a click on a child, activate click on the pressed object and unselect all other objects.
-            let pressedIsSelected = false;
+        if (this._mouseClickType == MouseClickType.RightClick) {
             for (let i = 0; i < this._selected.length; i++) {
-                if (this._selected[i] == this._pressed) {
-                    if (this.timelineEditMode == SongTimelineEditMode.Remove) {
-                        this._pressed.deleteEvent();
-                        this._pressed, this._hovered = null;
-                        this._selected.splice(i, 1);
-                        this._clickState = ClickState.None;
-                        return;
+                this._selected[i].deleteEvent();
+                this._selected.splice(i, 1);
+                this._clickState = ClickState.None;
+            }
+        }
+        else if (this._mouseClickType == MouseClickType.LeftClick) {
+            if (this._clickState == ClickState.Dragging) {
+                this.x = this._startXPosition;
+                if (this.timelineMode == TimelineMode.Edit) {
+                    if (this._newEventData != undefined) {
+                        let track = this._newEventData.track;
+                        let startPosition = this._newEventData.startPosition;
+                        console.log("adding at: " + startPosition);
+                        if (track instanceof NoteUITrack) {
+                            track.addNoteGroup(startPosition, startPosition + 4);
+                            this._initialiseNoteGroup([startPosition, startPosition + 4], track);
+                        }
+                        else if (track instanceof SoundFileUITrack) {
+                            let event = track.track.addOneShot(startPosition);
+                            this._initialiseTimelineEvent(event, track);
+                        }
+                        this._newEventData = undefined;
                     }
-                    else {
-                        this._pressed.pointerUpClickHandler();
-                    }
-                }
-                else {
-                    this._selected[i].selected = false;
                 }
             }
-            this._selected = [this._pressed];
+            else if (this._clickState == ClickState.EventDragging) {
+                // This was a click on a child, activate click on the pressed object and unselect all other objects.
+                for (let i = 0; i < this._selected.length; i++) {
+                    this._selected[i].pointerUpClickHandler();
+                }
+            }
         }
-        this._clickState = ClickState.None;
     }
 
     public pointerUpDragHandler(event: PIXI.InteractionEvent) {
-        if (this._clickState == ClickState.Dragging) {
-            super.pointerUpDragHandler(event);
+        if (this._mouseClickType == MouseClickType.LeftClick) {
+            if (this._clickState == ClickState.Dragging) {
+                super.pointerUpDragHandler(event);
+            }
+            else if (this._clickState == ClickState.EventDragging && this.timelineMode == TimelineMode.Edit) {
+                // Dragging a child, calculate distance and pass it down
+                let moveDelta = this.snapToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
+                this._selected.forEach(selectedObj => {
+                    selectedObj.pointerUpHandler(moveDelta);
+                });
+            }
         }
-        else if (this._clickState == ClickState.EventDragging && this.timelineMode == SongTimelineMode.Edit) {
-            // Dragging a child, calculate distance and pass it down
-            let moveDelta = this.snapToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
-            this._selected.forEach(selectedObj => {
-                selectedObj.pointerUpHandler(moveDelta);
-            });
-        }
-        this._clickState = ClickState.None;
     }
 
     public mouseWheelHandler(event: WheelEvent, canvasX: number, canvasY: number) {
@@ -308,31 +274,13 @@ export class SongTimeline extends ScrollableTimeline {
         super.mouseWheelHandler(event, canvasX, canvasY);
     }
 
-    public updateVerticalScroll(value : number) {
+    public updateVerticalScroll(value: number) {
         super.updateVerticalScroll(value);
 
         // Also move the events
-        this._eventContainer.children.forEach(function(event : TrackTimelineEvent) {
+        this._eventContainer.children.forEach(function (event: TrackTimelineEvent) {
             event.verticalScrollPosition = value;
         });
-    }
-
-    private _hoverHandler(newHover : TrackTimelineEvent) {
-        if (this._hovered != null && this._hovered != newHover) {
-            this._hovered.hoveredColor = null;
-            this._hovered.hovered = false;
-        }
-        this._hovered = newHover;
-        if (this._hovered == null) {
-            return;
-        }
-        this._hovered.hovered = true;
-
-        if (this.timelineMode == SongTimelineMode.Edit && this.timelineEditMode == SongTimelineEditMode.Remove) {
-            if (this._hovered != null && this._selected.indexOf(this._hovered) != -1) {
-                this._hovered.hoveredColor = 0xFF0000;
-            }
-        }
     }
 
     /**
@@ -343,7 +291,7 @@ export class SongTimeline extends ScrollableTimeline {
      * @returns {TrackTimelineEvent} The child that was hit (null if none was hit)
      * @memberof SongTimeline
      */
-    private _getTimelineEventHit(event : PIXI.InteractionEvent) : TrackTimelineEvent {
+    private _getTimelineEventHit(event: PIXI.InteractionEvent): TrackTimelineEvent {
         for (let i = 0; i < this._eventContainer.children.length; i++) {
             let child = this._eventContainer.children[i] as TrackTimelineEvent;
             let pos = event.data.getLocalPosition(child);
@@ -368,7 +316,7 @@ export class SongTimeline extends ScrollableTimeline {
             this._eventContainer.children[i].x -= pixelOffset;
         }
 
-        this._repositionTimelineMarker(this.songManager.quarterNotePosition);        
+        this._repositionTimelineMarker(this.songManager.quarterNotePosition);
     }
 
     /**
@@ -378,7 +326,7 @@ export class SongTimeline extends ScrollableTimeline {
      * @param {number} barPosition The bar position to start at
      * @memberof BarTimeline
      */
-    private _scrollToPosition(barPosition : number) {
+    private _scrollToPosition(barPosition: number) {
         // Regenerate the bars starting at the bar given by the metadata.
         let barNumber = Math.floor(barPosition);
         this._regenerateTimeline(barNumber);
@@ -416,7 +364,7 @@ export class SongTimeline extends ScrollableTimeline {
                     });
                 }
             };
-        } 
+        }
         // Otherwise, reposition them to the correct location.
         else {
             this._eventContainer.children.forEach(event => {
@@ -450,20 +398,20 @@ export class SongTimeline extends ScrollableTimeline {
         return event;
     }
 
-    private _initialiseTimelineEvent(event : BaseEvent, track : UITrack) : TrackTimelineEvent {
+    private _initialiseTimelineEvent(event: BaseEvent, track: UITrack): TrackTimelineEvent {
         let [x, width] = this._getTimelineEventXWidth(event.startPosition, event.startPosition + event.duration);
         let timelineEvent = new OneShotTimelineEvent(this, x, width, track, event);
         this._eventContainer.addChild(timelineEvent);
         return timelineEvent;
     }
 
-    private _playingStateChanged(value : boolean) {
+    private _playingStateChanged(value: boolean) {
         if (value == true) {
             requestAnimationFrame(this._boundTimelineAnim);
         }
     }
 
-    private _timelineMarkerAnim(timestamp : number) {
+    private _timelineMarkerAnim(timestamp: number) {
         this._repositionTimelineMarker(this.songManager.quarterNotePosition);
 
         if (this.songManager.playing == true) {
@@ -494,7 +442,7 @@ export class SongTimeline extends ScrollableTimeline {
      * @param {number} position
      * @memberof SongTimeline
      */
-    private _repositionTimelineMarker(position : number) {
+    private _repositionTimelineMarker(position: number) {
         this._timelineMarker.x = this._getTimelineEventX(position);
     }
 
@@ -507,13 +455,13 @@ export class SongTimeline extends ScrollableTimeline {
      * @returns {number[]} [x, width]
      * @memberof SongTimeline
      */
-    private _getTimelineEventXWidth(startPosition: number, endPosition : number) : number[] {
+    private _getTimelineEventXWidth(startPosition: number, endPosition: number): number[] {
         let x = this._getTimelineEventX(startPosition);
         let width = (this.metadata.positionQuarterNoteToBeats(endPosition) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
         return [x, width]
     }
 
-    private _getTimelineEventX(position : number) : number {
+    private _getTimelineEventX(position: number): number {
         return (this.metadata.positionQuarterNoteToBeats(position) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._scrollObjects[0].barNumber))) * this.beatWidth + this._scrollObjects[0].leftBound;
     }
 
@@ -529,17 +477,17 @@ export class SongTimeline extends ScrollableTimeline {
         return value - this.getPixelOffsetFromDragType(value);
     }
 
-    private getPixelOffsetFromDragType(value : number) {
+    private getPixelOffsetFromDragType(value: number) {
         switch (this.dragType) {
-            case EventDragType.Beat:
+            case EventSnapType.Beat:
                 return (value % this.beatWidth);
-            case EventDragType.HalfBeat:
+            case EventSnapType.HalfBeat:
                 return (value % (this.beatWidth / 2));
-            case EventDragType.QuarterBeat:
+            case EventSnapType.QuarterBeat:
                 return (value % (this.beatWidth / 4));
-            case EventDragType.EighthBeat:
+            case EventSnapType.EighthBeat:
                 return (value % (this.beatWidth / 8));
-            case EventDragType.None:
+            case EventSnapType.None:
                 return 0;
         }
     }

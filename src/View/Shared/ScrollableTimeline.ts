@@ -3,6 +3,13 @@ import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { PointHelper } from "../../HelperModules/PointHelper.js";
 import { ScrollableBar } from "./ScrollableBar.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
+import { MouseClickType } from "./Enums.js";
+
+export enum ClickState {
+    None,
+    Dragging,
+    EventDragging
+}
 
 export abstract class ScrollableTimeline extends PIXI.Container {
 
@@ -31,6 +38,8 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     protected _startPointerPosition: PIXI.Point;
     protected _startXPosition: number;
     protected _verticalScrollPosition : number = 0;
+    protected _clickState = ClickState.None;
+    protected _mouseClickType : MouseClickType = MouseClickType.None;
 
     protected _interactivityRect: PIXI.Graphics;
 
@@ -58,13 +67,31 @@ export abstract class ScrollableTimeline extends PIXI.Container {
         return ScrollableTimeline.beatWidth * this._zoomScale;
     }
 
+    get clickState() {
+        return this._clickState;
+    }
+
     public pointerDownHandler(event: PIXI.InteractionEvent) {
+        switch (event.data.button) {
+            case 0:
+                this._mouseClickType = MouseClickType.LeftClick;
+                break;
+            case 2:
+                this._mouseClickType = MouseClickType.RightClick;
+                break;
+            default:
+                this._mouseClickType = MouseClickType.None;
+        }
+
+        if (this._mouseClickType == MouseClickType.LeftClick) {
+            this._clickState = ClickState.Dragging;
+        }
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
         this._startXPosition = this.x;
     }
 
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
-        if (this._startPointerPosition === undefined) {
+        if (this._clickState != ClickState.Dragging) {
             return;
         }
 
@@ -115,18 +142,21 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     }
 
     public pointerUpHandler(event: PIXI.InteractionEvent) {
+        if (this._mouseClickType != MouseClickType.LeftClick) {
+            return;
+        }
         // Check if event was a click
-        if (this._startPointerPosition != undefined) {
-            if (PointHelper.distanceSquared(event.data.getLocalPosition(this.parent), this._startPointerPosition) < 10) {
-                this.pointerUpClickHandler(event);
-            }
-            else {
-                this.pointerUpDragHandler(event);
-            }     
-        }   
+        if (PointHelper.distanceSquared(event.data.getLocalPosition(this.parent), this._startPointerPosition) < 10) {
+            this.pointerUpClickHandler(event);
+        }
+        else {
+            this.pointerUpDragHandler(event);
+        }     
 
         this._startXPosition = undefined;
         this._startPointerPosition = undefined;
+        this._clickState = ClickState.None;
+        this._mouseClickType = MouseClickType.None;
     }
 
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {

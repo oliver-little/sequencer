@@ -18,7 +18,7 @@ export class SequencerView extends VerticalScrollView {
         this.endX = renderer.width;
         this.endY = renderer.height;        
 
-        this.timeline = new SequencerTimeline(this._sidebarPosition, renderer.width, renderer.height, this.contentHeight, songManager);
+        this.timeline = new SequencerTimeline(this._sidebarPosition, renderer.width, renderer.height, this.contentHeight, songManager, track);
 
         // Create and draw horizontal lines over the whole screen.
         this._horizontalLines = new PIXI.Graphics();
