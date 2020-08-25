@@ -1,10 +1,11 @@
 import * as PIXI from "pixi.js";
-import { ScrollableTimeline, ClickState } from "../Shared/ScrollableTimeline.js";
+import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
 import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { ScrollableBar } from "../Shared/ScrollableBar.js";
-import { TimelineMode } from "../Shared/Enums.js";
+import { TimelineMode, MouseClickType, ClickState } from "../Shared/Enums.js";
 import { NoteUITrack } from "../UIObjects/UITrack.js";
+import { TrackTimelineEvent } from "../Shared/TrackTimelineEvent.js";
 
 enum NoteLength {
     Bar,
@@ -30,12 +31,14 @@ export class SequencerTimeline extends ScrollableTimeline {
     protected _contentHeight : number;
     protected _newEventGraphics: PIXI.Graphics;
 
+
     constructor(startX : number, endX : number, endY : number, contentHeight : number, songManager: SongManager, track: NoteUITrack) {
         super(startX, endX, 0, endY, songManager);
         this.track = track;
         this._contentHeight = contentHeight;
 
         this._newEventGraphics = new PIXI.Graphics();
+        this.addChild(this._newEventGraphics);
 
         this._regenerateTimeline(0);
     }
@@ -44,19 +47,7 @@ export class SequencerTimeline extends ScrollableTimeline {
         return this._contentHeight;
     }
 
-    /*public pointerMoveHandler(event : PIXI.InteractionEvent) {
-        this._newEventGraphics.visible = false;
-        if (this._clickState == ClickState.Dragging) {
-            super.pointerMoveHandler(event);
-        }
-        else if (this.timelineMode == TimelineMode.Edit) {
-
-        }
+    protected _initialiseTrackTimelineEvents() {
+        // Placeholder
     }
-
-    public pointerUpClickHandler(event : PIXI.InteractionEvent) {
-        if (this.timelineMode == TimelineMode.Edit) {
-            
-        }
-    }*/
 }

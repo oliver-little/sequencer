@@ -1,12 +1,12 @@
 import * as PIXI from "pixi.js";
 import { UITrack, NoteUITrack, SoundFileUITrack } from "../UIObjects/UITrack.js";
-import { TrackTimelineEvent, NoteGroupTimelineEvent, OneShotTimelineEvent } from "./TrackTimelineEvent.js";
+import { TrackTimelineEvent, NoteGroupTimelineEvent, OneShotTimelineEvent } from "../Shared/TrackTimelineEvent.js";
 import { UIColors } from "../Shared/UITheme.js";
 import { BaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { TimelineMarker } from "./TimelineMarker.js";
-import { ScrollableTimeline, ClickState } from "../Shared/ScrollableTimeline.js";
-import { EventSnapType, TimelineMode, MouseClickType } from "../Shared/Enums.js";
+import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
+import { EventSnapType, TimelineMode, MouseClickType, ClickState } from "../Shared/Enums.js";
 
 interface INewEventData {
     track: UITrack,
@@ -22,21 +22,7 @@ interface INewEventData {
  */
 export class SongTimeline extends ScrollableTimeline {
 
-    public songManager: SongManager;
     public tracks: UITrack[];
-
-    public timelineMode: TimelineMode = TimelineMode.Edit;
-
-    /**
-     * Represents how dragging of child objects should be snapped (to the beat, to the half beat, etc)
-     *
-     * @type {EventSnapType}
-     * @memberof SongTimeline
-     */
-    public dragType: EventSnapType = EventSnapType.QuarterBeat;
-
-    // Separate bars and events for z indexing
-    private _eventContainer: PIXI.Container;
 
     // Scrolling variables
     private _timelineMarker: TimelineMarker;
@@ -44,9 +30,6 @@ export class SongTimeline extends ScrollableTimeline {
     // Event creation variables
     private _newEventGraphics: PIXI.Graphics;
     private _newEventData: INewEventData;
-
-    // Event variables
-    private _selected: TrackTimelineEvent[] = [];
 
     private _boundTimelineAnim: (time: number) => any;
 
@@ -64,11 +47,8 @@ export class SongTimeline extends ScrollableTimeline {
         this.songManager = songManager;
         this.tracks = tracks;
 
-
-        this._eventContainer = new PIXI.Container();
-
         this._newEventGraphics = new PIXI.Graphics();
-        this.addChild(this._eventContainer, this._newEventGraphics);
+        this.addChild(this._newEventGraphics);
 
         this._regenerateTimeline(0);
 
@@ -84,65 +64,10 @@ export class SongTimeline extends ScrollableTimeline {
         return this.tracks[this.tracks.length - 1].startY + this.tracks[this.tracks.length - 1].height;
     }
 
-    public pointerDownHandler(event: PIXI.InteractionEvent) {
-        super.pointerDownHandler(event);
-
-        let pressed = this._getTimelineEventHit(event);
-
-        if (pressed != null) {
-            this._clickState = ClickState.EventDragging;
-
-            this._selected.forEach(timelineEvent => {
-                if (timelineEvent != pressed) {
-                    timelineEvent.selected = false;
-                }
-            });
-            this._selected = [];
-
-            // Select pressed object
-            this._selected.push(pressed);
-            pressed.selected = true;
-
-            if (this._mouseClickType == MouseClickType.LeftClick) {
-                this._selected.forEach(timelineEvent => {
-                    timelineEvent.pointerDownHandler();
-                });
-            }
-        }
-        else {
-            this._clickState = ClickState.Dragging;
-            // Remove selected objects
-            this._selected.forEach(selectedObj => {
-                selectedObj.selected = false;
-            });
-            this._selected = [];
-        }
-    }
-
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
         this._newEventGraphics.visible = false;
-        // Right Click
-        if (this._mouseClickType == MouseClickType.RightClick && this.timelineMode == TimelineMode.Edit) {
-            // Add hover here
-        }
-        // Left click
-        else if (this._mouseClickType == MouseClickType.LeftClick) {
-            if (this._clickState == ClickState.Dragging) {
-                super.pointerMoveHandler(event);
-            }
-            else if (this.timelineMode == TimelineMode.Edit) {
-                if (this._clickState == ClickState.EventDragging) {
-                    // Calculate snapped moveDelta
-                    let moveDelta = this.snapToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
-
-                    // Pass it to selected children
-                    this._selected.forEach(selectedObj => {
-                        selectedObj.pointerMoveHandler(moveDelta);
-                    });
-                }
-            }
-        }
-        else if (this._mouseClickType == MouseClickType.None) {
+        super.pointerMoveHandler(event);
+        if (this._mouseClickType == MouseClickType.None) {
             this._newEventData = undefined;
             // Display new event outline (set width for note events, same length as soundfile for soundfile)
             let mousePos = event.data.getLocalPosition(this.parent);
@@ -218,88 +143,27 @@ export class SongTimeline extends ScrollableTimeline {
     }
 
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {
-        if (this._mouseClickType == MouseClickType.RightClick) {
-            for (let i = 0; i < this._selected.length; i++) {
-                this._selected[i].deleteEvent();
-                this._selected.splice(i, 1);
-                this._clickState = ClickState.None;
+        super.pointerUpClickHandler(event);
+        // Check that the click was a left click, and the click was on the timeline, and the timeline is in edit mode, and there is some valid event data to use to create the object.
+        if (this._mouseClickType == MouseClickType.LeftClick && this._clickState == ClickState.Dragging && this.timelineMode == TimelineMode.Edit && this._newEventData != undefined) {
+            let track = this._newEventData.track;
+            let startPosition = this._newEventData.startPosition;
+            console.log("adding at: " + startPosition);
+            if (track instanceof NoteUITrack) {
+                track.addNoteGroup(startPosition, startPosition + 4);
+                this._initialiseNoteGroup([startPosition, startPosition + 4], track);
             }
-        }
-        else if (this._mouseClickType == MouseClickType.LeftClick) {
-            if (this._clickState == ClickState.Dragging) {
-                this.x = this._startXPosition;
-                if (this.timelineMode == TimelineMode.Edit) {
-                    if (this._newEventData != undefined) {
-                        let track = this._newEventData.track;
-                        let startPosition = this._newEventData.startPosition;
-                        console.log("adding at: " + startPosition);
-                        if (track instanceof NoteUITrack) {
-                            track.addNoteGroup(startPosition, startPosition + 4);
-                            this._initialiseNoteGroup([startPosition, startPosition + 4], track);
-                        }
-                        else if (track instanceof SoundFileUITrack) {
-                            let event = track.track.addOneShot(startPosition);
-                            this._initialiseTimelineEvent(event, track);
-                        }
-                        this._newEventData = undefined;
-                    }
-                }
+            else if (track instanceof SoundFileUITrack) {
+                let event = track.track.addOneShot(startPosition);
+                this._initialiseTimelineEvent(event, track);
             }
-            else if (this._clickState == ClickState.EventDragging) {
-                // This was a click on a child, activate click on the pressed object and unselect all other objects.
-                for (let i = 0; i < this._selected.length; i++) {
-                    this._selected[i].pointerUpClickHandler();
-                }
-            }
-        }
-    }
-
-    public pointerUpDragHandler(event: PIXI.InteractionEvent) {
-        if (this._mouseClickType == MouseClickType.LeftClick) {
-            if (this._clickState == ClickState.Dragging) {
-                super.pointerUpDragHandler(event);
-            }
-            else if (this._clickState == ClickState.EventDragging && this.timelineMode == TimelineMode.Edit) {
-                // Dragging a child, calculate distance and pass it down
-                let moveDelta = this.snapToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
-                this._selected.forEach(selectedObj => {
-                    selectedObj.pointerUpHandler(moveDelta);
-                });
-            }
+            this._newEventData = undefined;
         }
     }
 
     public mouseWheelHandler(event: WheelEvent, canvasX: number, canvasY: number) {
         this._newEventGraphics.visible = false;
         super.mouseWheelHandler(event, canvasX, canvasY);
-    }
-
-    public updateVerticalScroll(value: number) {
-        super.updateVerticalScroll(value);
-
-        // Also move the events
-        this._eventContainer.children.forEach(function (event: TrackTimelineEvent) {
-            event.verticalScrollPosition = value;
-        });
-    }
-
-    /**
-     * Returns if a timelineEvent is under a given PIXI InteractionEvent
-     *
-     * @private
-     * @param {PIXI.InteractionEvent} event
-     * @returns {TrackTimelineEvent} The child that was hit (null if none was hit)
-     * @memberof SongTimeline
-     */
-    private _getTimelineEventHit(event: PIXI.InteractionEvent): TrackTimelineEvent {
-        for (let i = 0; i < this._eventContainer.children.length; i++) {
-            let child = this._eventContainer.children[i] as TrackTimelineEvent;
-            let pos = event.data.getLocalPosition(child);
-            if (pos.x > 0 && pos.x < child.width && pos.y > 0 && pos.y < child.height) {
-                return child;
-            }
-        }
-        return null;
     }
 
     /**
@@ -312,68 +176,24 @@ export class SongTimeline extends ScrollableTimeline {
     protected _offsetChildren(pixelOffset: number) {
         super._offsetChildren(pixelOffset);
 
-        for (let i = 0; i < this._eventContainer.children.length; i++) {
-            this._eventContainer.children[i].x -= pixelOffset;
-        }
-
         this._repositionTimelineMarker(this.songManager.quarterNotePosition);
     }
 
-    /**
-     * Scrolls the view so that a given bar position is at the start of the view.
-     *
-     * @private
-     * @param {number} barPosition The bar position to start at
-     * @memberof BarTimeline
-     */
-    private _scrollToPosition(barPosition: number) {
-        // Regenerate the bars starting at the bar given by the metadata.
-        let barNumber = Math.floor(barPosition);
-        this._regenerateTimeline(barNumber);
-
-        // Calculate the number of pixels to scroll by using the time signature (to get the number of beats)
-        let scrollAmount = this.metadata.getTimeSignature(barPosition)[0] * (barPosition % 1) * this.beatWidth;
-        this._offsetChildren(scrollAmount);
-    }
-
-    /**
-     * Clears the screen and regenerates the timeline from a given bar number - places the first bar at startX.
-     * Also repositions timeline events
-     * 
-     * @private
-     * @param {number} fromBar The bar to start generating from
-     * @param {number} toBar The bar to which generation should at least run to
-     * @memberof ScrollableTimeline
-     */
-    protected _regenerateTimeline(fromBar: number, toBar?: number) {
-        super._regenerateTimeline(fromBar, toBar);
-
-        // If no events have been generated, create all the UITracks
-        if (this._eventContainer.children.length == 0) {
-            for (let i = 0; i < this.tracks.length; i++) {
-                let track = this.tracks[i];
-                if (track instanceof NoteUITrack) {
-                    // Get all note groups that should be generated in the current bar range
-                    track.noteGroups.forEach(group => {
-                        this._initialiseNoteGroup(group, track as NoteUITrack);
-                    });
-                }
-                else if (track instanceof SoundFileUITrack) {
-                    track.track.timeline.events.forEach(event => {
-                        this._initialiseTimelineEvent(event, track);
-                    });
-                }
-            };
-        }
-        // Otherwise, reposition them to the correct location.
-        else {
-            this._eventContainer.children.forEach(event => {
-                if (event instanceof TrackTimelineEvent) {
-                    let [x, width] = this._getTimelineEventXWidth(event.eventStartPosition, event.eventStartPosition + event.eventDuration);
-                    event.reinitialise(x, width);
-                }
-            });
-        }
+    protected _initialiseTrackTimelineEvents() {
+        for (let i = 0; i < this.tracks.length; i++) {
+            let track = this.tracks[i];
+            if (track instanceof NoteUITrack) {
+                // Get all note groups that should be generated in the current bar range
+                track.noteGroups.forEach(group => {
+                    this._initialiseNoteGroup(group, track as NoteUITrack);
+                });
+            }
+            else if (track instanceof SoundFileUITrack) {
+                track.track.timeline.events.forEach(event => {
+                    this._initialiseTimelineEvent(event, track);
+                });
+            }
+        };
     }
 
     /**
@@ -444,51 +264,5 @@ export class SongTimeline extends ScrollableTimeline {
      */
     private _repositionTimelineMarker(position: number) {
         this._timelineMarker.x = this._getTimelineEventX(position);
-    }
-
-    /**
-     * Gets the x coordinate and the width of a timeline event
-     *
-     * @private
-     * @param {number} startPosition (quarter notes)
-     * @param {number} endPosition (quarter notes)
-     * @returns {number[]} [x, width]
-     * @memberof SongTimeline
-     */
-    private _getTimelineEventXWidth(startPosition: number, endPosition: number): number[] {
-        let x = this._getTimelineEventX(startPosition);
-        let width = (this.metadata.positionQuarterNoteToBeats(endPosition) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
-        return [x, width]
-    }
-
-    private _getTimelineEventX(position: number): number {
-        return (this.metadata.positionQuarterNoteToBeats(position) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._scrollObjects[0].barNumber))) * this.beatWidth + this._scrollObjects[0].leftBound;
-    }
-
-    /**
-     * Snaps a coordinate to the drag type of this timeline
-     *
-     * @private
-     * @param {number} value
-     * @returns
-     * @memberof SongTimeline
-     */
-    private snapToDragType(value: number) {
-        return value - this.getPixelOffsetFromDragType(value);
-    }
-
-    private getPixelOffsetFromDragType(value: number) {
-        switch (this.dragType) {
-            case EventSnapType.Beat:
-                return (value % this.beatWidth);
-            case EventSnapType.HalfBeat:
-                return (value % (this.beatWidth / 2));
-            case EventSnapType.QuarterBeat:
-                return (value % (this.beatWidth / 4));
-            case EventSnapType.EighthBeat:
-                return (value % (this.beatWidth / 8));
-            case EventSnapType.None:
-                return 0;
-        }
     }
 }
