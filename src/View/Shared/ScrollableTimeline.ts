@@ -44,7 +44,7 @@ export abstract class ScrollableTimeline extends PIXI.Container {
      * @type {EventSnapType}
      * @memberof SongTimeline
      */
-    public dragType: EventSnapType = EventSnapType.QuarterBeat;
+    public dragType: EventSnapType = EventSnapType.Beat;
 
     protected _zoomScale = 1;
 
@@ -55,7 +55,6 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     protected _eventContainer: PIXI.Container;
     protected _barContainer: PIXI.Container;
 
-    // FIXME: content height is duplicated between verticalscrollview and this object, possibly not necessary?
     protected abstract readonly contentHeight: number;
 
     protected _startPointerPosition: PIXI.Point;
@@ -210,7 +209,7 @@ export abstract class ScrollableTimeline extends PIXI.Container {
             }
             else if (this._clickState == ClickState.EventDragging && this.timelineMode == TimelineMode.Edit) {
                 // Calculate snapped moveDelta
-                let moveDelta = this.snapToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
+                let moveDelta = this.snapCoordinateToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
 
                 // Pass it to selected children
                 this._selected.forEach(selectedObj => {
@@ -269,7 +268,7 @@ export abstract class ScrollableTimeline extends PIXI.Container {
             }
             else if (this._clickState == ClickState.EventDragging && this.timelineMode == TimelineMode.Edit) {
                 // Dragging a child, calculate distance and pass it down
-                let moveDelta = this.snapToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
+                let moveDelta = this.snapCoordinateToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
                 this._selected.forEach(selectedObj => {
                     selectedObj.pointerUpHandler(moveDelta);
                 });
@@ -286,7 +285,7 @@ export abstract class ScrollableTimeline extends PIXI.Container {
 
         // Get the mouse's position in bars (based on the screen)
         let [barPosition, beatPosition, numBeats] = this._getBarFromStageCoordinates(stageX);
-        barPosition += beatPosition / numBeats
+        barPosition += beatPosition / numBeats;
         // Change the scaling
         this._zoomScale = Math.max(0.5, Math.min(5.0, this._zoomScale - event.deltaY / 1000));
         // Regenerate the bars (at least until the bar we need)
@@ -305,12 +304,10 @@ export abstract class ScrollableTimeline extends PIXI.Container {
         this._scrollObjects.forEach(bar => {
             bar.verticalScrollPosition = value;
         });
-        this._verticalScrollPosition = value;
 
-        // Also move the events
-        this._eventContainer.children.forEach(function (event: TrackTimelineEvent) {
-            event.verticalScrollPosition = value;
-        });
+        this._eventContainer.y = value;
+
+        this._verticalScrollPosition = value;
     }
 
     /**
@@ -528,7 +525,7 @@ export abstract class ScrollableTimeline extends PIXI.Container {
      * @returns
      * @memberof ScrollableTimeline
      */
-    protected snapToDragType(value: number) {
+    protected snapCoordinateToDragType(value: number) {
         return value - this.getPixelOffsetFromDragType(value);
     }
 
@@ -545,6 +542,29 @@ export abstract class ScrollableTimeline extends PIXI.Container {
             case EventSnapType.None:
                 return 0;
         }
+    }
+
+    protected snapBeatToDragType(value: number) {
+        switch (this.dragType) {
+            case EventSnapType.None:
+                break;
+            case EventSnapType.Beat:
+                value = value - (value % 1)
+                break;
+            case EventSnapType.HalfBeat:
+                value *= 2;
+                value = (value - (value % 1)) / 2;
+                break;
+            case EventSnapType.QuarterBeat:
+                value *= 4;
+                value = (value - (value % 1)) / 4;
+                break;
+            case EventSnapType.EighthBeat:
+                value *= 8;
+                value = (value - (value % 1)) / 8;
+                break;
+        }
+        return value;
     }
 
     /**
@@ -595,7 +615,7 @@ export abstract class ScrollableTimeline extends PIXI.Container {
             0,
             UIPositioning.timelineHeaderHeight,
             5 * this._zoomScale,
-            Math.max(this.contentHeight, this.endY)
+            this.endY
         );
         this._repositionTimelineMarker(this.songManager.quarterNotePosition);
     }

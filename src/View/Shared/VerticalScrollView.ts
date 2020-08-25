@@ -48,7 +48,8 @@ export abstract class VerticalScrollView extends PIXI.Container {
     }
 
     set verticalScrollPosition(value : number) {
-        this._verticalScrollPosition = Math.min(0, Math.max(-this.contentHeight + this.endY, value));
+        // Include a small offset so content at the very bottom is still visible
+        this._verticalScrollPosition = Math.min(0, Math.max(-this.contentHeight + this.endY - 2, value));
     }
 
     public resizeInteractiveArea(width: number, height: number) {

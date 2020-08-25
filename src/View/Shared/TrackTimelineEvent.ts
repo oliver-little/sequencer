@@ -8,18 +8,19 @@ import { ScrollableTimeline } from "./ScrollableTimeline.js";
 
 export abstract class TrackTimelineEvent extends PIXI.Container {
 
-    static borderLeft = 1;
-    static borderRight = 2;
-    static borderHeight = 2;
-    static paddingHeight = 6;
-    static selectedBorderWidth = 4;
-
     public timeline: ScrollableTimeline;
     public assignedWidth: number;
+    public assignedHeight : number;
     public track: UITrack;
 
     public abstract readonly eventStartPosition: number;
-    public abstract readonly eventDuration: number
+    public abstract readonly eventDuration: number;
+
+    public borderLeft = 1;
+    public borderRight = 2;
+    public borderHeight = 2;
+    public paddingHeight = 6;
+    public selectedBorderWidth = 4;
 
     protected _selected: boolean = false;
     protected _hovered: boolean = false;
@@ -28,22 +29,21 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
     protected _selectedGraphics: PIXI.Graphics;
     protected _hoveredColor: number = UIColors.trackEventHoveredColor;
 
-    protected _assignedHeight : number;
-
     protected _startXPosition: number;
-    protected _verticalScrollPosition: number;
 
     /**
      *Creates an instance of TrackTimelineEvent.
      * @param {ScrollableTimeline} timeline The timeline object this TrackTimelineEvent is part of
-     * @param {number} x The x position this even should start at (pixels)
+     * @param {number} x The x position this event should start at (pixels)
      * @param {number} width The width of this event (pixels)
+     * @param {number} y The y coordinate this event should start at (pixels)
+     * @param {number} height The height of this event (pixels)
      * @param {UITrack} track The UITrack this TrackTimelineEvent represents an event of
      * @param {number} eventStartPosition The start position of this event (quarter notes)
      * @param {number} eventDuration The duration of this event (quarter notes)
      * @memberof TrackTimelineEvent
      */
-    constructor(timeline: ScrollableTimeline, x: number, width: number, track: UITrack) {
+    constructor(timeline: ScrollableTimeline, x: number, width: number, y : number, height : number, track: UITrack) {
         super();
         this.timeline = timeline;
         this.track = track;
@@ -53,18 +53,10 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
         this._selectedGraphics.zIndex = 1;
         this.addChild(this._contentGraphics, this._selectedGraphics);
 
-        this.x = x + TrackTimelineEvent.borderLeft;
-        this.assignedWidth = Math.max(width - TrackTimelineEvent.borderRight, 3);
-        this.y = track.startY + TrackTimelineEvent.borderHeight;
-    }
-
-    get verticalScrollPosition() : number {
-        return this._verticalScrollPosition;
-    }
-
-    set verticalScrollPosition(value : number) {
-        this._verticalScrollPosition = value;
-        this.y = this.track.startY + TrackTimelineEvent.borderHeight + value;
+        this.x = x + this.borderLeft;
+        this.assignedWidth = Math.max(width - this.borderRight, 3);
+        this.assignedHeight = height - this.borderHeight;
+        this.y = y + this.borderHeight;
     }
 
     /**
@@ -74,9 +66,16 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      * @param {number} width The new width (pixels)
      * @memberof TrackTimelineEvent
      */
-    public reinitialise(x : number, width : number) {
-        this.x = x + TrackTimelineEvent.borderLeft;
-        this.assignedWidth = Math.max(width - TrackTimelineEvent.borderRight, 3);
+    public reinitialise(x : number, width : number, y? : number, height? : number) {
+        this.x = x + this.borderLeft;
+        this.assignedWidth = Math.max(width - this.borderRight, 3);
+
+        if (y != undefined) {
+            this.y = y;
+        }
+        if (height != undefined) {
+            this.assignedHeight = height;
+        }
         this.redraw();
     }
 
@@ -137,11 +136,9 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      * @memberof TrackTimelineEvent
      */
     public redraw() {
-        this._assignedHeight = this.track.height - TrackTimelineEvent.borderHeight;
-
         this._contentGraphics.clear();
         this._contentGraphics.beginFill(UIColors.trackEventColor, this._opacity)
-            .drawRect(0, 0, this.assignedWidth, this._assignedHeight)
+            .drawRect(0, 0, this.assignedWidth, this.assignedHeight)
             .endFill();
         this.redrawSelected();
     }
@@ -155,10 +152,10 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
         this._selectedGraphics.clear();
         if (this.hovered || this.selected) {
         this._selectedGraphics.beginFill(this.hovered ? this._hoveredColor : UIColors.trackEventSelectedColor, this.opacity)
-                .drawRect(0, 0, this.assignedWidth, this._assignedHeight)
+                .drawRect(0, 0, this.assignedWidth, this.assignedHeight)
                 .endFill()
                 .beginHole()
-                .drawRect(TrackTimelineEvent.selectedBorderWidth, TrackTimelineEvent.selectedBorderWidth, this.assignedWidth - TrackTimelineEvent.selectedBorderWidth * 2, this._assignedHeight - TrackTimelineEvent.selectedBorderWidth * 2)
+                .drawRect(this.selectedBorderWidth, this.selectedBorderWidth, this.assignedWidth - this.selectedBorderWidth * 2, this.assignedHeight - this.selectedBorderWidth * 2)
                 .endHole();
         }
     }
@@ -274,7 +271,9 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
      * @memberof NoteGroupTimelineEvent
      */
     constructor(timeline: ScrollableTimeline, x: number, width: number, track: NoteUITrack, noteGroup: number[]) {
-        super(timeline, x, width, track);
+        let y = track.startY;
+        let height = track.height;
+        super(timeline, x, width, y, height, track);
         this._noteGroup = noteGroup;
         this.redraw();
     }
@@ -302,7 +301,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
         let start = noteGroup[0];
         let end = noteGroup[1];
-        let noteHeight = (this.track.height - TrackTimelineEvent.paddingHeight * 2) / noteRange;
+        let noteHeight = (this.track.height - this.paddingHeight * 2) / noteRange;
         let positionMap = position => {
             return (position - start) / (end - start);
         }
@@ -311,7 +310,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
             let startX = positionMap(note.startPosition) * this.assignedWidth;
             let endX = positionMap(note.startPosition + note.duration) * this.assignedWidth;
             this._contentGraphics.drawRect(startX,
-                NoteHelper.distanceBetweenNotes(highestNote, note.pitchString) * noteHeight + TrackTimelineEvent.paddingHeight,
+                NoteHelper.distanceBetweenNotes(highestNote, note.pitchString) * noteHeight + this.paddingHeight,
                 endX - startX - 2,
                 noteHeight);
         });
@@ -375,13 +374,13 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 }
 
 /**
- * TimelineEvent representing one playback of a track which can only play one sound
+ * TimelineEvent representing a base event object
  *
  * @export
- * @class OneShotTimelineEvent
+ * @class BaseEventTimelineEvent
  * @extends {TrackTimelineEvent}
  */
-export class OneShotTimelineEvent extends TrackTimelineEvent {
+export class BaseEventTimelineEvent extends TrackTimelineEvent {
 
     public event : BaseEvent;
 
@@ -390,12 +389,14 @@ export class OneShotTimelineEvent extends TrackTimelineEvent {
      * @param {SongTimeline} timeline The timeline object this event is part of.
      * @param {number} x The x position this object should start at (pixels)
      * @param {number} width The width of this object (pixels)
+     * @param {number} y The y coordinate this object should start at (pixels)
+     * @param {number} height The height of this object (pixels)
      * @param {UITrack} track The UITrack this event is part of
      * @param {BaseEvent} event
-     * @memberof OneShotTimelineEvent
+     * @memberof BaseEventTimelineEvent
      */
-    constructor(timeline: ScrollableTimeline, x: number, width: number, track: UITrack, event : BaseEvent) {
-        super(timeline, x, width, track);
+    constructor(timeline: ScrollableTimeline, x: number, width: number, y : number, height : number, track: UITrack, event : BaseEvent) {
+        super(timeline, x, width, y, height, track);
 
         this.event = event;
         this.redraw();
@@ -438,6 +439,65 @@ export class OneShotTimelineEvent extends TrackTimelineEvent {
     }
 
     protected clickHandler() {
-        console.log("Clicked OneShotTimelineEvent");
+        console.log("Clicked BaseEventTimelineEvent");
+    }
+}
+
+/**
+ * Represents a OneShot event
+ * The difference between this object and BaseEventTimelineEvent is 
+ * that the y coordinate of this object is fixed to track.startY
+ * and the height is fixed to track.height
+ *
+ * @export
+ * @class OneShotTimelineEvent
+ * @extends {BaseEventTimelineEvent}
+ */
+export class OneShotTimelineEvent extends BaseEventTimelineEvent {
+    constructor(timeline: ScrollableTimeline, x: number, width: number, track: UITrack, event : BaseEvent) {
+        let y = track.startY;
+        let height = track.height;
+        super(timeline, x, width, y, height, track, event);
+    }
+}
+
+/**
+ * Extends BaseEventTimelineEvent to modify how events are tested for collisions
+ *
+ * @export
+ * @class NoteTimelineEvent
+ * @extends {BaseEventTimelineEvent}
+ */
+export class NoteTimelineEvent extends BaseEventTimelineEvent {
+
+    public track : NoteUITrack;
+    public event : NoteEvent;
+
+    constructor(timeline: ScrollableTimeline, x: number, width: number, y : number, height : number, track: NoteUITrack, event : NoteEvent) {
+        super(timeline, x, width, y, height, track, event);
+    }
+
+    protected dragHandler(dragDistance : number) {
+        // Get the events that occur within 
+        let beatChange = dragDistance / this.timeline.beatWidth;
+        let newStartPosition = this.timeline.metadata.positionQuarterNoteToBeats(this.event.startPosition) + beatChange;
+        let eventsInPeriod = this.track.track.timeline.getEventsBetweenTimes(newStartPosition, newStartPosition + this.event.duration) as NoteEvent[];
+
+        // FIXME: Possibly test for collisions in BaseEvent/NoteEvent to remove the need for this basic class extension
+        let timePeriodClear = true;
+        for(let i = 0; i < eventsInPeriod.length; i++) {
+            if (eventsInPeriod[i] != this.event && eventsInPeriod[i].pitch == this.event.pitch) {
+                timePeriodClear = false;
+                break;
+            }
+        }
+
+        if (!timePeriodClear) {
+            this.x = this._startXPosition;
+        }
+        else {
+            let eventIndex = this.track.track.timeline.getIndexOfEvent(this.event);
+            this.track.track.timeline.editEvent(eventIndex, newStartPosition);
+        }
     }
 }

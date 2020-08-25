@@ -35,7 +35,7 @@ let base64data = "data:audio/mpeg;base64,SUQzAwAAAAAAH1RYWFgAAAAVAAAAU29mdHdhcmU
 let songManager : SongManager = new SongManager();
 let oscillatorTrack = songManager.addOscillatorTrack();
 oscillatorTrack.addNote(0, "E5", "2n");
-oscillatorTrack.addNote(0, "C5", "2n");
+oscillatorTrack.addNote(0, "C0", "2n");
 oscillatorTrack.addNote(0, "G5", "2n");
 oscillatorTrack.addNote(2, "E5", "2n");
 oscillatorTrack.addNote(2, "C6", "2n");
@@ -79,9 +79,14 @@ window.onload = async function () {
             btn.innerHTML = "Start";
         }
     }
-
-    let timeline = new TimelineView(app.renderer, newUITracks, songManager);
-    //let timeline = new SequencerView(app.renderer, newUITracks.filter(track => {track instanceof NoteUITrack})[0] as NoteUITrack, songManager);
+    let track : NoteUITrack = null;
+    for(let i = 0; i < newUITracks.length; i++) {
+        if (newUITracks[i] instanceof NoteUITrack) {
+            track = newUITracks[i] as NoteUITrack;
+        }
+    }
+    //let timeline = new TimelineView(app.renderer, newUITracks, songManager);
+    let timeline = new SequencerView(app.renderer, track, songManager);
     app.view.addEventListener("wheel", event => timeline.timeline.mouseWheelHandler(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));
     app.stage.addChild(timeline);
 

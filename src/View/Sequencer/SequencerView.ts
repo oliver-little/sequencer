@@ -7,7 +7,8 @@ import { VerticalScrollView } from "../Shared/VerticalScrollView";
 import NoteHelper from "../../HelperModules/NoteHelper";
 
 export class SequencerView extends VerticalScrollView {
-    static noteHeight = 20;
+
+    static numNotes = 99;
 
     public timeline : SequencerTimeline;
 
@@ -23,15 +24,15 @@ export class SequencerView extends VerticalScrollView {
         // Create and draw horizontal lines over the whole screen.
         this._horizontalLines = new PIXI.Graphics();
         this._horizontalLines.beginFill(UIColors.fgColor);
-        for (let i = 0; i < 97; i++) {
-            this._horizontalLines.drawRect(0, 40 + i * SequencerView.noteHeight, renderer.width, 1);
+        for (let i = 0; i < SequencerView.numNotes; i++) {
+            this._horizontalLines.drawRect(0, 40 + i * SequencerTimeline.noteHeight, renderer.width, 1);
         }
         this._horizontalLines.endFill();
         this.addChild(this._horizontalLines, this.timeline);
     }
 
     get contentHeight() : number {
-        return SequencerView.noteHeight * 96;
+        return SequencerTimeline.noteHeight * SequencerView.numNotes;
     }
 
     protected updateVerticalScroll(value : number) {

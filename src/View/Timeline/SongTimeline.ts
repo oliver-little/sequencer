@@ -69,25 +69,7 @@ export class SongTimeline extends ScrollableTimeline {
                     // Get mouse position as bar position
                     let [barPosition, beatPosition, numBeats] = this._getBarFromStageCoordinates(mousePos.x);
                     // Snap beat position
-                    switch (this.dragType) {
-                        case EventSnapType.None:
-                            break;
-                        case EventSnapType.Beat:
-                            beatPosition = beatPosition - (beatPosition % 1)
-                            break;
-                        case EventSnapType.HalfBeat:
-                            beatPosition *= 2;
-                            beatPosition = (beatPosition - (beatPosition % 1)) / 2;
-                            break;
-                        case EventSnapType.QuarterBeat:
-                            beatPosition *= 4;
-                            beatPosition = (beatPosition - (beatPosition % 1)) / 4;
-                            break;
-                        case EventSnapType.EighthBeat:
-                            beatPosition *= 8;
-                            beatPosition = (beatPosition - (beatPosition % 1)) / 8;
-                            break;
-                    }
+                    beatPosition = this.snapBeatToDragType(beatPosition);
                     // Add snapped beat position as percentage to barPosition
                     barPosition += beatPosition / numBeats;
 
