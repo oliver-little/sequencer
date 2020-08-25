@@ -1,10 +1,9 @@
 import * as PIXI from "pixi.js";
-import { UIColors } from "../Shared/UITheme.js";
-import { TrackList } from "./TrackList.js";
+import { UIColors } from "./UITheme.js";
 import { NoteEvent, BaseEvent } from "../../Model/Notation/SongEvents.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
-import { SongTimeline } from "./SongTimeline.js";
 import { UITrack, NoteUITrack } from "../UIObjects/UITrack.js";
+import { ScrollableTimeline } from "./ScrollableTimeline.js";
 
 
 export abstract class TrackTimelineEvent extends PIXI.Container {
@@ -15,7 +14,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
     static paddingHeight = 6;
     static selectedBorderWidth = 4;
 
-    public timeline: SongTimeline;
+    public timeline: ScrollableTimeline;
     public assignedWidth: number;
     public track: UITrack;
 
@@ -36,7 +35,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
 
     /**
      *Creates an instance of TrackTimelineEvent.
-     * @param {SongTimeline} timeline The timeline object this TrackTimelineEvent is part of
+     * @param {ScrollableTimeline} timeline The timeline object this TrackTimelineEvent is part of
      * @param {number} x The x position this even should start at (pixels)
      * @param {number} width The width of this event (pixels)
      * @param {UITrack} track The UITrack this TrackTimelineEvent represents an event of
@@ -44,7 +43,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      * @param {number} eventDuration The duration of this event (quarter notes)
      * @memberof TrackTimelineEvent
      */
-    constructor(timeline: SongTimeline, x: number, width: number, track: UITrack) {
+    constructor(timeline: ScrollableTimeline, x: number, width: number, track: UITrack) {
         super();
         this.timeline = timeline;
         this.track = track;
@@ -274,7 +273,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
      * @param {number[]} noteGroup The NoteGroup this event represents
      * @memberof NoteGroupTimelineEvent
      */
-    constructor(timeline: SongTimeline, x: number, width: number, track: NoteUITrack, noteGroup: number[]) {
+    constructor(timeline: ScrollableTimeline, x: number, width: number, track: NoteUITrack, noteGroup: number[]) {
         super(timeline, x, width, track);
         this._noteGroup = noteGroup;
         this.redraw();
@@ -395,7 +394,7 @@ export class OneShotTimelineEvent extends TrackTimelineEvent {
      * @param {BaseEvent} event
      * @memberof OneShotTimelineEvent
      */
-    constructor(timeline: SongTimeline, x: number, width: number, track: UITrack, event : BaseEvent) {
+    constructor(timeline: ScrollableTimeline, x: number, width: number, track: UITrack, event : BaseEvent) {
         super(timeline, x, width, track);
 
         this.event = event;
