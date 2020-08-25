@@ -1,8 +1,6 @@
 import * as PIXI from "pixi.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
-import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
-import { ScrollableBar } from "../Shared/ScrollableBar.js";
 import { TimelineMode, MouseClickType, ClickState } from "../Shared/Enums.js";
 import { NoteUITrack } from "../UIObjects/UITrack.js";
 import { TrackTimelineEvent } from "../Shared/TrackTimelineEvent.js";

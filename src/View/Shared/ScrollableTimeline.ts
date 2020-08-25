@@ -5,6 +5,8 @@ import { ScrollableBar } from "./ScrollableBar.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { MouseClickType, ClickState, TimelineMode, EventSnapType } from "./Enums.js";
 import { TrackTimelineEvent } from "./TrackTimelineEvent.js";
+import { TimelineMarker } from "../Timeline/TimelineMarker.js";
+import { UIPositioning } from "./UITheme.js";
 
 /**
  * Provides a basic implementation of a timeline, including pooled bar objects using ScrollableBar
@@ -66,6 +68,10 @@ export abstract class ScrollableTimeline extends PIXI.Container {
 
     protected _selected: TrackTimelineEvent[] = [];
 
+    // Timeline marker variables
+    protected _timelineMarker: TimelineMarker;
+    protected _boundTimelineAnim: (time: number) => any;
+
     constructor(startX: number, endX: number, startY: number, endY: number, songManager: SongManager) {
         super();
         this.startX = startX;
@@ -81,6 +87,12 @@ export abstract class ScrollableTimeline extends PIXI.Container {
         this._headerContainer = new PIXI.Container();
         this._eventContainer = new PIXI.Container();
         this.addChild(this._barContainer, this._eventContainer, this._headerContainer);
+
+        this._timelineMarker = new TimelineMarker();
+        this.addChild(this._timelineMarker);
+
+        this._boundTimelineAnim = this._timelineMarkerAnim.bind(this);
+        this.songManager.playingChangedEvent.addListener(value => { this._playingStateChanged(value[0]) });
     }
 
     get metadata() {
@@ -330,8 +342,8 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     }
 
     /**
-     * Should be implemented by subclasses to offset all children correctly.
-     * Applies a given pixel offset to the x coordinate all children of this object.
+     * Should be reimplemented by subclasses to offset all children correctly.
+     * Applies a given pixel offset to the x coordinate all known children of this object.
      * 
      *
      * @protected
@@ -349,6 +361,8 @@ export abstract class ScrollableTimeline extends PIXI.Container {
 
         // After offsetting, ensure the screen is still filled with bars
         this._checkBarsFillScreen();
+
+        this._repositionTimelineMarker(this.songManager.quarterNotePosition);
     }
 
     /**
@@ -396,6 +410,8 @@ export abstract class ScrollableTimeline extends PIXI.Container {
                 }
             });
         }
+        
+        this._redrawTimelineMarker();
     }
 
     /**
@@ -548,5 +564,50 @@ export abstract class ScrollableTimeline extends PIXI.Container {
 
     protected _getTimelineEventX(position: number): number {
         return (this.metadata.positionQuarterNoteToBeats(position) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._scrollObjects[0].barNumber))) * this.beatWidth + this._scrollObjects[0].leftBound;
+    }
+
+    protected _playingStateChanged(value: boolean) {
+        if (value == true) {
+            this.timelineMode = TimelineMode.Playback;
+            requestAnimationFrame(this._boundTimelineAnim);
+        }
+        else {
+            this.timelineMode = TimelineMode.Edit;
+        }
+    }
+
+    protected _timelineMarkerAnim(timestamp: number) {
+        this._repositionTimelineMarker(this.songManager.quarterNotePosition);
+
+        if (this.songManager.playing == true) {
+            requestAnimationFrame(this._boundTimelineAnim);
+        }
+    }
+
+    /**
+     * Redraws the timeline marker
+     *
+     * @protected
+     * @memberof ScrollableTimeline
+     */
+    protected _redrawTimelineMarker() {
+        this._timelineMarker.redraw(
+            0,
+            UIPositioning.timelineHeaderHeight,
+            5 * this._zoomScale,
+            Math.max(this.contentHeight, this.endY)
+        );
+        this._repositionTimelineMarker(this.songManager.quarterNotePosition);
+    }
+
+    /**
+     * Repositions the timeline marker over a given quarter note position
+     *
+     * @protected
+     * @param {number} position
+     * @memberof ScrollableTimeline
+     */
+    protected _repositionTimelineMarker(position: number) {
+        this._timelineMarker.x = this._getTimelineEventX(position);
     }
 }

@@ -17,3 +17,7 @@ export class UIFonts {
         align: "left"
     };
 }
+
+export class UIPositioning {
+    public static timelineHeaderHeight : number = 40;
+}

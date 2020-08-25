@@ -4,7 +4,6 @@ import { TrackTimelineEvent, NoteGroupTimelineEvent, OneShotTimelineEvent } from
 import { UIColors } from "../Shared/UITheme.js";
 import { BaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
-import { TimelineMarker } from "./TimelineMarker.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
 import { EventSnapType, TimelineMode, MouseClickType, ClickState } from "../Shared/Enums.js";
 
@@ -24,14 +23,9 @@ export class SongTimeline extends ScrollableTimeline {
 
     public tracks: UITrack[];
 
-    // Scrolling variables
-    private _timelineMarker: TimelineMarker;
-
     // Event creation variables
     private _newEventGraphics: PIXI.Graphics;
     private _newEventData: INewEventData;
-
-    private _boundTimelineAnim: (time: number) => any;
 
     /**
      *Creates an instance of SongTimeline.
@@ -51,13 +45,6 @@ export class SongTimeline extends ScrollableTimeline {
         this.addChild(this._newEventGraphics);
 
         this._regenerateTimeline(0);
-
-        this._timelineMarker = new TimelineMarker();
-        this.addChild(this._timelineMarker);
-        this._redrawTimelineMarker();
-
-        this._boundTimelineAnim = this._timelineMarkerAnim.bind(this);
-        this.songManager.playingChangedEvent.addListener(value => { this._playingStateChanged(value[0]) });
     }
 
     get contentHeight() {
@@ -166,19 +153,6 @@ export class SongTimeline extends ScrollableTimeline {
         super.mouseWheelHandler(event, canvasX, canvasY);
     }
 
-    /**
-     * Adds a given pixel offset to the x coordinate all children of this object.
-     *
-     * @private
-     * @param {number} pixelOffset The number of pixels to offset by
-     * @memberof SongTimeline
-     */
-    protected _offsetChildren(pixelOffset: number) {
-        super._offsetChildren(pixelOffset);
-
-        this._repositionTimelineMarker(this.songManager.quarterNotePosition);
-    }
-
     protected _initialiseTrackTimelineEvents() {
         for (let i = 0; i < this.tracks.length; i++) {
             let track = this.tracks[i];
@@ -223,46 +197,5 @@ export class SongTimeline extends ScrollableTimeline {
         let timelineEvent = new OneShotTimelineEvent(this, x, width, track, event);
         this._eventContainer.addChild(timelineEvent);
         return timelineEvent;
-    }
-
-    private _playingStateChanged(value: boolean) {
-        if (value == true) {
-            requestAnimationFrame(this._boundTimelineAnim);
-        }
-    }
-
-    private _timelineMarkerAnim(timestamp: number) {
-        this._repositionTimelineMarker(this.songManager.quarterNotePosition);
-
-        if (this.songManager.playing == true) {
-            requestAnimationFrame(this._boundTimelineAnim);
-        }
-    }
-
-    /**
-     * Redraws the timeline marker
-     *
-     * @private
-     * @memberof SongTimeline
-     */
-    private _redrawTimelineMarker() {
-        this._timelineMarker.redraw(
-            0,
-            this.tracks[0].startY,
-            5 * this._zoomScale,
-            Math.max(this.contentHeight, this.endY)
-        );
-        this._repositionTimelineMarker(this.songManager.quarterNotePosition);
-    }
-
-    /**
-     * Repositions the timeline marker over a given quarter note position
-     *
-     * @private
-     * @param {number} position
-     * @memberof SongTimeline
-     */
-    private _repositionTimelineMarker(position: number) {
-        this._timelineMarker.x = this._getTimelineEventX(position);
     }
 }
