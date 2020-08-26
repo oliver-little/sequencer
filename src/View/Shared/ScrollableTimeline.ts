@@ -220,9 +220,6 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     }
 
     public pointerUpHandler(event: PIXI.InteractionEvent) {
-        if (this._mouseClickType != MouseClickType.LeftClick) {
-            return;
-        }
         // Check if event was a click
         if (PointHelper.distanceSquared(event.data.getLocalPosition(this.parent), this._startPointerPosition) < 10) {
             this.pointerUpClickHandler(event);
@@ -250,11 +247,10 @@ export abstract class ScrollableTimeline extends PIXI.Container {
                 }
             }
         }
-        else if (this._mouseClickType == MouseClickType.RightClick) {
+        else if (this._mouseClickType == MouseClickType.RightClick && this._selected.length > 0) {
             for (let i = 0; i < this._selected.length; i++) {
                 this._selected[i].deleteEvent();
                 this._selected.splice(i, 1);
-                this._clickState = ClickState.None;
             }
         }
     }

@@ -73,7 +73,7 @@ export class SequencerTimeline extends ScrollableTimeline {
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
         this._newEventGraphics.visible = false;
         super.pointerMoveHandler(event);
-        if (this._mouseClickType == MouseClickType.None) {
+        if (this._mouseClickType == MouseClickType.None && this.timelineMode == TimelineMode.Edit) {
             // Get the mouse position, extract the y coordinate and offset by the header (so C8 is at the top of the rows, not the top of the view)
             let mousePos = event.data.getLocalPosition(this.parent);
             if (mousePos.x < this.startX || mousePos.x > this.endX || mousePos.y < (this.startY + UIPositioning.timelineHeaderHeight) || mousePos.y > this.endY) {
