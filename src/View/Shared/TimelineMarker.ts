@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import { UIColors } from "../Shared/UITheme.js";
+import { UIColors } from "./UITheme.js";
 
 export class TimelineMarker extends PIXI.Graphics {
     constructor() {

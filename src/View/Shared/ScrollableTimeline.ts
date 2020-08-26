@@ -5,7 +5,7 @@ import { ScrollableBar } from "./ScrollableBar.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { MouseClickType, ClickState, TimelineMode, EventSnapType } from "./Enums.js";
 import { TrackTimelineEvent } from "./TrackTimelineEvent.js";
-import { TimelineMarker } from "../Timeline/TimelineMarker.js";
+import { TimelineMarker } from "./TimelineMarker.js";
 import { UIPositioning } from "./UITheme.js";
 
 /**
