@@ -50,7 +50,11 @@ window.onload = async function () {
     soundFileTrack.setSoundFile(await (await fetch(base64data)).blob());
     
     let app = new PIXI.Application({ width: window.innerWidth * 0.8, height: window.innerHeight * 0.8 });
+
+    // This prevents context menu on right click
     app.view.setAttribute("oncontextmenu", "return false;");
+    // This prevents text from being selected when the mouse triple clicks the canvas
+    app.view.addEventListener("mousedown", function(e) {e.preventDefault();});
 
     document.body.appendChild(app.view);
 
