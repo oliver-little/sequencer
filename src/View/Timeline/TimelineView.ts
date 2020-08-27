@@ -4,6 +4,7 @@ import { TrackList, TrackHorizontalLines } from "./TrackList.js";
 import { UITrack } from "../UIObjects/UITrack.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { VerticalScrollView } from "../Shared/VerticalScrollView.js";
+import { UIPositioning } from "../Shared/UITheme";
 
 export class TimelineView extends VerticalScrollView {
 
@@ -19,6 +20,7 @@ export class TimelineView extends VerticalScrollView {
         this._tracks = tracks;
 
         this._trackLines = new TrackHorizontalLines(tracks, renderer.width);
+        this._trackLines.y = UIPositioning.timelineHeaderHeight;
         this.addChild(this._trackLines);
         this.timeline = new SongTimeline(this._sidebarPosition, renderer.width, renderer.height, songManager, tracks);
         this.addChild(this.timeline);

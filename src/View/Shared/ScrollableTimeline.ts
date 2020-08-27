@@ -1,13 +1,12 @@
 import * as PIXI from "pixi.js";
 import { ObjectPool } from "../../HelperModules/ObjectPool.js";
-import { PointHelper } from "../../HelperModules/PointHelper.js";
 import { ScrollableBar } from "./ScrollableBar.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { MouseClickType, TimelineMode, EventSnapType } from "./Enums.js";
 import { TrackTimelineEvent } from "./TrackTimelineEvent.js";
 import { TimelineMarker } from "./TimelineMarker.js";
 import { UIPositioning } from "./UITheme.js";
-import { InteractiveContainer, MouseTypeContainer } from "./InteractiveContainer.js";
+import { MouseTypeContainer } from "./InteractiveContainer.js";
 
 /**
  * Provides a basic implementation of a timeline, including pooled bar objects using ScrollableBar
@@ -89,6 +88,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._barContainer = new PIXI.Container();
         this._headerContainer = new PIXI.Container();
         this._eventContainer = new PIXI.Container();
+        this._eventContainer.y = UIPositioning.timelineHeaderHeight;
         this.addChild(this._barContainer, this._eventContainer, this._headerContainer);
 
         this._timelineMarker = new TimelineMarker();
@@ -227,7 +227,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
             bar.verticalScrollPosition = value;
         });
 
-        this._eventContainer.y = value;
+        this._eventContainer.y = value + UIPositioning.timelineHeaderHeight;
 
         this._verticalScrollPosition = value;
     }

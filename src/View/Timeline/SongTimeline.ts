@@ -1,11 +1,11 @@
 import * as PIXI from "pixi.js";
 import { UITrack, NoteUITrack, SoundFileUITrack } from "../UIObjects/UITrack.js";
 import { TrackTimelineEvent, NoteGroupTimelineEvent, OneShotTimelineEvent } from "../Shared/TrackTimelineEvent.js";
-import { UIColors } from "../Shared/UITheme.js";
+import { UIColors, UIPositioning } from "../Shared/UITheme.js";
 import { BaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
-import { EventSnapType, TimelineMode, MouseClickType } from "../Shared/Enums.js";
+import { TimelineMode, MouseClickType } from "../Shared/Enums.js";
 
 interface INewEventData {
     track: UITrack,
@@ -42,6 +42,7 @@ export class SongTimeline extends ScrollableTimeline {
         this.tracks = tracks;
 
         this._newEventGraphics = new PIXI.Graphics();
+        this._newEventGraphics.y = UIPositioning.timelineHeaderHeight;
         this.addChild(this._newEventGraphics);
 
         this._regenerateTimeline(0);

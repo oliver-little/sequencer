@@ -79,7 +79,6 @@ export abstract class MouseTypeContainer extends InteractiveContainer {
                 this._mouseClickType = MouseClickType.None;
                 return;
         }
-
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
     }
 
@@ -92,7 +91,7 @@ export abstract class MouseTypeContainer extends InteractiveContainer {
      * @memberof MouseTypeContainer
      */
     public pointerUpHandler(event : PIXI.InteractionEvent) {
-        if (this._mouseClickType == MouseClickType.None) {
+        if (this._mouseClickType == MouseClickType.None || this._mouseClickType == undefined) {
             return;
         }
         else {

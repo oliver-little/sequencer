@@ -2,13 +2,12 @@ import * as PIXI from "pixi.js";
 import { SequencerTimeline } from "./SequencerTimeline";
 import { NoteUITrack } from "../UIObjects/UITrack";
 import { SongManager } from "../../Model/SongManagement/SongManager";
-import { UIColors } from "../Shared/UITheme";
+import { UIColors, UIPositioning } from "../Shared/UITheme";
 import { VerticalScrollView } from "../Shared/VerticalScrollView";
-import NoteHelper from "../../HelperModules/NoteHelper";
 
 export class SequencerView extends VerticalScrollView {
 
-    static numNotes = 99;
+    static numNotes = 97;
 
     public timeline : SequencerTimeline;
 
@@ -23,9 +22,10 @@ export class SequencerView extends VerticalScrollView {
 
         // Create and draw horizontal lines over the whole screen.
         this._horizontalLines = new PIXI.Graphics();
+        this._horizontalLines.y = UIPositioning.timelineHeaderHeight;
         this._horizontalLines.beginFill(UIColors.fgColor);
         for (let i = 0; i < SequencerView.numNotes; i++) {
-            this._horizontalLines.drawRect(0, 40 + i * SequencerTimeline.noteHeight, renderer.width, 1);
+            this._horizontalLines.drawRect(0, i * SequencerTimeline.noteHeight, renderer.width, 1);
         }
         this._horizontalLines.endFill();
         this.addChild(this._horizontalLines, this.timeline);

@@ -56,7 +56,6 @@ export abstract class VerticalScrollView extends MouseTypeContainer {
     }
 
     public pointerDownHandler(event : PIXI.InteractionEvent) {
-        console.log("down");
         super.pointerDownHandler(event);
 
         if (this._mouseClickType == MouseClickType.None) {

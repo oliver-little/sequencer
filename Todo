@@ -9,3 +9,6 @@ To Add UI:
 - Selective PIXI imports to reduce package size
 
 - Connections for tracks with chains and global bus - https://github.com/lukasoppermann/html5sortable
+
+BUGFIXES:
+- Rare bug where scrolling becomes unresponsive after moving a TrackTimelineEvent 

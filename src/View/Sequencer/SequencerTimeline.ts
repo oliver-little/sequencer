@@ -18,7 +18,7 @@ enum NoteLength {
 }
 
 interface INewNoteData {
-    pitch: string,
+    pitchString: string,
     startPosition: number,
     duration: number
 }
@@ -67,14 +67,14 @@ export class SequencerTimeline extends ScrollableTimeline {
 
     // Fixes the bug where C0 will be off the screen, by offsetting the height by one note.
     get offsetContentHeight() {
-        return this.contentHeight - SequencerTimeline.noteHeight
+        return this.contentHeight - SequencerTimeline.noteHeight;
     }
 
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
         this._newEventGraphics.visible = false;
         super.pointerMoveHandler(event);
         if (this._mouseClickType == MouseClickType.None && this.timelineMode == TimelineMode.Edit) {
-            // Get the mouse position, extract the y coordinate and offset by the header (so C8 is at the top of the rows, not the top of the view)
+            // Get the mouse position, extract the y coordinate and invert by the height (so C8 is at the top of the rows, not the bottom)
             let mousePos = event.data.getLocalPosition(this.parent);
             if (mousePos.x < this.startX || mousePos.x > this.endX || mousePos.y < (this.startY + UIPositioning.timelineHeaderHeight) || mousePos.y > this.endY) {
                 return;
@@ -93,7 +93,7 @@ export class SequencerTimeline extends ScrollableTimeline {
 
             let length = SequencerTimeline.noteLengthDict[this.noteLength];
 
-            let noteData: INewNoteData = { pitch: noteString, startPosition: startPosition, duration: length };
+            let noteData: INewNoteData = { pitchString: noteString, startPosition: startPosition, duration: length };
 
             // Only regenerate the new event graphics if the note is different
             if (this._newEventData != noteData) {
@@ -101,7 +101,8 @@ export class SequencerTimeline extends ScrollableTimeline {
                 let events = this.track.track.timeline.getEventsBetweenTimes(startPosition, startPosition + length) as NoteEvent[];
 
                 for (let i = 0; i < events.length; i++) {
-                    if (events[i].pitchString === noteData.pitch) {
+                    if (events[i].pitchString === noteData.pitchString) {
+                        this._newEventData = undefined;
                         return;
                     }
                 }
@@ -127,7 +128,7 @@ export class SequencerTimeline extends ScrollableTimeline {
         super.pointerUpClickHandler(event);
         // Check that the click was a left click, and the click was on the timeline, and the timeline is in edit mode, and there is some valid event data to use to create the object.
         if (this._mouseClickType == MouseClickType.LeftClick && this.timelineMode == TimelineMode.Edit && this._newEventData != undefined) {
-            let noteEvent = this.track.track.addNote(this._newEventData.startPosition, this._newEventData.pitch, this._newEventData.duration);
+            let noteEvent = this.track.track.addNote(this._newEventData.startPosition, this._newEventData.pitchString, this._newEventData.duration);
             this._initialiseNote(noteEvent);
             this._newEventData = undefined;
         }
@@ -146,7 +147,8 @@ export class SequencerTimeline extends ScrollableTimeline {
     }
 
     protected _initialiseNote(note : NoteEvent) : TrackTimelineEvent {
-        let y = this.offsetContentHeight - NoteHelper.noteStringToNoteNumber(note.pitchString) * SequencerTimeline.noteHeight;
+        // Offset initialise location to account for one note error, and the height of the header.
+        let y = this.offsetContentHeight - NoteHelper.noteStringToNoteNumber(note.pitchString) * SequencerTimeline.noteHeight - UIPositioning.timelineHeaderHeight;
         let timelineEvent = new NoteTimelineEvent(this, this.track, note, y, SequencerTimeline.noteHeight);
         timelineEvent.borderHeight = 1;
         this._eventContainer.addChild(timelineEvent);

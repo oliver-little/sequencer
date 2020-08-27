@@ -64,10 +64,10 @@ window.onload = async function () {
         let modelTrack = songManager.tracks[i]
         let newTrack = null;
         if (modelTrack instanceof OscillatorTrack) {
-            newTrack = new NoteUITrack("", 40 + (250 * i), 250, modelTrack as OscillatorTrack, [[0, 2], [2, 4]]);
+            newTrack = new NoteUITrack("", (250 * i), 250, modelTrack as OscillatorTrack, [[0, 2], [2, 4]]);
         }
         else if (modelTrack instanceof SoundFileTrack) {
-            newTrack = new SoundFileUITrack("", 40 + (250 * i), 250, modelTrack);
+            newTrack = new SoundFileUITrack("", (250 * i), 250, modelTrack);
         }
         newUITracks.push(newTrack);
     }
