@@ -20,12 +20,3 @@ export enum MouseClickType {
     MiddleClick,
     None
 }
-
-// The context of the current mouse click (determined on pointer down)
-export enum ClickState {
-    None,
-    // The current mouse click is dragging/clicking the timeline itself
-    Dragging,
-    // The current mouse click is dragging/clicking a TrackTimelineEvent
-    EventDragging
-}

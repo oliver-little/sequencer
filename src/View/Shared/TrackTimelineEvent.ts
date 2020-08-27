@@ -4,13 +4,16 @@ import { NoteEvent, BaseEvent } from "../../Model/Notation/SongEvents.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
 import { UITrack, NoteUITrack } from "../UIObjects/UITrack.js";
 import { ScrollableTimeline } from "./ScrollableTimeline.js";
+import { InteractiveContainer, MouseTypeContainer } from "./InteractiveContainer.js";
+import { PointHelper } from "../../HelperModules/PointHelper.js";
+import { MouseClickType } from "./Enums.js";
 
 
-export abstract class TrackTimelineEvent extends PIXI.Container {
+export abstract class TrackTimelineEvent extends MouseTypeContainer {
 
     public timeline: ScrollableTimeline;
     public assignedWidth: number;
-    public assignedHeight : number;
+    public assignedHeight: number;
     public track: UITrack;
 
     public abstract readonly eventStartPosition: number;
@@ -43,7 +46,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      * @param {number} eventDuration The duration of this event (quarter notes)
      * @memberof TrackTimelineEvent
      */
-    constructor(timeline: ScrollableTimeline, x: number, width: number, y : number, height : number, track: UITrack) {
+    constructor(timeline: ScrollableTimeline, track: UITrack, x: number, width: number, y: number, height: number) {
         super();
         this.timeline = timeline;
         this.track = track;
@@ -66,7 +69,8 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      * @param {number} width The new width (pixels)
      * @memberof TrackTimelineEvent
      */
-    public reinitialise(x : number, width : number, y? : number, height? : number) {
+    public reinitialise(y?: number, height?: number) {
+        let [x, width] = this.timeline.getTimelineEventXWidth(this.eventStartPosition, this.eventStartPosition + this.eventDuration);
         this.x = x + this.borderLeft;
         this.assignedWidth = Math.max(width - this.borderRight, 3);
 
@@ -109,7 +113,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
         return this._hoveredColor;
     }
 
-    set hoveredColor(value : number) {
+    set hoveredColor(value: number) {
         if (value == null) {
             value = UIColors.trackEventHoveredColor;
         }
@@ -121,7 +125,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
         return this._opacity;
     }
 
-    set opacity(value : number) {
+    set opacity(value: number) {
         if (value < 0 || value > 1) {
             throw new RangeError("Opacity must be between 0 and 1.");
         }
@@ -151,7 +155,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
     public redrawSelected() {
         this._selectedGraphics.clear();
         if (this.hovered || this.selected) {
-        this._selectedGraphics.beginFill(this.hovered ? this._hoveredColor : UIColors.trackEventSelectedColor, this.opacity)
+            this._selectedGraphics.beginFill(this.hovered ? this._hoveredColor : UIColors.trackEventSelectedColor, this.opacity)
                 .drawRect(0, 0, this.assignedWidth, this.assignedHeight)
                 .endFill()
                 .beginHole()
@@ -163,28 +167,42 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
     /**
      * Handler for pointer down events
      *
-     * @public
+     * @param {PIXI.InteractionEvent} event
      * @memberof TrackTimelineEvent
      */
-    public pointerDownHandler() {
+    public pointerDownHandler(event: PIXI.InteractionEvent) {
+        super.pointerDownHandler(event);
+
+        if (this._mouseClickType == MouseClickType.None) {
+            return;
+        }
+        event.stopPropagation();
+
         this._startXPosition = this.x;
+        this._startPointerPosition = event.data.getLocalPosition(this.parent);
     }
 
     /**
      * Handler for pointer move events
      *
      * @public
-     * @param {number} moveDelta Difference in x between start mouse position and current mouse position
+     * @param {PIXI.InteractionEvent} event
      * @memberof TrackTimelineEvent
      */
-    public pointerMoveHandler(moveDelta: number) {
-        // Check if snapped moveDelta would put the event start before 0, if so correct for it
-        let newEventStart = this.timeline.metadata.positionQuarterNoteToBeats(this.eventStartPosition) + (moveDelta / this.timeline.beatWidth);
-        if (newEventStart < 0) {
-            moveDelta -= newEventStart * this.timeline.beatWidth;
+    public pointerMoveHandler(event: PIXI.InteractionEvent) {
+        if (this._mouseClickType == MouseClickType.LeftClick) {
+            event.stopPropagation();
+
+            let moveDelta = this.timeline.snapCoordinateToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
+
+            // Check if snapped moveDelta would put the event start before 0, if so correct for it
+            let newEventStart = this.timeline.metadata.positionQuarterNoteToBeats(this.eventStartPosition) + (moveDelta / this.timeline.beatWidth);
+            if (newEventStart < 0) {
+                moveDelta -= newEventStart * this.timeline.beatWidth;
+            }
+            // Update the x position
+            this.x = this._startXPosition + moveDelta;
         }
-        // Update the x position
-        this.x = this._startXPosition + moveDelta;
     }
 
     /**
@@ -194,14 +212,10 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      * @param {number} moveDelta Difference in x position between start mouse position and current mouse position
      * @memberof TrackTimelineEvent
      */
-    public pointerUpHandler(moveDelta: number) {
-        let newEventStart = this.timeline.metadata.positionQuarterNoteToBeats(this.eventStartPosition) + (moveDelta / this.timeline.beatWidth);
-        if (newEventStart < 0) {
-            moveDelta -= newEventStart * this.timeline.beatWidth;
-        }
-        this.dragHandler(moveDelta);
-
+    public pointerUpHandler(event: PIXI.InteractionEvent) {
+        super.pointerUpHandler(event);
         this._startXPosition = undefined;
+        this._startPointerPosition = undefined;
     }
 
 
@@ -210,11 +224,35 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      *
      * @memberof TrackTimelineEvent
      */
-    public pointerUpClickHandler() {
-        // Reset x position
-        this.x = this._startXPosition;
-        this.clickHandler();
-        this._startXPosition = undefined;
+    public pointerUpClickHandler(event: PIXI.InteractionEvent) {
+        event.stopPropagation();
+        if (this._mouseClickType == MouseClickType.LeftClick) {
+            // Reset x position
+            this.x = this._startXPosition;
+            this.clickHandler();
+        }
+        else if (this._mouseClickType == MouseClickType.RightClick) {
+            this.deleteEvent();
+        }
+    }
+
+    /**
+     * Handler for pointer up events where it was calculated that this event was a drag
+     *
+     * @param {PIXI.InteractionEvent} event
+     * @memberof TrackTimelineEvent
+     */
+    public pointerUpDragHandler(event: PIXI.InteractionEvent) {
+        event.stopPropagation();
+        if (this._mouseClickType == MouseClickType.LeftClick) {
+            let moveDelta = this.timeline.snapCoordinateToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
+
+            let newEventStart = this.timeline.metadata.positionQuarterNoteToBeats(this.eventStartPosition) + (moveDelta / this.timeline.beatWidth);
+            if (newEventStart < 0) {
+                moveDelta -= newEventStart * this.timeline.beatWidth;
+            }
+            this.dragHandler(moveDelta);
+        }
     }
 
     /**
@@ -223,7 +261,7 @@ export abstract class TrackTimelineEvent extends PIXI.Container {
      * @memberof TrackTimelineEvent
      */
     public deleteEvent() {
-        this.destroy({children:true});
+        this.destroy({ children: true });
     }
 
     /**
@@ -270,10 +308,11 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
      * @param {number[]} noteGroup The NoteGroup this event represents
      * @memberof NoteGroupTimelineEvent
      */
-    constructor(timeline: ScrollableTimeline, x: number, width: number, track: NoteUITrack, noteGroup: number[]) {
+    constructor(timeline: ScrollableTimeline, track: NoteUITrack, noteGroup: number[]) {
+        let [x, width] = timeline.getTimelineEventXWidth(noteGroup[0], noteGroup[1]);
         let y = track.startY;
         let height = track.height;
-        super(timeline, x, width, y, height, track);
+        super(timeline, track, x, width, y, height);
         this._noteGroup = noteGroup;
         this.redraw();
     }
@@ -319,7 +358,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
     protected dragHandler(dragDistance: number) {
         let metadata = this.timeline.metadata;
-        
+
         // Get a deep copy of the current noteGroup, then update the set of notegroups
         let noteGroup = Object.assign([], this._noteGroup);
 
@@ -327,13 +366,13 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
         noteGroup[0] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(noteGroup[0]) + beatChange);
         noteGroup[1] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(noteGroup[1]) + beatChange);
-        
+
         // Check if new position is clear
         let groups = this.track.getNoteGroupsWithinTime(noteGroup[0], noteGroup[1]);
         let timePeriodClear = true;
 
         // Check if any groups were found that aren't this noteGroup (as we're currently using a copy)
-        for(let i = 0; i < groups.length; i++) {
+        for (let i = 0; i < groups.length; i++) {
             if (!(groups[i][0] == this._noteGroup[0] && groups[i][1] == this._noteGroup[1])) {
                 timePeriodClear = false;
                 break;
@@ -382,7 +421,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
  */
 export class BaseEventTimelineEvent extends TrackTimelineEvent {
 
-    public event : BaseEvent;
+    public event: BaseEvent;
 
     /**
      * Creates an instance of OneShotTimelineEvent.
@@ -395,8 +434,9 @@ export class BaseEventTimelineEvent extends TrackTimelineEvent {
      * @param {BaseEvent} event
      * @memberof BaseEventTimelineEvent
      */
-    constructor(timeline: ScrollableTimeline, x: number, width: number, y : number, height : number, track: UITrack, event : BaseEvent) {
-        super(timeline, x, width, y, height, track);
+    constructor(timeline: ScrollableTimeline, track: UITrack, event: BaseEvent, y: number, height: number) {
+        let [x, width] = timeline.getTimelineEventXWidth(event.startPosition, event.startPosition + event.duration);
+        super(timeline, track, x, width, y, height);
 
         this.event = event;
         this.redraw();
@@ -410,14 +450,14 @@ export class BaseEventTimelineEvent extends TrackTimelineEvent {
         return this.event.duration;
     }
 
-    protected dragHandler(dragDistance : number) {
+    protected dragHandler(dragDistance: number) {
         // Get the events that occur within 
         let beatChange = dragDistance / this.timeline.beatWidth;
         let newStartPosition = this.timeline.metadata.positionQuarterNoteToBeats(this.event.startPosition) + beatChange;
         let eventsInPeriod = this.track.track.timeline.getEventsBetweenTimes(newStartPosition, newStartPosition + this.event.duration);
 
         let timePeriodClear = true;
-        for(let i = 0; i < eventsInPeriod.length; i++) {
+        for (let i = 0; i < eventsInPeriod.length; i++) {
             if (eventsInPeriod[i] != this.event) {
                 timePeriodClear = false;
                 break;
@@ -454,10 +494,10 @@ export class BaseEventTimelineEvent extends TrackTimelineEvent {
  * @extends {BaseEventTimelineEvent}
  */
 export class OneShotTimelineEvent extends BaseEventTimelineEvent {
-    constructor(timeline: ScrollableTimeline, x: number, width: number, track: UITrack, event : BaseEvent) {
+    constructor(timeline: ScrollableTimeline, track: UITrack, event: BaseEvent) {
         let y = track.startY;
         let height = track.height;
-        super(timeline, x, width, y, height, track, event);
+        super(timeline, track, event, y, height);
     }
 }
 
@@ -470,14 +510,14 @@ export class OneShotTimelineEvent extends BaseEventTimelineEvent {
  */
 export class NoteTimelineEvent extends BaseEventTimelineEvent {
 
-    public track : NoteUITrack;
-    public event : NoteEvent;
+    public track: NoteUITrack;
+    public event: NoteEvent;
 
-    constructor(timeline: ScrollableTimeline, x: number, width: number, y : number, height : number, track: NoteUITrack, event : NoteEvent) {
-        super(timeline, x, width, y, height, track, event);
+    constructor(timeline: ScrollableTimeline, track: NoteUITrack, event: NoteEvent, y: number, height: number,) {
+        super(timeline, track, event, y, height);
     }
 
-    protected dragHandler(dragDistance : number) {
+    protected dragHandler(dragDistance: number) {
         // Get the events that occur within 
         let beatChange = dragDistance / this.timeline.beatWidth;
         let newStartPosition = this.timeline.metadata.positionQuarterNoteToBeats(this.event.startPosition) + beatChange;
@@ -485,7 +525,7 @@ export class NoteTimelineEvent extends BaseEventTimelineEvent {
 
         // FIXME: Possibly test for collisions in BaseEvent/NoteEvent to remove the need for this basic class extension
         let timePeriodClear = true;
-        for(let i = 0; i < eventsInPeriod.length; i++) {
+        for (let i = 0; i < eventsInPeriod.length; i++) {
             if (eventsInPeriod[i] != this.event && eventsInPeriod[i].pitch == this.event.pitch) {
                 timePeriodClear = false;
                 break;

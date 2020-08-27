@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
-import { TimelineMode, MouseClickType, ClickState } from "../Shared/Enums.js";
+import { TimelineMode, MouseClickType } from "../Shared/Enums.js";
 import { NoteUITrack } from "../UIObjects/UITrack.js";
 import { TrackTimelineEvent, NoteTimelineEvent } from "../Shared/TrackTimelineEvent.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
@@ -126,7 +126,7 @@ export class SequencerTimeline extends ScrollableTimeline {
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {
         super.pointerUpClickHandler(event);
         // Check that the click was a left click, and the click was on the timeline, and the timeline is in edit mode, and there is some valid event data to use to create the object.
-        if (this._mouseClickType == MouseClickType.LeftClick && this._clickState == ClickState.Dragging && this.timelineMode == TimelineMode.Edit && this._newEventData != undefined) {
+        if (this._mouseClickType == MouseClickType.LeftClick && this.timelineMode == TimelineMode.Edit && this._newEventData != undefined) {
             let noteEvent = this.track.track.addNote(this._newEventData.startPosition, this._newEventData.pitch, this._newEventData.duration);
             this._initialiseNote(noteEvent);
             this._newEventData = undefined;
@@ -146,9 +146,8 @@ export class SequencerTimeline extends ScrollableTimeline {
     }
 
     protected _initialiseNote(note : NoteEvent) : TrackTimelineEvent {
-        let [x, width] = this._getTimelineEventXWidth(note.startPosition, note.startPosition + note.duration);
         let y = this.offsetContentHeight - NoteHelper.noteStringToNoteNumber(note.pitchString) * SequencerTimeline.noteHeight;
-        let timelineEvent = new NoteTimelineEvent(this, x, width, y, SequencerTimeline.noteHeight, this.track, note);
+        let timelineEvent = new NoteTimelineEvent(this, this.track, note, y, SequencerTimeline.noteHeight);
         timelineEvent.borderHeight = 1;
         this._eventContainer.addChild(timelineEvent);
         return timelineEvent;

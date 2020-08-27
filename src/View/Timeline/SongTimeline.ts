@@ -5,7 +5,7 @@ import { UIColors } from "../Shared/UITheme.js";
 import { BaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
-import { EventSnapType, TimelineMode, MouseClickType, ClickState } from "../Shared/Enums.js";
+import { EventSnapType, TimelineMode, MouseClickType } from "../Shared/Enums.js";
 
 interface INewEventData {
     track: UITrack,
@@ -114,10 +114,9 @@ export class SongTimeline extends ScrollableTimeline {
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {
         super.pointerUpClickHandler(event);
         // Check that the click was a left click, and the click was on the timeline, and the timeline is in edit mode, and there is some valid event data to use to create the object.
-        if (this._mouseClickType == MouseClickType.LeftClick && this._clickState == ClickState.Dragging && this.timelineMode == TimelineMode.Edit && this._newEventData != undefined) {
+        if (this._mouseClickType == MouseClickType.LeftClick && this.timelineMode == TimelineMode.Edit && this._newEventData != undefined) {
             let track = this._newEventData.track;
             let startPosition = this._newEventData.startPosition;
-            console.log("adding at: " + startPosition);
             if (track instanceof NoteUITrack) {
                 track.addNoteGroup(startPosition, startPosition + 4);
                 this._initialiseNoteGroup([startPosition, startPosition + 4], track);
@@ -163,20 +162,13 @@ export class SongTimeline extends ScrollableTimeline {
     private _initialiseNoteGroup(noteGroup: number[], track: NoteUITrack): TrackTimelineEvent {
         // starting x position is calculated as follows:
         // (Position of note group start in beats - the position of the first DISPLAYED bar in beats) * beat width * zoom + the start position of the first DISPLAYED bar in pixels
-        let [x, width] = this._getTimelineEventXWidth(noteGroup[0], noteGroup[1]);
-        let event = new NoteGroupTimelineEvent(
-            this,
-            x,
-            width,
-            track,
-            noteGroup);
+        let event = new NoteGroupTimelineEvent(this, track, noteGroup);
         this._eventContainer.addChild(event);
         return event;
     }
 
     private _initialiseTimelineEvent(event: BaseEvent, track: UITrack): TrackTimelineEvent {
-        let [x, width] = this._getTimelineEventXWidth(event.startPosition, event.startPosition + event.duration);
-        let timelineEvent = new OneShotTimelineEvent(this, x, width, track, event);
+        let timelineEvent = new OneShotTimelineEvent(this, track, event);
         this._eventContainer.addChild(timelineEvent);
         return timelineEvent;
     }

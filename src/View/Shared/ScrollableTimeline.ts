@@ -3,10 +3,11 @@ import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { PointHelper } from "../../HelperModules/PointHelper.js";
 import { ScrollableBar } from "./ScrollableBar.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
-import { MouseClickType, ClickState, TimelineMode, EventSnapType } from "./Enums.js";
+import { MouseClickType, TimelineMode, EventSnapType } from "./Enums.js";
 import { TrackTimelineEvent } from "./TrackTimelineEvent.js";
 import { TimelineMarker } from "./TimelineMarker.js";
 import { UIPositioning } from "./UITheme.js";
+import { InteractiveContainer, MouseTypeContainer } from "./InteractiveContainer.js";
 
 /**
  * Provides a basic implementation of a timeline, including pooled bar objects using ScrollableBar
@@ -17,7 +18,7 @@ import { UIPositioning } from "./UITheme.js";
  * @class ScrollableTimeline
  * @extends {PIXI.Container}
  */
-export abstract class ScrollableTimeline extends PIXI.Container {
+export abstract class ScrollableTimeline extends MouseTypeContainer {
 
     // Stores the width of 1 beat in pixels.
     static beatWidth = 50;
@@ -57,10 +58,9 @@ export abstract class ScrollableTimeline extends PIXI.Container {
 
     protected abstract readonly contentHeight: number;
 
-    protected _startPointerPosition: PIXI.Point;
     protected _startXPosition: number;
     protected _verticalScrollPosition: number = 0;
-    protected _clickState = ClickState.None;
+
     protected _mouseClickType: MouseClickType = MouseClickType.None;
 
     protected _interactivityRect: PIXI.Graphics;
@@ -82,6 +82,10 @@ export abstract class ScrollableTimeline extends PIXI.Container {
         this._scrollObjects = [];
         this._barPool = new ObjectPool();
 
+        this._interactivityRect = new PIXI.Graphics();
+        this.addChild(this._interactivityRect);
+        this.resizeInteractiveArea(endX, endY);
+
         this._barContainer = new PIXI.Container();
         this._headerContainer = new PIXI.Container();
         this._eventContainer = new PIXI.Container();
@@ -102,58 +106,23 @@ export abstract class ScrollableTimeline extends PIXI.Container {
         return ScrollableTimeline.beatWidth * this._zoomScale;
     }
 
-    get clickState() {
-        return this._clickState;
+    public resizeInteractiveArea(width: number, height: number) {
+        this._interactivityRect.clear();
+        this._interactivityRect.beginFill(0x000000, 1.0);
+        this._interactivityRect.drawRect(0, 0, width, height);
+        this._interactivityRect.endFill();
+        this._interactivityRect.alpha = 0.0;
     }
 
     public pointerDownHandler(event: PIXI.InteractionEvent) {
-        switch (event.data.button) {
-            case 0:
-                this._mouseClickType = MouseClickType.LeftClick;
-                break;
-            case 2:
-                this._mouseClickType = MouseClickType.RightClick;
-                break;
-            default:
-                this._mouseClickType = MouseClickType.None;
+        super.pointerDownHandler(event);
+
+        if (this._mouseClickType == MouseClickType.None) {
+            return;
         }
 
-        if (this._mouseClickType == MouseClickType.LeftClick) {
-            this._clickState = ClickState.Dragging;
-        }
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
         this._startXPosition = this.x;
-
-        let pressed = this._getTimelineEventHit(event);
-
-        if (pressed != null) {
-            this._clickState = ClickState.EventDragging;
-
-            this._selected.forEach(timelineEvent => {
-                if (timelineEvent != pressed) {
-                    timelineEvent.selected = false;
-                }
-            });
-            this._selected = [];
-
-            // Select pressed object
-            this._selected.push(pressed);
-            pressed.selected = true;
-
-            if (this._mouseClickType == MouseClickType.LeftClick) {
-                this._selected.forEach(timelineEvent => {
-                    timelineEvent.pointerDownHandler();
-                });
-            }
-        }
-        else {
-            this._clickState = ClickState.Dragging;
-            // Remove selected objects
-            this._selected.forEach(selectedObj => {
-                selectedObj.selected = false;
-            });
-            this._selected = [];
-        }
     }
 
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
@@ -161,114 +130,71 @@ export abstract class ScrollableTimeline extends PIXI.Container {
             // TODO: Add hover effect for TrackTimelineEvents
         }
         else if (this._mouseClickType == MouseClickType.LeftClick) {
-            if (this._clickState == ClickState.Dragging) {
-                let moveDelta = event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x;
-                this.x = this._startXPosition + moveDelta;
+            let moveDelta = event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x;
+            this.x = this._startXPosition + moveDelta;
 
-                // This solution is used because the container's x is reset to 0 after each scroll event,
-                // but while scrolling occurs the container's position rather than the child objects' positions is changed.
-                // Therefore, we have to find out if bar 0 is past where the timeline should start.
-                // If it is, calculate the offset required to position bar 0 at the start of the timeline.
-                if (this._scrollObjects[0].barNumber === 0 && this.x + this._scrollObjects[0].leftBound > this.startX) {
-                    this.x = -this._scrollObjects[0].leftBound + this.startX;
-                }
-
-                // While loops are used in this section because extremely quick, large scrolls can cause bars to be missing
-                // Check right side for adding or removing bars offscreen
-                let rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
-                while (rightSideOffset < 100) { // If the right side is too close, need to add a new bar.
-                    let lastBar = this._scrollObjects[this._scrollObjects.length - 1];
-                    let bar = this._initialiseScrollableBar(lastBar.rightBound, lastBar.barNumber + 1, true);
-                    this._scrollObjects.push(bar);
-
-                    // Recalculate where the right side is.
-                    rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
-                }
-                while (rightSideOffset > 800) {
-                    let bar = this._scrollObjects.pop();
-                    this._returnScrollableBar(bar);
-
-                    rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
-                }
-
-
-                // Check left side for adding or removing bars offscreen
-                let leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
-                while (leftSideOffset < 100 && this._scrollObjects[0].barNumber != 0) {
-                    let firstBar = this._scrollObjects[0];
-                    let bar = this._initialiseScrollableBar(firstBar.leftBound, firstBar.barNumber - 1, false);
-                    this._scrollObjects.splice(0, 0, bar);
-
-                    leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
-                }
-                while (leftSideOffset > 800) {
-                    let bar = this._scrollObjects.splice(0, 1)[0];
-                    this._returnScrollableBar(bar);
-                    leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
-                }
+            // This solution is used because the container's x is reset to 0 after each scroll event,
+            // but while scrolling occurs the container's position rather than the child objects' positions is changed.
+            // Therefore, we have to find out if bar 0 is past where the timeline should start.
+            // If it is, calculate the offset required to position bar 0 at the start of the timeline.
+            if (this._scrollObjects[0].barNumber === 0 && this.x + this._scrollObjects[0].leftBound > this.startX) {
+                this.x = -this._scrollObjects[0].leftBound + this.startX;
             }
-            else if (this._clickState == ClickState.EventDragging && this.timelineMode == TimelineMode.Edit) {
-                // Calculate snapped moveDelta
-                let moveDelta = this.snapCoordinateToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
 
-                // Pass it to selected children
-                this._selected.forEach(selectedObj => {
-                    selectedObj.pointerMoveHandler(moveDelta);
-                });
+            // While loops are used in this section because extremely quick, large scrolls can cause bars to be missing
+            // Check right side for adding or removing bars offscreen
+            let rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+            while (rightSideOffset < 100) { // If the right side is too close, need to add a new bar.
+                let lastBar = this._scrollObjects[this._scrollObjects.length - 1];
+                let bar = this._initialiseScrollableBar(lastBar.rightBound, lastBar.barNumber + 1, true);
+                this._scrollObjects.push(bar);
+
+                // Recalculate where the right side is.
+                rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+            }
+            while (rightSideOffset > 800) {
+                let bar = this._scrollObjects.pop();
+                this._returnScrollableBar(bar);
+
+                rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+            }
+
+
+            // Check left side for adding or removing bars offscreen
+            let leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
+            while (leftSideOffset < 100 && this._scrollObjects[0].barNumber != 0) {
+                let firstBar = this._scrollObjects[0];
+                let bar = this._initialiseScrollableBar(firstBar.leftBound, firstBar.barNumber - 1, false);
+                this._scrollObjects.splice(0, 0, bar);
+
+                leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
+            }
+            while (leftSideOffset > 800) {
+                let bar = this._scrollObjects.splice(0, 1)[0];
+                this._returnScrollableBar(bar);
+                leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
             }
         }
     }
 
     public pointerUpHandler(event: PIXI.InteractionEvent) {
-        // Check if event was a click
-        if (PointHelper.distanceSquared(event.data.getLocalPosition(this.parent), this._startPointerPosition) < 10) {
-            this.pointerUpClickHandler(event);
-        }
-        else {
-            this.pointerUpDragHandler(event);
-        }
-
+        super.pointerUpHandler(event);
         this._startXPosition = undefined;
-        this._startPointerPosition = undefined;
-        this._clickState = ClickState.None;
-        this._mouseClickType = MouseClickType.None;
+        this._startPointerPosition = undefined;  
     }
 
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {
         // TODO: move timeline marker on click in playback mode
         if (this._mouseClickType == MouseClickType.LeftClick) {
-            if (this._clickState == ClickState.Dragging) {
-                this.x = this._startXPosition;
-            }
-            else if (this._clickState == ClickState.EventDragging) {
-                // This was a click on a child
-                for (let i = 0; i < this._selected.length; i++) {
-                    this._selected[i].pointerUpClickHandler();
-                }
-            }
-        }
-        else if (this._mouseClickType == MouseClickType.RightClick && this._selected.length > 0) {
-            for (let i = 0; i < this._selected.length; i++) {
-                this._selected[i].deleteEvent();
-                this._selected.splice(i, 1);
-            }
+            this.x = this._startXPosition;
         }
     }
 
     public pointerUpDragHandler(event: PIXI.InteractionEvent) {
         if (this._mouseClickType == MouseClickType.LeftClick) {
-            if (this._clickState == ClickState.Dragging) {
-                // Normal drag
-                this._offsetChildren(-this.x);
-                this.x = 0;
-            }
-            else if (this._clickState == ClickState.EventDragging && this.timelineMode == TimelineMode.Edit) {
-                // Dragging a child, calculate distance and pass it down
-                let moveDelta = this.snapCoordinateToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
-                this._selected.forEach(selectedObj => {
-                    selectedObj.pointerUpHandler(moveDelta);
-                });
-            }
+            // Normal drag
+            this._offsetChildren(-this.x);
+            this.x = 0;
         }
     }
 
@@ -398,12 +324,11 @@ export abstract class ScrollableTimeline extends PIXI.Container {
         else {
             this._eventContainer.children.forEach(event => {
                 if (event instanceof TrackTimelineEvent) {
-                    let [x, width] = this._getTimelineEventXWidth(event.eventStartPosition, event.eventStartPosition + event.eventDuration);
-                    event.reinitialise(x, width);
+                    event.reinitialise();
                 }
             });
         }
-        
+
         this._redrawTimelineMarker();
     }
 
@@ -495,33 +420,14 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     }
 
     /**
-     * Returns if a timelineEvent is under a given PIXI InteractionEvent
-     *
-     * @private
-     * @param {PIXI.InteractionEvent} event
-     * @returns {TrackTimelineEvent} The child that was hit (null if none was hit)
-     * @memberof SongTimeline
-     */
-    protected _getTimelineEventHit(event: PIXI.InteractionEvent): TrackTimelineEvent {
-        for (let i = 0; i < this._eventContainer.children.length; i++) {
-            let child = this._eventContainer.children[i] as TrackTimelineEvent;
-            let pos = event.data.getLocalPosition(child);
-            if (pos.x > 0 && pos.x < child.width && pos.y > 0 && pos.y < child.height) {
-                return child;
-            }
-        }
-        return null;
-    }
-
-    /**
      * Snaps a coordinate to the drag type of this timeline
      *
-     * @private
+     * @public
      * @param {number} value The coordinate (pixels)
      * @returns
      * @memberof ScrollableTimeline
      */
-    protected snapCoordinateToDragType(value: number) {
+    public snapCoordinateToDragType(value: number) {
         return value - this.getPixelOffsetFromDragType(value);
     }
 
@@ -564,21 +470,21 @@ export abstract class ScrollableTimeline extends PIXI.Container {
     }
 
     /**
-     * Gets the x coordinate and the width of a timeline event
+     * Gets the x coordinate and the width of a quarter note position
      *
-     * @private
+     * @public
      * @param {number} startPosition (quarter notes)
      * @param {number} endPosition (quarter notes)
      * @returns {number[]} [x, width]
      * @memberof SongTimeline
      */
-    protected _getTimelineEventXWidth(startPosition: number, endPosition: number): number[] {
-        let x = this._getTimelineEventX(startPosition);
+    public getTimelineEventXWidth(startPosition: number, endPosition: number): number[] {
+        let x = this.getTimelineEventX(startPosition);
         let width = (this.metadata.positionQuarterNoteToBeats(endPosition) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
         return [x, width]
     }
 
-    protected _getTimelineEventX(position: number): number {
+    public getTimelineEventX(position: number): number {
         return (this.metadata.positionQuarterNoteToBeats(position) - this.metadata.positionQuarterNoteToBeats(this.metadata.positionBarsToQuarterNote(this._scrollObjects[0].barNumber))) * this.beatWidth + this._scrollObjects[0].leftBound;
     }
 
@@ -624,6 +530,6 @@ export abstract class ScrollableTimeline extends PIXI.Container {
      * @memberof ScrollableTimeline
      */
     protected _repositionTimelineMarker(position: number) {
-        this._timelineMarker.x = this._getTimelineEventX(position);
+        this._timelineMarker.x = this.getTimelineEventX(position);
     }
 }

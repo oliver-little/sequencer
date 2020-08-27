@@ -3,8 +3,9 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
-- Disable vertical scrolling when moving objects 
+- Add selected effect to TrackTimelineEvents
 - Scrollbars, both vertical and horizontal
 - Ability to add time signature and bpm changes at the top of the screen
+- Selective PIXI imports to reduce package size
 
 - Connections for tracks with chains and global bus - https://github.com/lukasoppermann/html5sortable

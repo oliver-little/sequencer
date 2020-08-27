@@ -1,5 +1,7 @@
 import * as PIXI from "pixi.js";
 import { ScrollableTimeline } from "./ScrollableTimeline";
+import { InteractiveContainer, MouseTypeContainer } from "./InteractiveContainer";
+import { MouseClickType } from "./Enums";
 
 interface pointerEventObject {
     pointerDownHandler(event : PIXI.InteractionEvent);
@@ -7,7 +9,7 @@ interface pointerEventObject {
     pointerUpHandler(event : PIXI.InteractionEvent);
 }
 
-export abstract class VerticalScrollView extends PIXI.Container {
+export abstract class VerticalScrollView extends MouseTypeContainer {
     public timeline : ScrollableTimeline;
     public scrollingEnabled : boolean = true;
 
@@ -21,7 +23,6 @@ export abstract class VerticalScrollView extends PIXI.Container {
     protected abstract readonly contentHeight: number;
 
     // Scrolling variables
-    private _startPointerPosition : PIXI.Point;
     protected _verticalScrollPosition : number;
     protected _startVerticalScrollPosition : number;
 
@@ -33,13 +34,7 @@ export abstract class VerticalScrollView extends PIXI.Container {
 
         this._interactivityRect = new PIXI.Graphics();
         this.addChild(this._interactivityRect);
-        this.interactive = true;
         this.resizeInteractiveArea(width, height);
-
-        this.on("pointerdown", this.pointerDownHandler.bind(this));
-        this.on("pointermove", this.pointerMoveHandler.bind(this));
-        this.on("pointerup", this.pointerUpHandler.bind(this));
-        this.on("pointerupoutside", this.pointerUpHandler.bind(this));
     }
 
 
@@ -61,40 +56,35 @@ export abstract class VerticalScrollView extends PIXI.Container {
     }
 
     public pointerDownHandler(event : PIXI.InteractionEvent) {
+        console.log("down");
+        super.pointerDownHandler(event);
+
+        if (this._mouseClickType == MouseClickType.None) {
+            return;
+        }
+
         this._startPointerPosition = event.data.getLocalPosition(this);
         this._startVerticalScrollPosition = this._verticalScrollPosition;
-
-        if (this._startPointerPosition.x > this._sidebarPosition) {
-            this._sendPointerEventsTo = this.timeline;
-        }
-        this._sendPointerEventsTo.pointerDownHandler(event);
     }
 
     public pointerMoveHandler(event : PIXI.InteractionEvent) {
-        if (this.scrollingEnabled && this._startPointerPosition != undefined) {
+        if (this._mouseClickType == MouseClickType.LeftClick && this.scrollingEnabled) {
             this.verticalScrollPosition = event.data.getLocalPosition(this).y - this._startPointerPosition.y + this._startVerticalScrollPosition;
             this.updateVerticalScroll(this.verticalScrollPosition);
-        }
-        if (this._sendPointerEventsTo != undefined) {
-            this._sendPointerEventsTo.pointerMoveHandler(event);
-        }
-        else {
-            if (event.data.getLocalPosition(this).x > this._sidebarPosition) {
-                this.timeline.pointerMoveHandler(event);
-            }
         }
     }
 
     public pointerUpHandler(event : PIXI.InteractionEvent) {
-        if (this.scrollingEnabled && this._startPointerPosition != undefined) {
+        super.pointerUpHandler(event);
+        this._startPointerPosition = undefined;
+        this._startVerticalScrollPosition = undefined;
+    }
+
+    public pointerUpDragHandler(event : PIXI.InteractionEvent) {
+        if (this._mouseClickType == MouseClickType.LeftClick && this.scrollingEnabled) {
             this.verticalScrollPosition = event.data.getLocalPosition(this).y - this._startPointerPosition.y + this._startVerticalScrollPosition;
             this.updateVerticalScroll(this.verticalScrollPosition);
         }
-        if (this._sendPointerEventsTo != undefined) {
-            this._sendPointerEventsTo.pointerUpHandler(event);
-        }
-        this._sendPointerEventsTo = undefined;
-        this._startPointerPosition = undefined;
     }
 
     protected abstract updateVerticalScroll(value : number);
