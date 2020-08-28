@@ -59,6 +59,7 @@ export class SongTimeline extends ScrollableTimeline {
             this._newEventData = undefined;
             // Display new event outline (set width for note events, same length as soundfile for soundfile)
             let mousePos = event.data.getLocalPosition(this.parent);
+            mousePos.y -= this._newEventGraphics.y;
             for (let i = 0; i < this.tracks.length; i++) {
                 if (this.tracks[i].startY + this._verticalScrollPosition < mousePos.y && this.tracks[i].startY + this.tracks[i].height + this._verticalScrollPosition > mousePos.y) {
                     let track = this.tracks[i];

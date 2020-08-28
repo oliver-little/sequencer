@@ -78,6 +78,7 @@ export class SequencerTimeline extends ScrollableTimeline {
         this._newEventGraphics.visible = false;
         super.pointerMoveHandler(event);
         if (this._mouseClickType == MouseClickType.None && this.timelineMode == TimelineMode.Edit) {
+            this._newEventData = undefined;
             // Get the mouse position, extract the y coordinate and invert by the height (so C8 is at the top of the rows, not the bottom)
             let mousePos = event.data.getLocalPosition(this.parent);
             if (mousePos.x < this.startX || mousePos.x > this.endX || mousePos.y < (this.startY + UIPositioning.timelineHeaderHeight) || mousePos.y > this.endY) {
@@ -99,31 +100,27 @@ export class SequencerTimeline extends ScrollableTimeline {
 
             let noteData: INewNoteData = { pitchString: noteString, startPosition: startPosition, duration: length };
 
-            // Only regenerate the new event graphics if the note is different
-            if (this._newEventData != noteData) {
-                // Check no events already occur at the point the new event should be added
-                let events = this.track.track.timeline.getEventsBetweenTimes(startPosition, startPosition + length) as NoteEvent[];
+            // Check no events already occur at the point the new event should be added
+            let events = this.track.track.timeline.getEventsBetweenTimes(startPosition, startPosition + length) as NoteEvent[];
 
-                for (let i = 0; i < events.length; i++) {
-                    if (events[i].pitchString === noteData.pitchString) {
-                        this._newEventData = undefined;
-                        return;
-                    }
+            for (let i = 0; i < events.length; i++) {
+                if (events[i].pitchString === noteData.pitchString) {
+                    return;
                 }
-
-                let x = this._getStageCoordinatesFromBar(barPosition);
-                y += this._verticalScrollPosition;
-                let width = (this.metadata.positionQuarterNoteToBeats(startPosition + length) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
-
-                this._newEventGraphics.clear()
-                    .beginFill(UIColors.trackEventColor)
-                    .drawRect(x, y, width, SequencerTimeline.noteHeight)
-                    .endFill()
-                    .beginHole()
-                    .drawRect(x + 2, y + 2, width - 4, SequencerTimeline.noteHeight - 4)
-                    .endHole();
-                this._newEventData = noteData;
             }
+
+            let x = this._getStageCoordinatesFromBar(barPosition);
+            y += this._verticalScrollPosition;
+            let width = (this.metadata.positionQuarterNoteToBeats(startPosition + length) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
+
+            this._newEventGraphics.clear()
+                .beginFill(UIColors.trackEventColor)
+                .drawRect(x, y, width, SequencerTimeline.noteHeight)
+                .endFill()
+                .beginHole()
+                .drawRect(x + 2, y + 2, width - 4, SequencerTimeline.noteHeight - 4)
+                .endHole();
+            this._newEventData = noteData;
             this._newEventGraphics.visible = true;
         }
     }
