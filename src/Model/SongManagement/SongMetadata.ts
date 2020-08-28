@@ -19,6 +19,9 @@ export default class SongMetadata {
         this.addMetadataEvent(0, bpm, timeSignature);
     }
 
+    get events() {
+        return this._metaEvents;
+    }
 
     /**
      * Gets the BPM at a given quarter note position

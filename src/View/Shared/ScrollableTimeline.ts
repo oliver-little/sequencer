@@ -7,6 +7,7 @@ import { TrackTimelineEvent } from "./TrackTimelineEvent.js";
 import { TimelineMarker } from "./TimelineMarker.js";
 import { UIPositioning } from "./UITheme.js";
 import { MouseTypeContainer } from "./InteractiveContainer.js";
+import { MetadataTimelineEvent } from "./MetadataTimelineEvent.js";
 
 /**
  * Provides a basic implementation of a timeline, including pooled bar objects using ScrollableBar
@@ -52,6 +53,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     protected _barPool: ObjectPool<ScrollableBar>;
 
     protected _headerContainer: PIXI.Container;
+    protected _metadataEventContainer : PIXI.Container;
     protected _eventContainer: PIXI.Container;
     protected _barContainer: PIXI.Container;
 
@@ -87,9 +89,10 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
         this._barContainer = new PIXI.Container();
         this._headerContainer = new PIXI.Container();
+        this._metadataEventContainer = new PIXI.Container();
         this._eventContainer = new PIXI.Container();
         this._eventContainer.y = UIPositioning.timelineHeaderHeight;
-        this.addChild(this._barContainer, this._eventContainer, this._headerContainer);
+        this.addChild(this._barContainer, this._eventContainer, this._headerContainer, this._metadataEventContainer);
 
         this._timelineMarker = new TimelineMarker();
         this.addChild(this._timelineMarker);
@@ -278,6 +281,10 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
             this._eventContainer.children[i].x -= pixelOffset;
         }
 
+        for (let i = 0; i < this._metadataEventContainer.children.length; i++) {
+            this._metadataEventContainer.children[i].x -= pixelOffset;
+        }
+
         // After offsetting, ensure the screen is still filled with bars
         this._checkBarsFillScreen();
 
@@ -320,6 +327,10 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
         if (this._eventContainer.children.length == 0) {
             this._initialiseTrackTimelineEvents();
+            
+            this.metadata.events.forEach(metaEvent => {
+                this._metadataEventContainer.addChild(new MetadataTimelineEvent(this, metaEvent, UIPositioning.timelineHeaderHeight / 2 - MetadataTimelineEvent.diamondSize/2));
+            })
         }
         else {
             this._eventContainer.children.forEach(event => {
@@ -327,6 +338,11 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
                     event.reinitialise();
                 }
             });
+            this._metadataEventContainer.children.forEach(event => {
+                if (event instanceof MetadataTimelineEvent) {
+                    event.reinitialise();
+                }
+            })
         }
 
         this._redrawTimelineMarker();

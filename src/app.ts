@@ -56,7 +56,7 @@ window.onload = async function () {
     // This prevents text from being selected when the mouse triple clicks the canvas
     app.view.addEventListener("mousedown", function(e) {e.preventDefault();});
 
-    document.body.appendChild(app.view);
+    document.getElementById("applicationContainer").appendChild(app.view);
 
     app.renderer.backgroundColor = 0x303030;
     let newUITracks : UITrack[] = [];
