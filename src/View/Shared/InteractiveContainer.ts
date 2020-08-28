@@ -82,6 +82,10 @@ export abstract class MouseTypeContainer extends InteractiveContainer {
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
     }
 
+    public pointerMoveHandler(event: PIXI.InteractionEvent) {
+        return;
+    }
+
     /**
      * This should always be called at the START of any subclass reimplementing this function.
      * 

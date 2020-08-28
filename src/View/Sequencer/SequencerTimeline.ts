@@ -7,6 +7,7 @@ import { TrackTimelineEvent, NoteTimelineEvent } from "../Shared/TrackTimelineEv
 import NoteHelper from "../../HelperModules/NoteHelper.js";
 import { UIColors, UIPositioning } from "../Shared/UITheme.js";
 import { NoteEvent } from "../../Model/Notation/SongEvents.js";
+import { NoteGroupMarker } from "./NoteGroupMarker.js";
 
 enum NoteLength {
     Bar,
@@ -49,14 +50,17 @@ export class SequencerTimeline extends ScrollableTimeline {
     protected _newEventGraphics: PIXI.Graphics;
     protected _newEventData: INewNoteData;
 
+    protected _noteGroupContainer : PIXI.Container;
+
 
     constructor(startX: number, endX: number, endY: number, contentHeight: number, songManager: SongManager, track: NoteUITrack) {
         super(startX, endX, 0, endY, songManager);
         this.track = track;
         this._contentHeight = contentHeight;
 
+        this._noteGroupContainer = new PIXI.Container; 
         this._newEventGraphics = new PIXI.Graphics();
-        this.addChild(this._newEventGraphics);
+        this.addChild(this._noteGroupContainer, this._newEventGraphics);
 
         this._regenerateTimeline(0);
     }
@@ -137,6 +141,32 @@ export class SequencerTimeline extends ScrollableTimeline {
     public mouseWheelHandler(event: WheelEvent, canvasX: number, canvasY: number) {
         this._newEventGraphics.visible = false;
         super.mouseWheelHandler(event, canvasX, canvasY);
+    }
+
+    // Possible change here, use a regenerate event rather than overriding this function
+    protected _regenerateTimeline(fromBar : number, toBar? : number) {
+        super._regenerateTimeline(fromBar, toBar);
+
+        if (this._noteGroupContainer.children.length == 0) {
+            this.track.noteGroups.forEach(noteGroup => {
+                this._noteGroupContainer.addChild(new NoteGroupMarker(this, noteGroup, UIPositioning.timelineHeaderHeight - NoteGroupMarker.triangleSize));
+            });
+        }
+        else {
+            this._noteGroupContainer.children.forEach(noteGroupMarker => {
+                if (noteGroupMarker instanceof NoteGroupMarker) {
+                    noteGroupMarker.reinitialise();
+                }
+            });
+        }
+    }
+
+    protected _offsetChildren(pixelOffset : number) {
+        super._offsetChildren(pixelOffset);
+
+        this._noteGroupContainer.children.forEach(child => {
+            child.x -= pixelOffset;
+        });
     }
 
     protected _initialiseTrackTimelineEvents() {

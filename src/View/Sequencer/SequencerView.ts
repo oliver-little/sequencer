@@ -7,7 +7,7 @@ import { VerticalScrollView } from "../Shared/VerticalScrollView";
 
 export class SequencerView extends VerticalScrollView {
 
-    static numNotes = 97;
+    static numNotes = 99;
 
     public timeline : SequencerTimeline;
 
@@ -38,6 +38,6 @@ export class SequencerView extends VerticalScrollView {
     protected updateVerticalScroll(value : number) {
         value = Math.min(0, value);
         this.timeline.updateVerticalScroll(value);
-        this._horizontalLines.y = value;        
+        this._horizontalLines.y = UIPositioning.timelineHeaderHeight + value;        
     }
 }

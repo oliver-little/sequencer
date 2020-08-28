@@ -3,12 +3,15 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
+- Fix TrackTimelineEvent dragging so that the event always moves when the mouse crosses a snap line in bar space, not in the screen space
+- Similarly, vertical dragging of NoteTimelineEvents does not move on the horizontal line, it moves at arbitrary points.
 - Add selected effect to TrackTimelineEvents
 - Scrollbars, both vertical and horizontal
 - Ability to add time signature and bpm changes at the top of the screen
+- Ability to move all notes in a note group in the sequencer view.
 - Selective PIXI imports to reduce package size
 
 - Connections for tracks with chains and global bus - https://github.com/lukasoppermann/html5sortable
 
-BUGFIXES:
+BUG FIXES:
 - Rare bug where scrolling becomes unresponsive after moving a TrackTimelineEvent 
