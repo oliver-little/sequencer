@@ -7,6 +7,7 @@ import { TrackTimelineEvent } from "./TrackTimelineEvent.js";
 import { TimelineMarker } from "./TimelineMarker.js";
 import { UIPositioning } from "./UITheme.js";
 import { MouseTypeContainer } from "./InteractiveContainer.js";
+import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 
 /**
  * Provides a basic implementation of a timeline, including pooled bar objects using ScrollableBar
@@ -46,6 +47,14 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
      */
     public dragType: EventSnapType = EventSnapType.Beat;
 
+    /**
+     * Event called when dragging of the timeline begins
+     *
+     * @type {SimpleEvent}
+     * @memberof ScrollableTimeline
+     */
+    public dragStart : SimpleEvent;
+
     protected _zoomScale = 1;
 
     protected _scrollObjects: ScrollableBar[];
@@ -77,6 +86,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this.endX = endX;
         this.endY = endY;
         this.songManager = songManager;
+        this.dragStart = new SimpleEvent();
 
         this._scrollObjects = [];
         this._barPool = new ObjectPool();
@@ -119,6 +129,9 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
         if (this._mouseClickType == MouseClickType.None) {
             return;
+        }
+        else if (this._mouseClickType == MouseClickType.LeftClick) {
+            this.dragStart.emit();
         }
 
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
