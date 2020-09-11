@@ -14,12 +14,22 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
     public timeline : ScrollableTimeline;
 
     private _graphics : PIXI.Graphics;
+    private _editDiv : HTMLDivElement;
 
     constructor(timeline : ScrollableTimeline, event : MetadataEvent, y : number) {
         super();
         this.timeline = timeline;
+        this.timeline.dragStart.addListener(this._objectMoved.bind(this));
         this.event = event;
 
+        this._editDiv = document.createElement("div");
+        this._editDiv.style.top = this.y.toString();
+        this._editDiv.style.display = "none";
+        this._editDiv.style.position = "absolute";
+        let testText = document.createElement("p");
+        testText.innerHTML = "This is a test";
+        this._editDiv.appendChild(testText);
+        document.getElementById("applicationContainer").appendChild(this._editDiv);
 
         this._graphics = new PIXI.Graphics();
         let diamondSize = MetadataTimelineEvent.diamondSize;
@@ -31,6 +41,15 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
         this.reinitialise(y);
     }
 
+    set x (value : number) {
+        super.x = value;
+        this._objectMoved();
+    }
+
+    get x() : number {
+        return super.x;
+    }
+
     public reinitialise(y? : number) {
         if (y != undefined) {
             this.y = y;
@@ -39,16 +58,13 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
     }
 
     public pointerUpClickHandler(event : PIXI.InteractionEvent) {
-        console.log("clicked metaevent");
         if (this._mouseClickType == MouseClickType.LeftClick) {
-            let editDiv = document.createElement("div");
-            let testText = document.createElement("p");
-            testText.innerHTML = "This is a test";
-            editDiv.appendChild(testText)
-            editDiv.style.position = "absolute";
-            editDiv.style.top = this.y.toString();
-            editDiv.style.left = this.x.toString();
-            document.getElementById("applicationContainer").appendChild(editDiv);
+            this._editDiv.style.display = "block";
+            this._editDiv.style.left = this.x.toString();
         }
+    }
+
+    private _objectMoved() {
+        this._editDiv.style.display = "none";
     }
 }
