@@ -49,12 +49,12 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     public dragType: EventSnapType = EventSnapType.Beat;
 
     /**
-     * Event called when dragging of the timeline begins
+     * Event called when the timeline's position is changed in any way (pan, zoom)
      *
      * @type {SimpleEvent}
      * @memberof ScrollableTimeline
      */
-    public dragStart : SimpleEvent;
+    public timelineViewChange : SimpleEvent;
 
     protected _zoomScale = 1;
 
@@ -88,7 +88,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this.endX = endX;
         this.endY = endY;
         this.songManager = songManager;
-        this.dragStart = new SimpleEvent();
+        this.timelineViewChange = new SimpleEvent();
 
         this._scrollObjects = [];
         this._barPool = new ObjectPool();
@@ -134,7 +134,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
             return;
         }
         else if (this._mouseClickType == MouseClickType.LeftClick) {
-            this.dragStart.emit();
+            this.timelineViewChange.emit();
         }
 
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
@@ -221,14 +221,16 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
             return;
         }
 
+        this.timelineViewChange.emit();
+
         // Get the mouse's position in bars (based on the screen)
         let [barPosition, beatPosition, numBeats] = this._getBarFromStageCoordinates(stageX);
         barPosition += beatPosition / numBeats;
         // Change the scaling
         this._zoomScale = Math.max(0.5, Math.min(5.0, this._zoomScale - event.deltaY / 1000));
-        // Regenerate the bars (at least until the bar we need)
+
         this._regenerateTimeline(this._scrollObjects[0].barNumber, Math.floor(barPosition));
-        // Get the offset required to put the original position under the mouse
+
         let offset = this._getStageCoordinatesFromBar(barPosition) - stageX;
         // If the first bar is bar 0, check the offset won't cause it to go past the left side of the timeline view.
         if (this._scrollObjects[0].barNumber === 0 && this._scrollObjects[0].leftBound - offset > this.startX) {
@@ -246,6 +248,28 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._eventContainer.y = value + UIPositioning.timelineHeaderHeight;
 
         this._verticalScrollPosition = value;
+    }
+
+
+    /**
+     * Regenerates the timeline, keeping a given bar position at the same position on the screen
+     *
+     * @param {number} barPosition
+     * @memberof ScrollableTimeline
+     */
+    public regenerateAroundPosition(barPosition: number) {
+        let startBarPosition = this._getStageCoordinatesFromBar(barPosition);
+        // Regenerate the bars (at least until the bar we need)
+        this._regenerateTimeline(this._scrollObjects[0].barNumber, Math.floor(barPosition));
+        // Get the offset required to put the original position under the mouse
+        let offset = this._getStageCoordinatesFromBar(barPosition) - startBarPosition;
+        console.log(offset);
+        // If the first bar is bar 0, check the offset won't cause it to go past the left side of the timeline view.
+        if (this._scrollObjects[0].barNumber === 0 && this._scrollObjects[0].leftBound - offset > this.startX) {
+            // If it will, instead set the offset at most to the offset needed to put bar 0 at the start of the timeline view.
+            offset = this.startX - this._scrollObjects[0].leftBound;
+        }
+        this._offsetChildren(offset);
     }
 
     /**
@@ -275,6 +299,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         }
         return -1;
     }
+
 
     /**
      * Should be reimplemented by subclasses to offset all children correctly.

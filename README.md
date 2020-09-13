@@ -1,13 +1,17 @@
 # Sequencer
 A web-based DAW and sequencer, built in TypeScript, using the Web Audio API.
 
-### Dependencies
+### Key Dependencies
 - tuna
     - Found in dependencies folder, as this project uses a modified version making use of ES6 imports and exports.
 - uuid
     - npm install uuid
 - pixi.js
     - npm install pixi.js
+- react
+    - npm install react
+- react-dom
+    - npm install react-dom
 
 
 ### Credits

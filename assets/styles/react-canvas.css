@@ -1,0 +1,23 @@
+.metadataEditDiv {
+    position: absolute;
+    background-color: black;
+    flex-flow: column;
+}
+
+.metadataEditInnerDiv {
+    display: inline-flex;
+    flex-shrink: 1;
+    align-items: center;
+}
+
+.metadataEditInnerDiv > input {
+    width: 30px;
+}
+
+.metadataEditDivider {
+    border: 1px solid grey;
+    display: block;
+    width: auto;
+    height: 0px;
+    margin: 4px 0 4px 0;
+}

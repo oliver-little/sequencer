@@ -1,4 +1,4 @@
-/*
+/* @license tuna.js
 Copyright (c) 2012 DinahMoe AB & Oskar Eriksson
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
