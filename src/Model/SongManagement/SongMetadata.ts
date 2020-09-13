@@ -276,7 +276,9 @@ export default class SongMetadata {
         this._metaEventSecondLengths = [];
         this._metaEventBarLengths = [];
         if (this._metaEvents.length > 1) {
-            let totalSecondsDuration, totalBarsDuration, totalBeatsDuration = 0;
+            let totalSecondsDuration = 0;
+            let totalBarsDuration = 0;
+            let totalBeatsDuration = 0;
             for (let i = 0; i < (this._metaEvents.length - 1); i++) {
                 let quarterNoteDuration = this._metaEvents[i+1].startPosition - this._metaEvents[i].startPosition;
                 totalSecondsDuration += quarterNoteDuration * this._metaEvents[i].quarterNoteMultiplier * this._metaEvents[i].secondsPerBeat;
