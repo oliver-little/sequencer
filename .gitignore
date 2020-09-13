@@ -2,6 +2,8 @@
 
 build
 
+assets/scripts
+
 test
 
 node_modules
