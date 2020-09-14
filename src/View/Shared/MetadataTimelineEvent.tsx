@@ -139,10 +139,9 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
 
   private _eventEdited(timeSigNumerator : number, timeSigDenominator : number, bpm : number) {
     this.event = this.timeline.metadata.addMetadataEvent(this.event.startPosition, bpm, [timeSigNumerator, timeSigDenominator]);
-    this.timeline.regenerateAroundPosition(this.event.startPosition);
+    this.timeline.regenerateAroundPosition(this.timeline.metadata.positionQuarterNoteToBars(this.event.startPosition));
     // The event was edited, so regenerate the box at the same position (no difference in the user's view) to update it's props
     render(<MetadataEditBox numerator={this.event.timeSignature[0]} denominator={this.event.timeSignature[1]} bpm={this.event.bpm} onSubmit={this._eventEdited} />, this._editDiv);
-    console.log(this.timeline.metadata.events);
   }
 
   /**

@@ -229,7 +229,6 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._zoomScale = Math.max(0.5, Math.min(5.0, this._zoomScale - event.deltaY / 1000));
 
         this._regenerateTimeline(this._scrollObjects[0].barNumber, Math.floor(barPosition));
-
         let offset = this._getStageCoordinatesFromBar(barPosition) - stageX;
         // If the first bar is bar 0, check the offset won't cause it to go past the left side of the timeline view.
         if (this._scrollObjects[0].barNumber === 0 && this._scrollObjects[0].leftBound - offset > this.startX) {
@@ -262,7 +261,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._regenerateTimeline(this._scrollObjects[0].barNumber, Math.floor(barPosition));
         // Get the offset required to put the original position under the mouse
         let offset = this._getStageCoordinatesFromBar(barPosition) - startBarPosition;
-        console.log(offset);
+
         // If the first bar is bar 0, check the offset won't cause it to go past the left side of the timeline view.
         if (this._scrollObjects[0].barNumber === 0 && this._scrollObjects[0].leftBound - offset > this.startX) {
             // If it will, instead set the offset at most to the offset needed to put bar 0 at the start of the timeline view.
@@ -293,7 +292,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         for (let i = 0; i < this._scrollObjects.length; i++) {
             if (this._scrollObjects[i].barNumber === Math.floor(barNumber)) {
                 // Get the left bound of the current bar and add 
-                return this._scrollObjects[i].leftBound + (barNumber % 1) * this._scrollObjects[i].numberOfBeats * this.beatWidth;
+                return this._scrollObjects[i].leftBound + ((barNumber % 1) * this._scrollObjects[i].numberOfBeats * this.beatWidth);
             }
         }
         return -1;
