@@ -76,25 +76,25 @@ export class SongTimeline extends ScrollableTimeline {
                     barPosition += beatPosition / numBeats;
 
                     let startPosition = this.metadata.positionBarsToQuarterNote(barPosition);
+                    let endPosition = startPosition;
                     let x = this._getStageCoordinatesFromBar(barPosition);
                     let y = track.startY + this._verticalScrollPosition;
                     let width = 0;
                     let height = track.height;
                     if (track instanceof NoteUITrack) {
-                        let endPosition = startPosition + 4;
+                        endPosition = startPosition + 4;
                         if (track.getNoteGroupsWithinTime(startPosition, endPosition).length > 0) {
                             return;
                         }
-                        width = (this.metadata.positionQuarterNoteToBeats(endPosition) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
                     }
                     else if (track instanceof SoundFileUITrack) {
-                        let endPosition = startPosition + track.eventDuration;
+                        endPosition = startPosition + track.eventDuration;
                         if (track.getOneShotsBetweenTime(startPosition, endPosition).length > 0) {
                             return;
                         }
-                        width = this.metadata.positionQuarterNoteToBeats(track.eventDuration) * this.beatWidth;
                     }
 
+                    width = (this.metadata.positionQuarterNoteToBeats(endPosition) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
                     // Fixes a bug where very small events won't display properly.
                     width = Math.max(width, 3);
 
