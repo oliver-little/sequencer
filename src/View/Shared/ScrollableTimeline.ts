@@ -7,7 +7,6 @@ import { TrackTimelineEvent } from "./TrackTimelineEvent.js";
 import { TimelineMarker } from "./TimelineMarker.js";
 import { UIPositioning } from "./UITheme.js";
 import { MouseTypeContainer } from "./InteractiveContainer.js";
-import { MetadataTimelineEvent } from "./MetadataTimelineEvent.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 
 /**
@@ -312,7 +311,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
      */
     protected _offsetChildren(pixelOffset: number) {
         this._scrollObjects.forEach(child => {
-            child.x -= pixelOffset;
+            child.setX(child.x - pixelOffset);
         });
 
         for (let i = 0; i < this._eventContainer.children.length; i++) {
@@ -365,10 +364,6 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
         if (this._eventContainer.children.length == 0) {
             this._initialiseTrackTimelineEvents();
-            
-            this.metadata.events.forEach(metaEvent => {
-                this._metadataEventContainer.addChild(new MetadataTimelineEvent(this, metaEvent, UIPositioning.timelineHeaderHeight / 2 - MetadataTimelineEvent.diamondSize/2));
-            })
         }
         else {
             this._eventContainer.children.forEach(event => {
@@ -376,11 +371,6 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
                     event.reinitialise();
                 }
             });
-            this._metadataEventContainer.children.forEach(event => {
-                if (event instanceof MetadataTimelineEvent) {
-                    event.reinitialise();
-                }
-            })
         }
 
         this._redrawTimelineMarker();
@@ -449,14 +439,15 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
             bar.setVisible(true);
         }
         else {
-            bar = new ScrollableBar(this._headerContainer);
+            bar = new ScrollableBar(this._headerContainer, this);
             this._barContainer.addChild(bar);
         }
 
         // Positions the bar object
         let quarterNotePosition = this.metadata.positionBarsToQuarterNote(barNumber);
         let numberOfBeats = this.metadata.getTimeSignature(quarterNotePosition)[0];
-        bar.initialise(xPosition, Math.max(this.contentHeight, this.endY), barNumber, numberOfBeats, this.beatWidth, leftSide);
+        let metadataEventActive = !(this.metadata.events.binarySearch(quarterNotePosition) == -1);
+        bar.initialise(xPosition, Math.max(this.contentHeight, this.endY), barNumber, numberOfBeats, this.beatWidth, quarterNotePosition, metadataEventActive, leftSide);
         bar.verticalScrollPosition = this._verticalScrollPosition;
         return bar;
     }

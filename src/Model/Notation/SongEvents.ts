@@ -242,7 +242,13 @@ export class NoteEvent extends BaseEvent {
 
 export class MetadataEvent {
 
+    // The current start position of this metadataEvent
+    // This can and will be adjusted by SongMetadata so this event starts at the beginning of a bar
     public startPosition : number;
+
+    // The original start position of this metadataEvent
+    // SongMetadata uses this so the position of the event doesn't drift too far from the original place.
+    public originalStartPosition : number;
 
     private _bpm : number;
     private _secondsPerBeat : number;
@@ -251,6 +257,7 @@ export class MetadataEvent {
 
     constructor(startPosition : number, bpm : number, timeSignature : number[]) {
         this.startPosition = startPosition;
+        this.originalStartPosition = startPosition;
         this.bpm = bpm;
         this.timeSignature = timeSignature
     }

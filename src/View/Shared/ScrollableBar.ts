@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js";
 import { UIColors } from "../Shared/UITheme.js";
 import { BarHeader } from "./ScrollableBarHeader.js";
+import { ScrollableTimeline } from "./ScrollableTimeline.js";
 
 export class ScrollableBar extends PIXI.Container {
 
@@ -11,22 +12,13 @@ export class ScrollableBar extends PIXI.Container {
 
     protected _verticalScrollPosition : number;
 
-    constructor(headerContainer : PIXI.Container) {
+    constructor(headerContainer : PIXI.Container, timeline : ScrollableTimeline) {
         super();
         this._graphics = new PIXI.Graphics();
         this.addChild(this._graphics);
 
-        this._header = new BarHeader();
+        this._header = new BarHeader(timeline);
         headerContainer.addChild(this._header);
-    }
-
-    get x () {
-        return super.x;
-    }
-
-    set x(value: number) {
-        super.x = value;
-        this._header.x = value;
     }
 
     get leftBound() {
@@ -62,7 +54,12 @@ export class ScrollableBar extends PIXI.Container {
         this._graphics.y = this._verticalScrollPosition;
     }
 
-    public initialise(x : number, height : number, barNumber : number, numberOfBeats : number, beatWidth : number, leftSide : boolean = true) : ScrollableBar {
+    public setX(value : number) {
+        this.x = value;
+        this._header.setX(value);
+    }
+
+    public initialise(x : number, height : number, barNumber : number, numberOfBeats : number, beatWidth : number, metadataEventPosition : number, metadataEventActive : boolean, leftSide : boolean = true) : ScrollableBar {
         if (leftSide) {
             this.x = x;
         }
@@ -83,7 +80,7 @@ export class ScrollableBar extends PIXI.Container {
         this._barNumber = barNumber;
         this._numberOfBeats = numberOfBeats;
 
-        this._header.initialise(this.x, numberOfBeats * beatWidth, this.barNumber);
+        this._header.initialise(this.x, numberOfBeats * beatWidth, this.barNumber, metadataEventPosition, metadataEventActive);
 
         return this;
     }

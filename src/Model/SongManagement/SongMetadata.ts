@@ -189,19 +189,46 @@ export default class SongMetadata {
      *
      * @param {number} time
      * @param {number} bpm
-     * @param {number[]} timeSignature
+     * @param {number[]} timeSignature 
+     * @returns {MetadataEvent} The event that was created/edited
      * @memberof SongMetadata
      */
-    public addMetadataEvent(time : number, bpm : number, timeSignature : number[]) {
+    public addMetadataEvent(time : number, bpm : number, timeSignature : number[]) : MetadataEvent {
         let index = this._metaEvents.binarySearch(time);
         if (index === -1) {
-            this._metaEvents.insert(new MetadataEvent(time, bpm, timeSignature));
+            index = this._metaEvents.insert(new MetadataEvent(time, bpm, timeSignature));
         }
         else {
+            this._metaEvents[index].originalStartPosition = time;
             this._metaEvents[index].bpm = bpm,
             this._metaEvents[index].timeSignature = timeSignature;
         }
         this.precalculateLengths();
+        // Now move every metadata event after the current one so it starts on a bar (to prevent errors in displaying the UI)
+        let indicesToRemove = [];
+        for (let i = index + 1; i < this._metaEvents.length; i++) {
+            let prevEvent = this._metaEvents[i - 1];
+            // Calculate the position of the current metaEvent in the context of the last metaEvent, then round it so it starts on a bar line.
+            let roundedBarPosition = Math.round(((this._metaEvents[i].originalStartPosition - prevEvent.startPosition) * prevEvent.quarterNoteMultiplier) / prevEvent.timeSignature[0]);
+            // Then, convert that bar position back to a quarter note position
+            let newPosition = prevEvent.startPosition + ((roundedBarPosition) * prevEvent.timeSignature[0]) / prevEvent.quarterNoteMultiplier;
+            
+            // Check the new position does not collide with an existing event
+            if (newPosition != this._metaEvents[i].startPosition && this._metaEvents.binarySearch(newPosition) != -1) {
+                indicesToRemove.push(i);
+            }
+            else {
+                // If it doesn't, change the information and recalculate the lengths to do it for the next events
+                this._metaEvents[i].startPosition = newPosition;
+                this.precalculateLengths();
+            }
+        }
+        if (indicesToRemove != []) {
+            indicesToRemove.forEach(index => {this._metaEvents.removeAt(index)});
+            this.precalculateLengths();
+        }
+
+        return this._metaEvents[index];
     }
 
     /**
@@ -230,15 +257,12 @@ export default class SongMetadata {
      * @memberof SongMetadata
      */
     private precalculateLengths() {
-        this._metaEventSecondLengths = [];
-        this._metaEventBarLengths = [];
-        this._metaEventBeatLengths = [];
+        this._metaEventSecondLengths = [0];
+        this._metaEventBarLengths = [0];
+        this._metaEventBeatLengths = [0];
         let totalSecondsDuration = 0;
         let totalBarsDuration = 0;
         let totalBeatsDuration = 0;
-        this._metaEventSecondLengths.push(0);
-        this._metaEventBarLengths.push(0);
-        this._metaEventBeatLengths.push(0);
         for (let i = 1; i < this._metaEvents.length; i++) {
             let quarterNoteDuration = this._metaEvents[i].startPosition - this._metaEvents[i - 1].startPosition;
 
