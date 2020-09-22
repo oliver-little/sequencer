@@ -6,7 +6,7 @@ import { MetadataEvent } from "../../Model/Notation/SongEvents";
 import { MouseClickType } from "./Enums";
 import { UIColors, UIPositioning } from "./UITheme";
 import { ScrollableTimeline } from "./ScrollableTimeline";
-import {MetadataEditBox} from "./MetadataEditBox";
+import { MetadataEditBox } from "./MetadataEditBox";
 
 
 /**
@@ -16,7 +16,6 @@ import {MetadataEditBox} from "./MetadataEditBox";
  * @class MetadataTimelineEvent
  * @extends {MouseTypeContainer}
  */
-// TODO: these events should be put in
 export class MetadataTimelineEvent extends MouseTypeContainer {
 
   public event: MetadataEvent;

@@ -21,4 +21,5 @@ export class UIFonts {
 
 export class UIPositioning {
     public static timelineHeaderHeight : number = 40;
+    public static timelineSidebarWidth : number = 100;
 }

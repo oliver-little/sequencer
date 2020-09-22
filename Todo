@@ -16,4 +16,5 @@ Other:
 - Look at licenses for dependencies before deploying, need to figure out the best way to include them.
 
 BUG FIXES:
-- After changing the time signature (denominator) some events which have been MOVED after they were originally placed seem to jump forwards or backwards depending on what the denominator was changed to.
+- TimelineMarker should move faster or slower depending on the time signature but it doesn't 
+- Look at code for notes in SequencerTimeline and SequencerNotes, the implementation is confusing

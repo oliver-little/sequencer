@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js";
 import { ScrollableTimeline } from "./ScrollableTimeline";
 import { InteractiveContainer, MouseTypeContainer } from "./InteractiveContainer";
 import { MouseClickType } from "./Enums";
+import { UIPositioning } from "./UITheme";
 
 interface pointerEventObject {
     pointerDownHandler(event : PIXI.InteractionEvent);
@@ -19,7 +20,7 @@ export abstract class VerticalScrollView extends MouseTypeContainer {
     protected _interactivityRect : PIXI.Graphics;
     protected _sendPointerEventsTo : pointerEventObject;
     
-    protected _sidebarPosition = 100;
+    protected _sidebarPosition = UIPositioning.timelineSidebarWidth;
     protected abstract readonly contentHeight: number;
 
     // Scrolling variables
