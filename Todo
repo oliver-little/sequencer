@@ -16,5 +16,5 @@ Other:
 - Look at licenses for dependencies before deploying, need to figure out the best way to include them.
 
 BUG FIXES:
-- TimelineMarker should move faster or slower depending on the time signature but it doesn't 
+- Rare bug where long SoundFileTracks will be provided with a negative start time
 - Look at code for notes in SequencerTimeline and SequencerNotes, the implementation is confusing

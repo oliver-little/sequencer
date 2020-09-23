@@ -5,7 +5,7 @@ import NoteHelper from "../../HelperModules/NoteHelper.js";
 import { UITrack, NoteUITrack } from "../UIObjects/UITrack.js";
 import { ScrollableTimeline } from "./ScrollableTimeline.js";
 import { MouseTypeContainer } from "./InteractiveContainer.js";
-import { MouseClickType } from "./Enums.js";
+import { MouseClickType, TimelineMode } from "./Enums.js";
 import { SequencerTimeline } from "../Sequencer/SequencerTimeline.js";
 
 
@@ -174,7 +174,7 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
     public pointerDownHandler(event: PIXI.InteractionEvent) {
         super.pointerDownHandler(event);
 
-        if (this._mouseClickType == MouseClickType.None) {
+        if (this._mouseClickType == MouseClickType.None || !(this.timeline.timelineMode == TimelineMode.Edit)) {
             return;
         }
         event.stopPropagation();
@@ -194,7 +194,7 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
         // TODO: modify this movement algorithm to change on the bar lines rather than after the snap value is reached.
         // This was done using conversion to bar coordinates and back - see sequencer timeline and song timeline new event creation.
-        if (this._mouseClickType == MouseClickType.LeftClick) {
+        if (this._mouseClickType == MouseClickType.LeftClick && this.timeline.timelineMode == TimelineMode.Edit) {
             event.stopPropagation();
 
             let moveDelta = this.timeline.snapCoordinateToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
@@ -230,14 +230,16 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
      * @memberof TrackTimelineEvent
      */
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {
-        event.stopPropagation();
-        if (this._mouseClickType == MouseClickType.LeftClick) {
-            // Reset x position
-            this.x = this._startXPosition;
-            this.clickHandler();
-        }
-        else if (this._mouseClickType == MouseClickType.RightClick) {
-            this.deleteEvent();
+        if (this.timeline.timelineMode == TimelineMode.Edit) {
+            event.stopPropagation();
+            if (this._mouseClickType == MouseClickType.LeftClick) {
+                // Reset x position
+                this.x = this._startXPosition;
+                this.clickHandler();
+            }
+            else if (this._mouseClickType == MouseClickType.RightClick) {
+                this.deleteEvent();
+            }
         }
     }
 
@@ -248,20 +250,22 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
      * @memberof TrackTimelineEvent
      */
     public pointerUpDragHandler(event: PIXI.InteractionEvent) {
-        event.stopPropagation();
-        if (this._mouseClickType == MouseClickType.LeftClick) {
-            let point = event.data.getLocalPosition(this.parent);
-            let moveX = this.timeline.snapCoordinateToDragType(point.x - this._startPointerPosition.x);
-            let moveY = point.y - this._startPointerPosition.y;
+        if (this.timeline.timelineMode == TimelineMode.Edit) {
+            event.stopPropagation();
+            if (this._mouseClickType == MouseClickType.LeftClick) {
+                let point = event.data.getLocalPosition(this.parent);
+                let moveX = this.timeline.snapCoordinateToDragType(point.x - this._startPointerPosition.x);
+                let moveY = point.y - this._startPointerPosition.y;
 
 
-            let newEventStart = this.timeline.metadata.positionQuarterNoteToBeats(this.eventStartPosition) + (moveX / this.timeline.beatWidth);
-            if (newEventStart < 0) {
-                moveX -= newEventStart * this.timeline.beatWidth;
+                let newEventStart = this.timeline.metadata.positionQuarterNoteToBeats(this.eventStartPosition) + (moveX / this.timeline.beatWidth);
+                if (newEventStart < 0) {
+                    moveX -= newEventStart * this.timeline.beatWidth;
+                }
+
+                let dragDistance = new PIXI.Point(moveX, moveY);
+                this.dragHandler(dragDistance);
             }
-
-            let dragDistance = new PIXI.Point(moveX, moveY);
-            this.dragHandler(dragDistance);
         }
     }
 
@@ -524,7 +528,7 @@ export class NoteTimelineEvent extends BaseEventTimelineEvent {
     public track: NoteUITrack;
     public event: NoteEvent;
 
-    private _lastNoteNumber : number;
+    private _lastNoteNumber: number;
 
     constructor(timeline: SequencerTimeline, track: NoteUITrack, event: NoteEvent, y: number, height: number,) {
         super(timeline, track, event, y, height);
