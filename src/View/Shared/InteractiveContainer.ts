@@ -11,8 +11,6 @@ import { PointHelper } from "../../HelperModules/PointHelper";
 export abstract class InteractiveContainer extends PIXI.Container {
     public mouseIsOver : boolean = false;
 
-    private _boundPointerMove;
-
     constructor() {
         super();
 
@@ -23,8 +21,6 @@ export abstract class InteractiveContainer extends PIXI.Container {
         this.on("pointerupoutside", this.pointerUpHandler.bind(this));
         this.on("pointerover", this.pointerOverHandler.bind(this));
         this.on("pointerout", this.pointerOutHandler.bind(this));
-
-        this._boundPointerMove = this.pointerMoveHandler.bind(this);
     }
 
     public pointerOverHandler(event : PIXI.InteractionEvent) {

@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import { UIColors } from "./UITheme.js";
+import { UIColors, UIPositioning } from "./UITheme.js";
 import { NoteEvent, BaseEvent } from "../../Model/Notation/SongEvents.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
 import { UITrack, NoteUITrack } from "../UIObjects/UITrack.js";
@@ -34,6 +34,10 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
 
     protected _startXPosition: number;
     protected _startYPosition: number;
+
+    // Stores a snapped version of the start pointer position, which is used to calculate where the event should be positioned
+    // if snapping is enabled in the parent ScrollableTimeline
+    protected _snappedStartPointerPosition : PIXI.Point;
 
     /**
      *Creates an instance of TrackTimelineEvent.
@@ -182,6 +186,8 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
         this._startXPosition = this.x;
         this._startYPosition = this.y;
         this._startPointerPosition = event.data.getLocalPosition(this.parent);
+        this._snappedStartPointerPosition = this._startPointerPosition.clone();
+        this._snappedStartPointerPosition.x = this.timeline.snapCoordinateToDragType(this._snappedStartPointerPosition.x);
     }
 
     /**
@@ -192,12 +198,10 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
      * @memberof TrackTimelineEvent
      */
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
-        // TODO: modify this movement algorithm to change on the bar lines rather than after the snap value is reached.
-        // This was done using conversion to bar coordinates and back - see sequencer timeline and song timeline new event creation.
         if (this._mouseClickType == MouseClickType.LeftClick && this.timeline.timelineMode == TimelineMode.Edit) {
             event.stopPropagation();
 
-            let moveDelta = this.timeline.snapCoordinateToDragType(event.data.getLocalPosition(this.parent).x - this._startPointerPosition.x);
+            let moveDelta = this.timeline.snapCoordinateToDragType(event.data.getLocalPosition(this.parent).x) - this._snappedStartPointerPosition.x;
 
             // Check if snapped moveDelta would put the event start before 0, if so correct for it
             let newEventStart = this.timeline.metadata.positionQuarterNoteToBeats(this.eventStartPosition) + (moveDelta / this.timeline.beatWidth);
@@ -221,6 +225,7 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
         this._startXPosition = undefined;
         this._startYPosition = undefined;
         this._startPointerPosition = undefined;
+        this._snappedStartPointerPosition = undefined;
     }
 
 
@@ -254,8 +259,8 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
             event.stopPropagation();
             if (this._mouseClickType == MouseClickType.LeftClick) {
                 let point = event.data.getLocalPosition(this.parent);
-                let moveX = this.timeline.snapCoordinateToDragType(point.x - this._startPointerPosition.x);
-                let moveY = point.y - this._startPointerPosition.y;
+                let moveX = this.timeline.snapCoordinateToDragType(point.x) - this._snappedStartPointerPosition.x;
+                let moveY = point.y - this._snappedStartPointerPosition.y;
 
 
                 let newEventStart = this.timeline.metadata.positionQuarterNoteToBeats(this.eventStartPosition) + (moveX / this.timeline.beatWidth);
@@ -534,14 +539,19 @@ export class NoteTimelineEvent extends BaseEventTimelineEvent {
         super(timeline, track, event, y, height);
     }
 
+    public pointerDownHandler(event: PIXI.InteractionEvent) {
+        super.pointerDownHandler(event);
+        this._snappedStartPointerPosition.y = this._snappedStartPointerPosition.y - (this._snappedStartPointerPosition.y % SequencerTimeline.noteHeight) + SequencerTimeline.noteHeight;
+    }
+
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
         super.pointerMoveHandler(event);
         if (this._mouseClickType == MouseClickType.LeftClick) {
-            let moveDelta = event.data.getLocalPosition(this.parent).y - this._startPointerPosition.y;
+            let moveDelta = event.data.getLocalPosition(this.parent).y - this._snappedStartPointerPosition.y;
             let oldNoteNumber = NoteHelper.noteStringToNoteNumber(this.event.pitchString);
-            let noteYPosition = Math.min(this.timeline.offsetContentHeight, Math.max(0, oldNoteNumber * SequencerTimeline.noteHeight - moveDelta));
+            let noteYPosition = Math.min(this.timeline.offsetContentHeight - UIPositioning.timelineHeaderHeight, Math.max(0, oldNoteNumber * SequencerTimeline.noteHeight - moveDelta));
             this._lastNoteNumber = Math.floor(noteYPosition / SequencerTimeline.noteHeight);
-            this.y = this._startYPosition - (this._lastNoteNumber - oldNoteNumber) * SequencerTimeline.noteHeight;
+            this.y =  this._startYPosition - (this._lastNoteNumber - oldNoteNumber) * SequencerTimeline.noteHeight;
         }
     }
 
@@ -554,7 +564,6 @@ export class NoteTimelineEvent extends BaseEventTimelineEvent {
 
         let timePeriodClear = true;
         for (let i = 0; i < eventsInPeriod.length; i++) {
-            console.log(eventsInPeriod[i], this.event);
             if (eventsInPeriod[i] != this.event && eventsInPeriod[i].pitchString == newNotePitch) {
                 timePeriodClear = false;
                 break;

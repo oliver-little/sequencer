@@ -3,8 +3,6 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
-- Fix TrackTimelineEvent dragging so that the event always moves when the mouse crosses a snap line in bar space, not in the screen space
-- Similarly, vertical dragging of NoteTimelineEvents does not move on the horizontal line, it moves at arbitrary points.
 - Add selected effect to TrackTimelineEvents
 - Scrollbars, both vertical and horizontal
 - Ability to move all notes in a note group in the sequencer view.
@@ -18,3 +16,4 @@ Other:
 BUG FIXES:
 - Rare bug where long SoundFileTracks will be provided with a negative start time
 - Look at code for notes in SequencerTimeline and SequencerNotes, the implementation is confusing
+- Implementation of contentHeight is also more complex than it might need to be
