@@ -37,6 +37,10 @@ export class BaseEvent {
         this._duration = value;
     }
 
+    public get endPosition() : number {
+        return this.startPosition + this.duration;
+    }
+
     public serialise() : ISongEvent {
         return {
             "eventType": "BaseEvent",

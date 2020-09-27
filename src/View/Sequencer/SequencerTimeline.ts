@@ -8,6 +8,7 @@ import NoteHelper from "../../HelperModules/NoteHelper.js";
 import { UIColors, UIPositioning } from "../Shared/UITheme.js";
 import { NoteEvent } from "../../Model/Notation/SongEvents.js";
 import { NoteGroupMarker } from "./NoteGroupMarker.js";
+import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 
 enum NoteLength {
     Bar,
@@ -50,7 +51,8 @@ export class SequencerTimeline extends ScrollableTimeline {
     protected _newEventGraphics: PIXI.Graphics;
     protected _newEventData: INewNoteData;
 
-    protected _noteGroupContainer : PIXI.Container;
+    protected _noteGroupContainer: PIXI.Container;
+    protected _noteGroupPool : ObjectPool<NoteGroupMarker>;
 
 
     constructor(startX: number, endX: number, endY: number, contentHeight: number, songManager: SongManager, track: NoteUITrack) {
@@ -58,7 +60,8 @@ export class SequencerTimeline extends ScrollableTimeline {
         this.track = track;
         this._contentHeight = contentHeight;
 
-        this._noteGroupContainer = new PIXI.Container; 
+        this._noteGroupContainer = new PIXI.Container();
+        this._noteGroupPool = new ObjectPool();
         this._newEventGraphics = new PIXI.Graphics();
         this.addChild(this._noteGroupContainer, this._newEventGraphics);
 
@@ -127,10 +130,70 @@ export class SequencerTimeline extends ScrollableTimeline {
 
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {
         super.pointerUpClickHandler(event);
-        // Check that the click was a left click, and the click was on the timeline, and the timeline is in edit mode, and there is some valid event data to use to create the object.
+        // Check that the click was a left click, and the timeline is in edit mode, and there is some valid event data to use to create the object.
         if (this._mouseClickType == MouseClickType.LeftClick && this.timelineMode == TimelineMode.Edit && this._newEventData != undefined) {
             let noteEvent = this.track.track.addNote(this._newEventData.startPosition, this._newEventData.pitchString, this._newEventData.duration);
+
+            // Now the note has been added, also edit the NoteGroups to contain this note
+            let noteGroups = this.track.getNoteGroupsWithinTime(noteEvent.startPosition, noteEvent.endPosition);
+            let chosenNoteGroup : number[] = null;
+
+            // If more than 1 note group was found, merge them.
+            if (noteGroups.length > 1) {
+                chosenNoteGroup = [noteGroups[0][0], noteGroups[noteGroups.length - 1][1]];
+                noteGroups.forEach(noteGroup => {
+                    this.track.removeNoteGroup(noteGroup[0]);
+                });
+                this.track.addNoteGroup(chosenNoteGroup[0], chosenNoteGroup[1]);
+            }
+            else if (noteGroups.length == 1) { // Only one group was found, do nothing.
+                chosenNoteGroup = noteGroups[0];
+            }
+            else { // If no NoteGroup was found, find the nearest one.
+                // NoteEvent ends before the first event
+                if (this.track.noteGroups[0][0] > noteEvent.endPosition) {
+                    chosenNoteGroup = this.track.noteGroups[0];
+                }
+                else {
+                    let index = 1;
+                    while (index < this.track.noteGroups.length && this.track.noteGroups[index][1] < noteEvent.startPosition) {
+                        index++;
+                    }
+
+                    // NoteEvent starts after the last event
+                    if (index == this.track.noteGroups.length) {
+                        chosenNoteGroup = this.track.noteGroups[index - 1];
+                    }
+                    else {
+                        // NoteEvent occurs somewhere between some NoteGroups, find the closest
+                        if (Math.abs(this.track.noteGroups[index - 1][1] - noteEvent.endPosition) <= Math.abs(this.track.noteGroups[index][0] - noteEvent.startPosition)) {
+                            chosenNoteGroup = this.track.noteGroups[index-1];
+                        }
+                        else {
+                            chosenNoteGroup = this.track.noteGroups[index];
+                        }
+                    }
+                }
+            }
+            let newNoteGroup = chosenNoteGroup;
+            // In all cases, check the start position is before this note's start and the end position is after this note's end
+            if (newNoteGroup[0] > noteEvent.startPosition) {
+                newNoteGroup[0] = noteEvent.startPosition;
+            }
+            if (newNoteGroup[1] < noteEvent.endPosition) {
+                newNoteGroup[1] = noteEvent.endPosition;
+            }
+            if (newNoteGroup != chosenNoteGroup) {
+                this.track.removeNoteGroup(chosenNoteGroup[0]);
+                this.track.addNoteGroup(newNoteGroup[0], newNoteGroup[1]);
+            }
+
+            // Then update the noteGroups
+            this._initialiseNoteGroups();
+
             this._initialiseNote(noteEvent);
+
+
             this._newEventData = undefined;
         }
     }
@@ -141,24 +204,13 @@ export class SequencerTimeline extends ScrollableTimeline {
     }
 
     // Possible change here, use a regenerate event rather than overriding this function
-    protected _regenerateTimeline(fromBar : number, toBar? : number) {
+    protected _regenerateTimeline(fromBar: number, toBar?: number) {
         super._regenerateTimeline(fromBar, toBar);
 
-        if (this._noteGroupContainer.children.length == 0) {
-            this.track.noteGroups.forEach(noteGroup => {
-                this._noteGroupContainer.addChild(new NoteGroupMarker(this, noteGroup, UIPositioning.timelineHeaderHeight - NoteGroupMarker.triangleSize));
-            });
-        }
-        else {
-            this._noteGroupContainer.children.forEach(noteGroupMarker => {
-                if (noteGroupMarker instanceof NoteGroupMarker) {
-                    noteGroupMarker.reinitialise();
-                }
-            });
-        }
+        this._initialiseNoteGroups();
     }
 
-    protected _offsetChildren(pixelOffset : number) {
+    protected _offsetChildren(pixelOffset: number) {
         super._offsetChildren(pixelOffset);
 
         this._noteGroupContainer.children.forEach(child => {
@@ -173,12 +225,28 @@ export class SequencerTimeline extends ScrollableTimeline {
         })
     }
 
-    protected _initialiseNote(note : NoteEvent) : TrackTimelineEvent {
+    protected _initialiseNote(note: NoteEvent): TrackTimelineEvent {
         // Offset initialise location to account for one note error, and the height of the header.
         let y = this.offsetContentHeight - NoteHelper.noteStringToNoteNumber(note.pitchString) * SequencerTimeline.noteHeight - UIPositioning.timelineHeaderHeight;
         let timelineEvent = new NoteTimelineEvent(this, this.track, note, y, SequencerTimeline.noteHeight);
         timelineEvent.borderHeight = 1;
         this._eventContainer.addChild(timelineEvent);
         return timelineEvent;
+    }
+
+    protected _initialiseNoteGroups() {
+        this._noteGroupContainer.children.forEach(noteGroupMarker => {
+            noteGroupMarker.visible = false;
+            this._noteGroupPool.returnObject(noteGroupMarker as NoteGroupMarker);
+        });
+        this.track.noteGroups.forEach(noteGroup => {
+            let marker = this._noteGroupPool.getObject();
+            if (marker == null) {
+                marker = new NoteGroupMarker(this);
+                this._noteGroupContainer.addChild(marker);
+            }
+            marker.visible = true;
+            marker.reinitialise(noteGroup);
+        });
     }
 }

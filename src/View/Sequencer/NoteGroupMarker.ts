@@ -2,7 +2,7 @@ import * as PIXI from "pixi.js";
 import { MouseTypeContainer } from "../Shared/InteractiveContainer.js";
 import { MouseClickType } from "../Shared/Enums.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
-import { UIColors } from "../Shared/UITheme.js";
+import { UIColors, UIPositioning } from "../Shared/UITheme.js";
 
 export class NoteGroupMarker extends PIXI.Container {
 
@@ -16,20 +16,20 @@ export class NoteGroupMarker extends PIXI.Container {
     private _rightHandle : NoteGroupHandle;
     private _graphics : PIXI.Graphics;
 
-    constructor(timeline : ScrollableTimeline, noteGroup : number[], y : number) {
+    constructor(timeline : ScrollableTimeline) {
         super();
         this.timeline = timeline;
-        this.noteGroup = noteGroup;
+        this.y = UIPositioning.timelineHeaderHeight - NoteGroupMarker.triangleSize;
 
         this._leftHandle = new NoteGroupHandle();
         this._rightHandle = new NoteGroupHandle();
         this._graphics = new PIXI.Graphics();
 
         this.addChild(this._graphics, this._leftHandle, this._rightHandle);
-        this.reinitialise(y);
     }
 
-    public reinitialise(y? : number) {
+    public reinitialise(noteGroup : number[], y? : number) {
+        this.noteGroup = noteGroup;
         if (y != undefined) {
             this.y = y;
         }

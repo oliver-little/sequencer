@@ -59,14 +59,14 @@ export class NoteUITrack extends UITrack {
     }
 
     /**
-     * Gets the note groups that start within a time period
+     * Gets the note groups that fall within a time period (does not have to start or end in that period)
      *
      * @param {number} startTime The start time (quarter notes)
      * @param {number} endTime The end time (quarter notes)
-     * @returns {number[][]} The note groups that start within that time period.
+     * @returns {number[][]} The note groups that are within that time period.
      * @memberof NoteUITrack
      */
-    public getNoteGroupsWithinTime(startTime : number, endTime : number) : number[] {
+    public getNoteGroupsWithinTime(startTime : number, endTime : number) : number[][] {
         let noteGroupsToReturn = []
         for(let i = 0; i < this._noteGroups.length; i++) {
             let noteGroup = this._noteGroups[i];
