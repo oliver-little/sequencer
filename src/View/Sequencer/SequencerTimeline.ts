@@ -60,6 +60,9 @@ export class SequencerTimeline extends ScrollableTimeline {
         this.track = track;
         this._contentHeight = contentHeight;
 
+        this._initialiseNoteGroups = this._initialiseNoteGroups.bind(this);
+        this.track.noteGroupsChanged.addListener(this._initialiseNoteGroups);
+
         this._noteGroupContainer = new PIXI.Container();
         this._noteGroupPool = new ObjectPool();
         this._newEventGraphics = new PIXI.Graphics();
@@ -132,67 +135,12 @@ export class SequencerTimeline extends ScrollableTimeline {
         super.pointerUpClickHandler(event);
         // Check that the click was a left click, and the timeline is in edit mode, and there is some valid event data to use to create the object.
         if (this._mouseClickType == MouseClickType.LeftClick && this.timelineMode == TimelineMode.Edit && this._newEventData != undefined) {
-            let noteEvent = this.track.track.addNote(this._newEventData.startPosition, this._newEventData.pitchString, this._newEventData.duration);
-
-            // Now the note has been added, also edit the NoteGroups to contain this note
-            let noteGroups = this.track.getNoteGroupsWithinTime(noteEvent.startPosition, noteEvent.endPosition);
-            let chosenNoteGroup : number[] = null;
-
-            // If more than 1 note group was found, merge them.
-            if (noteGroups.length > 1) {
-                chosenNoteGroup = [noteGroups[0][0], noteGroups[noteGroups.length - 1][1]];
-                noteGroups.forEach(noteGroup => {
-                    this.track.removeNoteGroup(noteGroup[0]);
-                });
-                this.track.addNoteGroup(chosenNoteGroup[0], chosenNoteGroup[1]);
-            }
-            else if (noteGroups.length == 1) { // Only one group was found, do nothing.
-                chosenNoteGroup = noteGroups[0];
-            }
-            else { // If no NoteGroup was found, find the nearest one.
-                // NoteEvent ends before the first event
-                if (this.track.noteGroups[0][0] > noteEvent.endPosition) {
-                    chosenNoteGroup = this.track.noteGroups[0];
-                }
-                else {
-                    let index = 1;
-                    while (index < this.track.noteGroups.length && this.track.noteGroups[index][1] < noteEvent.startPosition) {
-                        index++;
-                    }
-
-                    // NoteEvent starts after the last event
-                    if (index == this.track.noteGroups.length) {
-                        chosenNoteGroup = this.track.noteGroups[index - 1];
-                    }
-                    else {
-                        // NoteEvent occurs somewhere between some NoteGroups, find the closest
-                        if (Math.abs(this.track.noteGroups[index - 1][1] - noteEvent.endPosition) <= Math.abs(this.track.noteGroups[index][0] - noteEvent.startPosition)) {
-                            chosenNoteGroup = this.track.noteGroups[index-1];
-                        }
-                        else {
-                            chosenNoteGroup = this.track.noteGroups[index];
-                        }
-                    }
-                }
-            }
-            let newNoteGroup = chosenNoteGroup;
-            // In all cases, check the start position is before this note's start and the end position is after this note's end
-            if (newNoteGroup[0] > noteEvent.startPosition) {
-                newNoteGroup[0] = noteEvent.startPosition;
-            }
-            if (newNoteGroup[1] < noteEvent.endPosition) {
-                newNoteGroup[1] = noteEvent.endPosition;
-            }
-            if (newNoteGroup != chosenNoteGroup) {
-                this.track.removeNoteGroup(chosenNoteGroup[0]);
-                this.track.addNoteGroup(newNoteGroup[0], newNoteGroup[1]);
-            }
+            let noteEvent = this.track.addEvent(this._newEventData.startPosition, this._newEventData.pitchString, this._newEventData.duration);
 
             // Then update the noteGroups
             this._initialiseNoteGroups();
 
             this._initialiseNote(noteEvent);
-
 
             this._newEventData = undefined;
         }
@@ -201,6 +149,11 @@ export class SequencerTimeline extends ScrollableTimeline {
     public mouseWheelHandler(event: WheelEvent, canvasX: number, canvasY: number) {
         this._newEventGraphics.visible = false;
         super.mouseWheelHandler(event, canvasX, canvasY);
+    }
+
+    public destroy() {
+        this.track.noteGroupsChanged.removeListener(this._initialiseNoteGroups);
+        super.destroy();
     }
 
     // Possible change here, use a regenerate event rather than overriding this function

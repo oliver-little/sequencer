@@ -439,7 +439,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
  * @class BaseEventTimelineEvent
  * @extends {TrackTimelineEvent}
  */
-export class BaseEventTimelineEvent extends TrackTimelineEvent {
+abstract class BaseEventTimelineEvent extends TrackTimelineEvent {
 
     public event: BaseEvent;
 
@@ -492,11 +492,6 @@ export class BaseEventTimelineEvent extends TrackTimelineEvent {
         }
     }
 
-    public deleteEvent() {
-        this.track.track.timeline.removeEvent(this.event);
-        super.deleteEvent();
-    }
-
     protected clickHandler() {
         console.log("Clicked BaseEventTimelineEvent");
     }
@@ -517,6 +512,11 @@ export class OneShotTimelineEvent extends BaseEventTimelineEvent {
         let y = track.startY;
         let height = track.height;
         super(timeline, track, event, y, height);
+    }
+
+    public deleteEvent() {
+        this.track.track.timeline.removeEvent(this.event);
+        super.deleteEvent();
     }
 }
 
@@ -555,6 +555,11 @@ export class NoteTimelineEvent extends BaseEventTimelineEvent {
         }
     }
 
+    public deleteEvent() {
+        this.track.removeEvent(this.event);
+        super.deleteEvent();
+    }
+
     protected dragHandler(dragDistance: PIXI.Point) {
         let beatChange = dragDistance.x / this.timeline.beatWidth;
         // Add the note change to the new note string, floor it, make sure it isn't less than 0, and convert it back to a string.
@@ -575,9 +580,7 @@ export class NoteTimelineEvent extends BaseEventTimelineEvent {
             this.y = this._startYPosition;
         }
         else {
-            this.event.pitchString = newNotePitch;
-            let eventIndex = this.track.track.timeline.getIndexOfEvent(this.event);
-            this.track.track.timeline.editEvent(eventIndex, newStartPosition);
+            this.track.editEvent(this.event, newStartPosition, newNotePitch);
         }
     }
 }

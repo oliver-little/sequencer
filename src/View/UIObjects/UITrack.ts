@@ -1,3 +1,5 @@
+import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
+import { NoteEvent } from "../../Model/Notation/SongEvents.js";
 import { BaseTrack } from "../../Model/Tracks/BaseTrack.js";
 import { OscillatorTrack } from "../../Model/Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
@@ -23,13 +25,16 @@ export class UITrack {
  * @extends {UITrack}
  */
 export class NoteUITrack extends UITrack {
+
     public track : OscillatorTrack;
+    public noteGroupsChanged : SimpleEvent;
 
     private _noteGroups: number[][];
 
     constructor(name: string, startY : number, height: number, baseTrack: OscillatorTrack, noteGroups?: number[][]) {
         super(name, startY, height, baseTrack);
         this._noteGroups = noteGroups;
+        this.noteGroupsChanged = new SimpleEvent();
     }
 
     get noteGroups() {
@@ -106,6 +111,8 @@ export class NoteUITrack extends UITrack {
             throw new RangeError("StartTime cannot be greater than endTime");
         }
 
+        this.noteGroupsChanged.emit();
+
         if (this._noteGroups.length === 0) {
             this._noteGroups.push([startTime, endTime]);
             return 0;
@@ -146,6 +153,7 @@ export class NoteUITrack extends UITrack {
             mid = Math.floor((left + right) / 2);
             if (startTime - this._noteGroups[mid][0] === 0) {
                 this._noteGroups.splice(mid, 1);
+                this.noteGroupsChanged.emit();
                 return;
             }
             else if (startTime - this._noteGroups[mid][0] > 0) {
@@ -158,6 +166,145 @@ export class NoteUITrack extends UITrack {
 
         // Element does not exist in array, throw an error.
         throw new RangeError("Element with given startTime does not exist.");
+    }
+
+    /**
+     * Updates the NoteGroups when a NoteEvent is edited or added
+     *
+     * @param {NoteEvent} noteEvent The event that was edited or added
+     * @memberof NoteUITrack
+     */
+    public updateNoteGroups(noteEvent: NoteEvent) {
+        // Handle the special case where there are no notegroups by creating one around the note
+        if (this._noteGroups.length == 0) {
+            this.addNoteGroup(noteEvent.startPosition, noteEvent.endPosition);
+            return;
+        }
+
+        // Get the notegroups that are within this note
+        let noteGroups = this.getNoteGroupsWithinTime(noteEvent.startPosition, noteEvent.endPosition);
+        let chosenNoteGroup : number[] = null;
+
+        // If more than 1 note group was found, merge them.
+        if (noteGroups.length > 1) {
+            chosenNoteGroup = [noteGroups[0][0], noteGroups[noteGroups.length - 1][1]];
+            noteGroups.forEach(noteGroup => {
+                this.removeNoteGroup(noteGroup[0]);
+            });
+            this.addNoteGroup(chosenNoteGroup[0], chosenNoteGroup[1]);
+        }
+        else if (noteGroups.length == 1) { // Only one group was found, do nothing.
+            chosenNoteGroup = noteGroups[0];
+        }
+        else { // If no NoteGroup was found, find the nearest one.
+            // NoteEvent ends before the first event
+            if (this.noteGroups[0][0] > noteEvent.endPosition) {
+                chosenNoteGroup = this.noteGroups[0];
+            }
+            else {
+                let index = 1;
+                while (index < this.noteGroups.length && this.noteGroups[index][1] < noteEvent.startPosition) {
+                    index++;
+                }
+
+                // NoteEvent starts after the last event
+                if (index == this.noteGroups.length) {
+                    chosenNoteGroup = this.noteGroups[index - 1];
+                }
+                else {
+                    // NoteEvent occurs somewhere between some NoteGroups, find the closest
+                    if (Math.abs(this.noteGroups[index - 1][1] - noteEvent.endPosition) <= Math.abs(this.noteGroups[index][0] - noteEvent.startPosition)) {
+                        chosenNoteGroup = this.noteGroups[index-1];
+                    }
+                    else {
+                        chosenNoteGroup = this.noteGroups[index];
+                    }
+                }
+            }
+        }
+        let newNoteGroup = chosenNoteGroup;
+        // In all cases, check the start position is before this note's start and the end position is after this note's end
+        if (newNoteGroup[0] > noteEvent.startPosition) {
+            newNoteGroup[0] = noteEvent.startPosition;
+        }
+        if (newNoteGroup[1] < noteEvent.endPosition) {
+            newNoteGroup[1] = noteEvent.endPosition;
+        }
+        // Check if the NoteGroup was actually moved
+        if (newNoteGroup != chosenNoteGroup) {
+            this.removeNoteGroup(chosenNoteGroup[0]);
+            this.addNoteGroup(newNoteGroup[0], newNoteGroup[1]);
+            this.noteGroupsChanged.emit();
+        }
+        // If not, the change might have moved the first or last note, adjust the boundaries.
+        else {
+            this.checkNoteGroupBoundaries(this.getNoteGroupIndex(chosenNoteGroup));
+        }
+    }
+
+    /**
+     * Checks that the boundaries of a NoteGroup are at the start of the first note and the end of the last note.
+     *
+     * @param {number} index Index of the NoteGroup
+     * @memberof NoteUITrack
+     */
+    public checkNoteGroupBoundaries(index : number) {
+        let notes = this.getNoteGroupNotes(index);
+        // If there are no notes, remove the NoteGroup
+        if (notes.length == 0) {
+            this.removeNoteGroup(this._noteGroups[index][0]);
+            return;
+        }
+
+        // Get the largest end position
+        let max = notes[0].endPosition;
+        for (let i = 1; i < notes.length; i++) {
+            max = Math.max(max, notes[i].endPosition);
+        }
+        this._noteGroups[index][0] = notes[0].startPosition;
+        this._noteGroups[index][1] = max;
+
+        this.noteGroupsChanged.emit();
+    }
+
+    /**
+     * Gets the notes within a NoteGroup
+     *
+     * @param {number} index The NoteGroup index
+     * @returns {NoteEvent[]} The notes within the NoteGroup
+     * @memberof NoteUITrack
+     */
+    public getNoteGroupNotes(index: number) : NoteEvent[] {
+        let noteGroup = this._noteGroups[index];
+        return this.track.timeline.getEventsBetweenTimes(noteGroup[0], noteGroup[1]) as NoteEvent[];
+    }
+
+    /**
+     * Adds a new NoteEvent to the track
+     *
+     * @param {number} startPosition
+     * @param {string} pitch
+     * @param {number} duration
+     * @returns {NoteEvent}
+     * @memberof NoteUITrack
+     */
+    public addEvent(startPosition: number, pitch : string, duration : number) : NoteEvent {
+        let event = this.track.addNote(startPosition, pitch, duration);
+        this.updateNoteGroups(event);
+        return event;
+    }
+
+    public editEvent(event : NoteEvent, startPosition : number, pitch : string, duration? : number) {
+        event.pitchString = pitch;
+        this.track.timeline.editEvent(this.track.timeline.getIndexOfEvent(event), startPosition, duration);
+        this.updateNoteGroups(event);
+    }
+
+    public removeEvent(event : NoteEvent) {
+        let noteGroupIndex = this.getNoteGroupIndex(this.getNoteGroupsWithinTime(event.startPosition, event.endPosition)[0]);
+        console.log(noteGroupIndex);
+        this.track.timeline.removeEvent(event);
+        this.checkNoteGroupBoundaries(noteGroupIndex);
     }
 }
 
