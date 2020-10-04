@@ -20,7 +20,7 @@ export abstract class VerticalScrollView extends MouseTypeContainer {
     protected _interactivityRect : PIXI.Graphics;
     protected _sendPointerEventsTo : pointerEventObject;
     
-    protected _sidebarPosition = UIPositioning.timelineSidebarWidth;
+    protected _sidebarPosition = UIPositioning.sequencerSidebarWidth;
     protected abstract readonly contentHeight: number;
 
     // Scrolling variables

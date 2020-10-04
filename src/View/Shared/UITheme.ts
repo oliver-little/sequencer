@@ -14,12 +14,12 @@ export class UIFonts {
     public static trackFont = {
         fontFamily: "Arial",
         fontSize: 15,
-        fill: 0xFFFFFF,
-        align: "left"
+        fill: 0xFFFFFF
     };
 }
 
 export class UIPositioning {
     public static timelineHeaderHeight : number = 40;
-    public static timelineSidebarWidth : number = 100;
+    public static sequencerSidebarWidth : number = 100;
+    public static timelineSidebarWidth : number = 250;
 }

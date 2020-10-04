@@ -136,6 +136,11 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
     }
   }
 
+  public destroy() {
+    document.getElementById("applicationContainer").removeChild(this._editDiv);
+    super.destroy();
+  }
+
   private _eventEdited(timeSigNumerator : number, timeSigDenominator : number, bpm : number) {
     this.event = this.timeline.metadata.addMetadataEvent(this.event.startPosition, bpm, [timeSigNumerator, timeSigDenominator]);
     this.timeline.regenerateAroundPosition(this.timeline.metadata.positionQuarterNoteToBars(this.event.startPosition));

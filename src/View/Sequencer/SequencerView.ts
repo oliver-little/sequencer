@@ -22,9 +22,9 @@ export class SequencerView extends VerticalScrollView {
 
         this.timeline = new SequencerTimeline(this._sidebarPosition, renderer.width, renderer.height, this.contentHeight, songManager, track);
         // Contains the background UI for the sidebar, as well as the 
-        this._sidebarUI = new PIXI.Graphics().beginFill(UIColors.bgColor).drawRect(0, 0, UIPositioning.timelineSidebarWidth, renderer.height).endFill();
-        this._sidebarUI.beginFill(UIColors.fgColor).drawRect(UIPositioning.timelineSidebarWidth - 4, 0, 4, renderer.height);
-        this._noteList = new SequencerNotes(renderer.width, renderer.height, SequencerView.numNotes);
+        this._sidebarUI = new PIXI.Graphics().beginFill(UIColors.bgColor).drawRect(0, 0, this._sidebarPosition, renderer.height).endFill();
+        this._sidebarUI.beginFill(UIColors.fgColor).drawRect(this._sidebarPosition - 4, 0, 4, renderer.height);
+        this._noteList = new SequencerNotes(this._sidebarPosition, renderer.width, renderer.height, SequencerView.numNotes);
         this.addChild(this.timeline, this._sidebarUI, this._noteList);
     }
 
@@ -43,7 +43,7 @@ class SequencerNotes extends PIXI.Container {
 
     private _horizontalLines : PIXI.Graphics;
 
-    constructor(screenWidth : number, screenHeight : number, numNotes : number) {
+    constructor(width : number, screenWidth : number, screenHeight : number, numNotes : number) {
         super();
 
         numNotes = numNotes - 2;
@@ -57,7 +57,7 @@ class SequencerNotes extends PIXI.Container {
             let height = i * SequencerTimeline.noteHeight;
             this._horizontalLines.drawRect(0, height, screenWidth, 1);
             let text = new PIXI.Text(NoteHelper.noteNumberToNoteString(numNotes - 1 - i), UIFonts.trackFont);
-            text.x = UIPositioning.timelineSidebarWidth / 2 - text.width/2;
+            text.x = width / 2 - text.width/2;
             text.y = UIPositioning.timelineHeaderHeight + height + SequencerTimeline.noteHeight/2 - text.height/2;
             this.addChild(text);
         }

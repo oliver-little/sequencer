@@ -63,7 +63,7 @@ export class OscillatorInstrument implements IInstrument {
             throw new RangeError("Invalid Gain Value");
         }
         this._settings.gain = value;
-        this._masterGain.gain.value;
+        this._masterGain.gain.setValueAtTime(value, this._context.currentTime);
     }
 
     get envelopeEnabled() : boolean {

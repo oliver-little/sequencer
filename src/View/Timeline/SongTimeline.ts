@@ -49,7 +49,7 @@ export class SongTimeline extends ScrollableTimeline {
     }
 
     get contentHeight() {
-        return this.tracks[this.tracks.length - 1].startY + this.tracks[this.tracks.length - 1].height;
+        return UIPositioning.timelineHeaderHeight + this.tracks[this.tracks.length - 1].startY + this.tracks[this.tracks.length - 1].height;
     }
 
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
