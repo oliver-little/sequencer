@@ -13,8 +13,6 @@ export class TimelineView extends VerticalScrollView {
 
     protected _sidebarPosition : number = UIPositioning.timelineSidebarWidth;
 
-    private _trackLines : TrackLines;
-
     private _tracks : UITrack[];
 
     constructor(renderer : PIXI.Renderer, tracks : UITrack[], songManager : SongManager) {
@@ -24,11 +22,8 @@ export class TimelineView extends VerticalScrollView {
 
         this.timeline = new SongTimeline(this._sidebarPosition, renderer.width, renderer.height, songManager, tracks);
         this.addChild(this.timeline);
-        this.trackList = new TrackList(this._sidebarPosition, renderer.height, tracks);
+        this.trackList = new TrackList(this._sidebarPosition, renderer.width, renderer.height, tracks);
         this.addChild(this.trackList);
-        this._trackLines = new TrackLines(tracks, renderer.width);
-        this._trackLines.y = UIPositioning.timelineHeaderHeight;
-        this.addChild(this._trackLines);
     }
 
     get contentHeight() {
@@ -38,6 +33,6 @@ export class TimelineView extends VerticalScrollView {
     protected updateVerticalScroll(value : number) {
         value = Math.min(0, value);
         this.timeline.updateVerticalScroll(value);
-        this._trackLines.y = UIPositioning.timelineHeaderHeight + value;
+        this.trackList.updateVerticalScroll(value);
     }
 }

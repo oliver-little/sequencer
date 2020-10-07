@@ -1,3 +1,10 @@
+:root {
+    --timeline-bg-color: #303030;
+    --timeline-fg-color: #5F5F5F;
+}
+
+/* Metadata Edit Box */
+
 .metadataEditDiv {
     position: absolute;
     background-color: black;
@@ -20,4 +27,27 @@
     width: auto;
     height: 0px;
     margin: 4px 0 4px 0;
+}
+
+/* Track Settings Box */
+
+.trackSettingsDiv {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.trackSettingsDiv > * {
+    margin-top: 20px;
+}
+
+.trackSettingsName {
+    border: none;
+    text-align: center;
+    display: inline;
+    color: white;
+    background-color: var(--timeline-bg-color);
+    padding: none;
 }

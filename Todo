@@ -7,6 +7,7 @@ To Add UI:
 - Scrollbars, both vertical and horizontal
 - Ability to move all notes in a note group in the sequencer view.
 - Selective PIXI imports to reduce package size
+- Loading spinners, for async operations like loading in a new file: https://chevtek.io/how-to-create-versatile-loading-spinner-management-in-react/
 
 - Connections for tracks with chains and global bus - https://github.com/lukasoppermann/html5sortable
 

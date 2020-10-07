@@ -45,7 +45,8 @@ oscillatorTrack.addNote(2, "G5", "2n");
 oscillatorTrack.addNote(3, "G6", "32n");
 
 songManager.metadata.addMetadataEvent(0, 180, [4,4]);
-
+songManager.addOscillatorTrack();
+songManager.addOscillatorTrack();
 window.onload = async function () {
     let soundFileTrack =await songManager.addSoundFileTrack()
     soundFileTrack.addOneShot(0);

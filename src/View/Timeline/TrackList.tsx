@@ -3,6 +3,8 @@ import * as React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
 import { UITrack } from "../UIObjects/UITrack.js";
 import { UIColors, UIPositioning } from "../Shared/UITheme.js";
+import { FileInput, Slider } from "../SharedReact/BasicElements.js";
+import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 
 /**
  * Container for a the settings of a list of tracks.
@@ -13,67 +15,147 @@ import { UIColors, UIPositioning } from "../Shared/UITheme.js";
  */
 export class TrackList extends PIXI.Container {
 
-    public tracks : UITrack[];
+    public tracks: UITrack[];
 
-    private _assignedWidth : number;
-    private _assignedHeight : number;
+    private _sidebarWidth : number;
 
-    private _trackListGraphics : PIXI.Graphics;
-    private _trackSettingsBoxes : HTMLDivElement;
+    private _trackListGraphics: PIXI.Graphics;
+    private _trackLineGraphics: PIXI.Graphics;
+
+    private _overflowContainer: HTMLDivElement;
+    private _trackSettingsContainer: HTMLDivElement;
+    private _trackSettingsList : TrackSettingsList;
+
+    private _verticalScroll : number = 0;
 
     /**
      * Creates an instance of TrackList.
-     * @param {number} width The screen width of the TrackList (pixels)
-     * @param {number} height The screen height of the trackList (pixels)
+     * @param {number} sidebarWidth The width of the trackList (pixels)
+     * @param {number} width The screen width
+     * @param {number} height The screen height
      * @param {UITrack[]} tracks A list of UITracks representing the tracks to display.
      * @memberof TrackList
      */
-    constructor(width : number,  height : number, tracks : UITrack[]) {
+    constructor(sidebarWidth : number, width: number, height: number, tracks: UITrack[]) {
         super();
         this.tracks = tracks;
-        this._assignedWidth = width;
-        this._assignedHeight = Math.max(height, tracks[tracks.length - 1].startY + tracks[tracks.length - 1].height);
-        
+        this._sidebarWidth = sidebarWidth;
+
+        this._gainChanged = this._gainChanged.bind(this);
+        this._nameChanged = this._nameChanged.bind(this);
+        this._soundFileChanged = this._soundFileChanged.bind(this);
+        this._updateSoundFile = this._updateSoundFile.bind(this);
+
+        // Draw lines and background colour.
+
         this._trackListGraphics = new PIXI.Graphics();
         this.addChild(this._trackListGraphics);
 
         this._trackListGraphics.beginFill(UIColors.bgColor)
-            .drawRect(0, 0, this._assignedWidth, this._assignedHeight)
+            .drawRect(0, 0, sidebarWidth, height)
             .endFill();
         this._trackListGraphics.beginFill(UIColors.fgColor)
-            .drawRect(this._assignedWidth-3, 0, 3, this._assignedHeight)
+            .drawRect(sidebarWidth - 3, 0, 3, height)
+            .drawRect(0, UIPositioning.timelineHeaderHeight - 2, width, 2)
             .endFill();
 
-        this._trackSettingsBoxes = document.createElement("div");
-        this._trackSettingsBoxes.style.position = "absolute";
-        this._trackSettingsBoxes.style.top = this.getGlobalPosition().y.toString();
-        document.getElementById("applicationContainer").appendChild(this._trackSettingsBoxes);
+        this._trackLineGraphics = new PIXI.Graphics();
+        this._trackLineGraphics.beginFill(UIColors.fgColor);
 
-        this._gainChanged = this._gainChanged.bind(this);
+        tracks.forEach(track => {
+            this._trackLineGraphics.drawRect(0, UIPositioning.timelineHeaderHeight + track.startY + track.height, width, 2);
+        });
 
-        for(let i = 0; i < this.tracks.length; i++) {
-            let track = this.tracks[i];
-            let trackDiv = document.createElement("div");
-            trackDiv.style.position = "absolute";
-            trackDiv.style.top = (UIPositioning.timelineHeaderHeight + track.startY).toString();
-            this._trackSettingsBoxes.appendChild(trackDiv);
-            render(<TrackSettingsBox index ={i} name={track.name} onNameChange={() => {}} gain={track.track.audioSource.masterGain} onGainChange={this._gainChanged}/>, trackDiv);
-        }
+        this._trackLineGraphics.endFill();
+        this._trackLineGraphics.mask = new PIXI.Graphics().beginFill(0xFFFFFF).drawRect(0, UIPositioning.timelineHeaderHeight, width, height).endFill();
+
+        this.addChild(this._trackListGraphics, this._trackLineGraphics);
+
+        // Setup container for settings boxes
+        this._trackSettingsContainer = document.createElement("div");
+        Object.assign(this._trackSettingsContainer.style, {
+            position: "absolute",
+            top: (UIPositioning.timelineHeaderHeight + this.getGlobalPosition().y).toString(),
+            width: sidebarWidth.toString(),
+            height: (height - UIPositioning.timelineHeaderHeight).toString(),
+            overflow: "hidden"
+        });
+        document.getElementById("applicationContainer").appendChild(this._trackSettingsContainer);
+
+        this._rerenderList();
     }
 
-    private _gainChanged(index : number, value : number) {
-        console.log(this.tracks[index].track.audioSource);
+    public updateVerticalScroll(value: number) {
+        this._trackLineGraphics.y = value;
+        this._verticalScroll = value;
+        this._rerenderList();
+    }
+
+    private _nameChanged(index: number, value: string) {
+        this.tracks[index].name = value;
+        this._rerenderList();
+    }
+
+    private _gainChanged(index: number, value: number) {
         this.tracks[index].track.audioSource.masterGain = value;
-        console.log(value);
+    }
+
+    private _soundFileChanged(index: number, files: FileList) {
+        let file = files[0];
+        const objecturl = URL.createObjectURL(file);
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', objecturl, true);
+        xhr.responseType = 'blob';
+        let onloadFunc = this._updateSoundFile;
+        xhr.onload = function(e) {
+            if (this.status == 200) {
+                onloadFunc(index, this.response);
+            }
+            else {
+                throw new Error("Loading failed, error code:" + this.status);
+            }
+        };
+        xhr.send();
+    }
+
+    private _updateSoundFile(index: number, blob: Blob) {
+        let soundFileTrack = this.tracks[index].track as SoundFileTrack;
+        soundFileTrack.setSoundFile(blob);
+    }
+
+    private _rerenderList() {
+        render(<TrackSettingsList tracks={this.tracks} onNameChange={this._nameChanged} onGainChange={this._gainChanged} onSoundFileUpdate={this._soundFileChanged} width={this._sidebarWidth} verticalScroll={this._verticalScroll} />, this._trackSettingsContainer);
+    }
+}
+
+interface TrackSettingsListProps {
+    tracks: UITrack[],
+    onNameChange: Function,
+    onGainChange: Function,
+    onSoundFileUpdate: Function,
+    width: number,
+    verticalScroll: number;
+}
+
+class TrackSettingsList extends React.Component<TrackSettingsListProps> {
+    render() {
+        return (<div style={{position: "absolute", top: this.props.verticalScroll}}>
+            {this.props.tracks.map((track, index) => {
+                return <TrackSettingsBox key={index} index={index} name={track.name} onNameChange={this.props.onNameChange} gain={track.track.audioSource.masterGain} onGainChange={this.props.onGainChange} width={this.props.width} height={track.height} soundFileChange={(track.track instanceof SoundFileTrack ? this.props.onSoundFileUpdate : undefined)} />;
+            })}
+        </div>);
     }
 }
 
 interface TrackSettingsProps {
-    index : number,
-    name : string,
-    onNameChange : Function,
-    gain : number,
-    onGainChange : Function
+    index: number,
+    name: string,
+    onNameChange: Function,
+    gain: number,
+    onGainChange: Function,
+    width: number,
+    height: number
+    soundFileChange?: Function
 }
 
 class TrackSettingsBox extends React.Component<TrackSettingsProps> {
@@ -81,20 +163,33 @@ class TrackSettingsBox extends React.Component<TrackSettingsProps> {
         super(props);
         this.handleNameChange = this.handleNameChange.bind(this);
         this.handleGainChange = this.handleGainChange.bind(this);
+        this.handleSoundFileChange = this.handleSoundFileChange.bind(this);
     }
 
     handleNameChange(value: string) {
-
+        this.props.onNameChange(this.props.index, value);
     }
 
     handleGainChange(value: string) {
         this.props.onGainChange(this.props.index, parseFloat(value));
     }
 
+    handleSoundFileChange(files: FileList) {
+        this.props.soundFileChange(this.props.index, files);
+    }
+
     render() {
-        return <div className="trackSettingsDiv">
-            <p>{this.props.name}</p>
-            <input type="range" min="0" max="1" step="0.01" defaultValue={this.props.gain.toString()} className="trackSettingsSlider" onChange={(event) => {this.handleGainChange(event.target.value)}}/>
+
+        let soundFileButton = null;
+
+        if (this.props.soundFileChange != undefined) {
+            soundFileButton = <FileInput onChange={this.handleSoundFileChange} accept="audio/*" />
+        }
+
+        return <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
+            <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
+            <Slider min="0" max="1" step="0.01" onChange={this.handleGainChange} />
+            {soundFileButton}
         </div>
     }
 }
@@ -114,13 +209,11 @@ export class TrackLines extends PIXI.Graphics {
      * @param {number} viewHeight The height of the view (pixels)
      * @memberof TrackLines
      */
-    constructor(tracks : UITrack[], viewWidth : number) {
+    constructor(tracks: UITrack[], viewWidth: number) {
         super();
         this.beginFill(UIColors.fgColor);
         this.drawRect(0, -2, viewWidth, 3);
-        tracks.forEach(track => {
-            this.drawRect(0, track.startY + track.height, viewWidth, 2);
-        });
+        
         this.endFill();
     }
 }
