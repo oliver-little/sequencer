@@ -52,7 +52,6 @@ class SequencerNotes extends PIXI.Container {
         this._horizontalLines = new PIXI.Graphics();
         this._horizontalLines.y = UIPositioning.timelineHeaderHeight;
         this._horizontalLines.beginFill(UIColors.fgColor);
-        let noteValueOffset = (UIPositioning.timelineHeaderHeight / SequencerTimeline.noteHeight) + 1;
         for (let i = 0; i < numNotes; i++) {
             let height = i * SequencerTimeline.noteHeight;
             this._horizontalLines.drawRect(0, height, screenWidth, 1);

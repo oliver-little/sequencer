@@ -5,6 +5,7 @@ import { UITrack, NoteUITrack, SoundFileUITrack } from "./View/UIObjects/UITrack
 import { OscillatorTrack } from "./Model/Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "./Model/Tracks/SoundFileTrack.js";
 import { SequencerView } from "./View/Sequencer/SequencerView.js";
+import { UIPositioning } from "./View/Shared/UITheme.js";
 
 /*const input = document.getElementById("soundFile");
     input.addEventListener("change", handleFiles, false);
@@ -67,10 +68,10 @@ window.onload = async function () {
         let modelTrack = songManager.tracks[i]
         let newTrack = null;
         if (modelTrack instanceof OscillatorTrack) {
-            newTrack = new NoteUITrack("", (250 * i), 250, modelTrack as OscillatorTrack, [[0, 2], [2, 4]]);
+            newTrack = new NoteUITrack("", UIPositioning.timelineHeaderHeight + (250 * i), 250, modelTrack as OscillatorTrack, [[0, 2], [2, 4]]);
         }
         else if (modelTrack instanceof SoundFileTrack) {
-            newTrack = new SoundFileUITrack("", (250 * i), 250, modelTrack);
+            newTrack = new SoundFileUITrack("", UIPositioning.timelineHeaderHeight + (250 * i), 250, modelTrack);
         }
         newUITracks.push(newTrack);
     }

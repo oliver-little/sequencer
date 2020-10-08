@@ -100,7 +100,6 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._headerContainer = new PIXI.Container();
         this._metadataEventContainer = new PIXI.Container();
         this._eventContainer = new PIXI.Container();
-        this._eventContainer.y = UIPositioning.timelineHeaderHeight;
         this.addChild(this._barContainer, this._eventContainer, this._headerContainer, this._metadataEventContainer);
 
         this._timelineMarker = new TimelineMarker();
@@ -243,7 +242,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
             bar.verticalScrollPosition = value;
         });
 
-        this._eventContainer.y = value + UIPositioning.timelineHeaderHeight;
+        this._eventContainer.y = value;
 
         this._verticalScrollPosition = value;
     }

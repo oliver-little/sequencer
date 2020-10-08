@@ -27,7 +27,7 @@ export class TimelineView extends VerticalScrollView {
     }
 
     get contentHeight() {
-        return UIPositioning.timelineHeaderHeight + this._tracks[this._tracks.length - 1].startY + this._tracks[this._tracks.length - 1].height;
+        return this._tracks[this._tracks.length - 1].startY + this._tracks[this._tracks.length - 1].height;
     }
 
     protected updateVerticalScroll(value : number) {

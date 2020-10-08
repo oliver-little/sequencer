@@ -21,7 +21,8 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
 
     public borderLeft = 1;
     public borderRight = 2;
-    public borderHeight = 2;
+    public borderTop = 0;
+    public borderBottom = 0;
     public paddingHeight = 6;
     public selectedBorderWidth = 4;
 
@@ -63,8 +64,8 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
 
         this.x = x + this.borderLeft;
         this.assignedWidth = Math.max(width - this.borderRight, 3);
-        this.assignedHeight = height - this.borderHeight;
-        this.y = y + this.borderHeight;
+        this.assignedHeight = height - this.borderBottom;
+        this.y = y + this.borderTop;
     }
 
     /**

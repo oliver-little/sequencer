@@ -180,7 +180,7 @@ export class SequencerTimeline extends ScrollableTimeline {
 
     protected _initialiseNote(note: NoteEvent): TrackTimelineEvent {
         // Offset initialise location to account for one note error, and the height of the header.
-        let y = this.offsetContentHeight - NoteHelper.noteStringToNoteNumber(note.pitchString) * SequencerTimeline.noteHeight - UIPositioning.timelineHeaderHeight;
+        let y = this.offsetContentHeight - NoteHelper.noteStringToNoteNumber(note.pitchString) * SequencerTimeline.noteHeight;
         let timelineEvent = new NoteTimelineEvent(this, this.track, note, y, SequencerTimeline.noteHeight);
         timelineEvent.borderHeight = 1;
         this._eventContainer.addChild(timelineEvent);

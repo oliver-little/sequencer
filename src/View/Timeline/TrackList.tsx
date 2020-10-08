@@ -55,7 +55,7 @@ export class TrackList extends PIXI.Container {
             .drawRect(0, 0, sidebarWidth, height)
             .endFill();
         this._trackListGraphics.beginFill(UIColors.fgColor)
-            .drawRect(sidebarWidth - 3, 0, 3, height)
+            .drawRect(sidebarWidth, 0, 3, height)
             .drawRect(0, UIPositioning.timelineHeaderHeight - 2, width, 2)
             .endFill();
 
@@ -63,10 +63,11 @@ export class TrackList extends PIXI.Container {
         this._trackLineGraphics.beginFill(UIColors.fgColor);
 
         tracks.forEach(track => {
-            this._trackLineGraphics.drawRect(0, UIPositioning.timelineHeaderHeight + track.startY + track.height, width, 2);
+            this._trackLineGraphics.drawRect(0, track.startY + track.height, width, 2);
         });
 
         this._trackLineGraphics.endFill();
+        // Set mask so lines disappear once they go above the header
         this._trackLineGraphics.mask = new PIXI.Graphics().beginFill(0xFFFFFF).drawRect(0, UIPositioning.timelineHeaderHeight, width, height).endFill();
 
         this.addChild(this._trackListGraphics, this._trackLineGraphics);
@@ -75,9 +76,9 @@ export class TrackList extends PIXI.Container {
         this._trackSettingsContainer = document.createElement("div");
         Object.assign(this._trackSettingsContainer.style, {
             position: "absolute",
-            top: (UIPositioning.timelineHeaderHeight + this.getGlobalPosition().y).toString(),
+            top: tracks[0].startY.toString(),
             width: sidebarWidth.toString(),
-            height: (height - UIPositioning.timelineHeaderHeight).toString(),
+            height: (height - tracks[0].startY).toString(),
             overflow: "hidden"
         });
         document.getElementById("applicationContainer").appendChild(this._trackSettingsContainer);

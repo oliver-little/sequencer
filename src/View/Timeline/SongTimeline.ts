@@ -42,7 +42,6 @@ export class SongTimeline extends ScrollableTimeline {
         this.tracks = tracks;
 
         this._newEventGraphics = new PIXI.Graphics();
-        this._newEventGraphics.y = UIPositioning.timelineHeaderHeight;
         this.addChild(this._newEventGraphics);
 
         this._regenerateTimeline(0);
