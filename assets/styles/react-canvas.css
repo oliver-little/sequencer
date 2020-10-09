@@ -1,6 +1,7 @@
 :root {
     --timeline-bg-color: #303030;
     --timeline-fg-color: #5F5F5F;
+    --timeline-highlight-color: #999999;
 }
 
 /* Metadata Edit Box */
@@ -50,4 +51,31 @@
     color: white;
     background-color: var(--timeline-bg-color);
     padding: none;
+}
+
+.trackSettingsSlider {
+    cursor: pointer;
+}
+
+.trackSettingsIconInput {
+    cursor: pointer;
+    border-radius: 5px;
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--timeline-highlight-color);
+    height: 35px;
+    width: 35px;
+    background-color: var(--timeline-bg-color);
+    transition: transform 0.3s ease-in-out, filter 0.3s ease, border-color 0.3s ease;
+}
+
+.trackSettingsIconInput:hover {
+    transform: translateY(-0.2em) scale(1.1, 1.1);
+    border-color: var(--timeline-bg-color);
+    filter: invert();
+}
+
+.trackSettingsIconInput > i {
+    font-size: 1.2em;
+    color: var(--timeline-highlight-color);
 }

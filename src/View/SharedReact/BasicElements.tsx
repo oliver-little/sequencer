@@ -25,3 +25,23 @@ export class FileInput extends React.Component<FileInputProps> {
         return <input className={this.props.className} type="file" onChange={(event) => this.props.onChange(event.target.files)} accept={this.props.accept}/>
     }
 }
+
+interface IconFileInputProps extends FileInputProps {
+    iconName: string,
+}
+
+export class IconFileInput extends React.Component<IconFileInputProps> {
+
+    private _inputRef : HTMLInputElement;
+
+    handleClick() {
+        this._inputRef.click();
+    }
+
+    render() {
+        return <div>
+            <button className={this.props.className} onClick={this.handleClick.bind(this)}><i className={this.props.iconName}></i></button>
+            <input style={{position: "absolute", zIndex: -1, opacity: 0}} type="file" ref={(ref) => {this._inputRef = ref}} onChange={(event) => this.props.onChange(event.target.files)} accept={this.props.accept}/>
+        </div>
+    }
+}

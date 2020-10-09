@@ -60,7 +60,7 @@ export class SoundFileTrack extends BaseTrack {
      */
     public addOneShot(startPosition : number) : SecondsBaseEvent {
         // Check if there are any events occurring within the new location
-        if (this._timeline.getEventsBetweenTimes(startPosition, this._metadata.positionSecondsToQuarterNote(this.audioSource.duration)).length > 0) {
+        if (this._timeline.getEventsBetweenTimes(startPosition, startPosition + this._metadata.positionSecondsToQuarterNote(this.audioSource.duration)).length > 0) {
             throw new RangeError("Invalid location: a playback event already occurs in the duration of the new event.");
         }
         let event = new SecondsBaseEvent(startPosition, this._metadata, this.audioSource.duration);

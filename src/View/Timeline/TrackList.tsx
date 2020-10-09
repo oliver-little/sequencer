@@ -3,7 +3,7 @@ import * as React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
 import { UITrack } from "../UIObjects/UITrack.js";
 import { UIColors, UIPositioning } from "../Shared/UITheme.js";
-import { FileInput, Slider } from "../SharedReact/BasicElements.js";
+import { FileInput, IconFileInput, Slider } from "../SharedReact/BasicElements.js";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 
 /**
@@ -184,12 +184,12 @@ class TrackSettingsBox extends React.Component<TrackSettingsProps> {
         let soundFileButton = null;
 
         if (this.props.soundFileChange != undefined) {
-            soundFileButton = <FileInput onChange={this.handleSoundFileChange} accept="audio/*" />
+            soundFileButton = <IconFileInput className={"trackSettingsIconInput"} iconName={"fa fa-music"} onChange={this.handleSoundFileChange} accept="audio/*" />
         }
 
         return <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
             <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
-            <Slider min="0" max="1" step="0.01" onChange={this.handleGainChange} />
+            <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" onChange={this.handleGainChange} />
             {soundFileButton}
         </div>
     }
