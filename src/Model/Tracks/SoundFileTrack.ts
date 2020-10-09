@@ -7,6 +7,7 @@ import { SecondsBaseEvent, BaseEvent } from "../Notation/SongEvents.js";
 
 export class SoundFileTrack extends BaseTrack {
     public audioSource : SoundFileInstrument;
+    public allowOverlaps : Boolean = false;
 
     /**
      * Creates and initialises a SoundFileTrack
@@ -60,8 +61,8 @@ export class SoundFileTrack extends BaseTrack {
      */
     public addOneShot(startPosition : number) : SecondsBaseEvent {
         // Check if there are any events occurring within the new location
-        if (this._timeline.getEventsBetweenTimes(startPosition, startPosition + this._metadata.positionSecondsToQuarterNote(this.audioSource.duration)).length > 0) {
-            throw new RangeError("Invalid location: a playback event already occurs in the duration of the new event.");
+        if (!this.allowOverlaps && this._timeline.getEventsBetweenTimes(startPosition, startPosition + this._metadata.positionSecondsToQuarterNote(this.audioSource.duration)).length > 0) {
+            throw new RangeError("Invalid location: a playback event already occurs in the duration of the new event. Disable allowOverlaps to suppress this error.");
         }
         let event = new SecondsBaseEvent(startPosition, this._metadata, this.audioSource.duration);
         this._timeline.addEvent(event);
@@ -89,7 +90,23 @@ export class SoundFileTrack extends BaseTrack {
         this._timeline.events.forEach(event => {
             event.secondsDuration = this.audioSource.duration;
         });
+
+        if (!this.allowOverlaps) {
+            let index = 0;
+            while (index < this._timeline.events.length) {
+                let event = this._timeline.events[index];
+                let overlappingEvents = this._timeline.getEventsBetweenTimes(event.startPosition, event.endPosition);
+                overlappingEvents.forEach(overlapEvent => {
+                    if (overlapEvent != event) {
+                        this._timeline.removeEvent(overlapEvent);
+                    }
+                });
+                index++;
+            }
+        }
         this._timeline.updatePlaybackTime();
+
+
     }
 
     protected songEventHandler(event : BaseEvent) {

@@ -2,7 +2,7 @@ import * as PIXI from "pixi.js";
 import { UIColors, UIPositioning } from "./UITheme.js";
 import { NoteEvent, BaseEvent } from "../../Model/Notation/SongEvents.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
-import { UITrack, NoteUITrack } from "../UIObjects/UITrack.js";
+import { UITrack, NoteUITrack, SoundFileUITrack } from "../UIObjects/UITrack.js";
 import { ScrollableTimeline } from "./ScrollableTimeline.js";
 import { MouseTypeContainer } from "./InteractiveContainer.js";
 import { MouseClickType, TimelineMode } from "./Enums.js";
@@ -62,7 +62,7 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
         this.addChild(this._contentGraphics, this._selectedGraphics);
 
         this.x = x + this.borderLeft;
-        this.assignedWidth = Math.max(width - this.borderRight, 3);
+        this.assignedWidth = Math.max(width - this.borderRight, 5);
         this.assignedHeight = height - this.borderHeight;
         this.y = y + this.borderHeight;
     }
@@ -77,7 +77,7 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
     public reinitialise(y?: number, height?: number) {
         let [x, width] = this.timeline.getTimelineEventXWidth(this.eventStartPosition, this.eventStartPosition + this.eventDuration);
         this.x = x + this.borderLeft;
-        this.assignedWidth = Math.max(width - this.borderRight, 3);
+        this.assignedWidth = Math.max(width - this.borderRight, 5);
 
         if (y != undefined) {
             this.y = y;
@@ -433,32 +433,28 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 }
 
 /**
- * TimelineEvent representing a base event object
+ * Represents a OneShot event in SongTimeline
  *
  * @export
- * @class BaseEventTimelineEvent
+ * @class OneShotTimelineEvent
  * @extends {TrackTimelineEvent}
  */
-abstract class BaseEventTimelineEvent extends TrackTimelineEvent {
+export class OneShotTimelineEvent extends TrackTimelineEvent {
 
+    public track: SoundFileUITrack;
     public event: BaseEvent;
 
-    /**
-     * Creates an instance of OneShotTimelineEvent.
-     * @param {SongTimeline} timeline The timeline object this event is part of.
-     * @param {number} x The x position this object should start at (pixels)
-     * @param {number} width The width of this object (pixels)
-     * @param {number} y The y coordinate this object should start at (pixels)
-     * @param {number} height The height of this object (pixels)
-     * @param {UITrack} track The UITrack this event is part of
-     * @param {BaseEvent} event
-     * @memberof BaseEventTimelineEvent
-     */
-    constructor(timeline: ScrollableTimeline, track: UITrack, event: BaseEvent, y: number, height: number) {
-        let [x, width] = timeline.getTimelineEventXWidth(event.startPosition, event.startPosition + event.duration);
-        super(timeline, track, x, width, y, height);
+    constructor(timeline: ScrollableTimeline, track: SoundFileUITrack, event: BaseEvent) {
+        let [x, width] = timeline.getTimelineEventXWidth(event.startPosition, event.endPosition);
+        if (!track.displayActualWidth) {
+            width = 0;
+        }
+
+        super(timeline, track, x, width, track.startY, track.height);
 
         this.event = event;
+        this._modelEventRemoved = this._modelEventRemoved.bind(this);
+        this.event.removed.addListener(this._modelEventRemoved);
         this.redraw();
     }
 
@@ -467,7 +463,22 @@ abstract class BaseEventTimelineEvent extends TrackTimelineEvent {
     }
 
     get eventDuration() {
-        return this.event.duration;
+        if (this.track.displayActualWidth) {
+            return this.event.duration;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    public deleteEvent() {
+        this.track.track.timeline.removeEvent(this.event);
+        super.deleteEvent();
+    }
+
+    protected _modelEventRemoved() {
+        this.event.removed.removeListener(this._modelEventRemoved);
+        super.deleteEvent();
     }
 
     protected dragHandler(dragDistance: PIXI.Point) {
@@ -493,41 +504,19 @@ abstract class BaseEventTimelineEvent extends TrackTimelineEvent {
     }
 
     protected clickHandler() {
-        console.log("Clicked BaseEventTimelineEvent");
+        console.log("Clicked OneShotTimelineEvent");
     }
+
 }
 
 /**
- * Represents a OneShot event
- * The difference between this object and BaseEventTimelineEvent is 
- * that the y coordinate of this object is fixed to track.startY
- * and the height is fixed to track.height
- *
- * @export
- * @class OneShotTimelineEvent
- * @extends {BaseEventTimelineEvent}
- */
-export class OneShotTimelineEvent extends BaseEventTimelineEvent {
-    constructor(timeline: ScrollableTimeline, track: UITrack, event: BaseEvent) {
-        let y = track.startY;
-        let height = track.height;
-        super(timeline, track, event, y, height);
-    }
-
-    public deleteEvent() {
-        this.track.track.timeline.removeEvent(this.event);
-        super.deleteEvent();
-    }
-}
-
-/**
- * Extends BaseEventTimelineEvent to modify how events are tested for collisions
+ * Represents a NoteEvent in SequencerTimeline
  *
  * @export
  * @class NoteTimelineEvent
- * @extends {BaseEventTimelineEvent}
+ * @extends {TrackTimelineEvent}
  */
-export class NoteTimelineEvent extends BaseEventTimelineEvent {
+export class NoteTimelineEvent extends TrackTimelineEvent {
 
     public timeline: SequencerTimeline;
     public track: NoteUITrack;
@@ -536,7 +525,21 @@ export class NoteTimelineEvent extends BaseEventTimelineEvent {
     private _lastNoteNumber: number;
 
     constructor(timeline: SequencerTimeline, track: NoteUITrack, event: NoteEvent, y: number, height: number,) {
-        super(timeline, track, event, y, height);
+        let [x, width] = timeline.getTimelineEventXWidth(event.startPosition, event.endPosition);
+        super(timeline, track, x, width, y, height);
+
+        this.event = event;
+        this._modelEventRemoved = this._modelEventRemoved.bind(this);
+        this.event.removed.addListener(this._modelEventRemoved);
+        this.redraw();
+    }
+
+    get eventStartPosition() {
+        return this.event.startPosition;
+    }
+
+    get eventDuration() {
+        return this.event.duration;
     }
 
     public pointerDownHandler(event: PIXI.InteractionEvent) {
@@ -557,6 +560,11 @@ export class NoteTimelineEvent extends BaseEventTimelineEvent {
 
     public deleteEvent() {
         this.track.removeEvent(this.event);
+        super.deleteEvent();
+    }
+
+    protected _modelEventRemoved() {
+        this.event.removed.removeListener(this._modelEventRemoved);
         super.deleteEvent();
     }
 
@@ -582,5 +590,9 @@ export class NoteTimelineEvent extends BaseEventTimelineEvent {
         else {
             this.track.editEvent(this.event, newStartPosition, newNotePitch);
         }
+    }
+
+    protected clickHandler() {
+        console.log("Clicked NoteTimelineEvent");
     }
 }

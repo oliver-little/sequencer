@@ -22,9 +22,7 @@ export class TrackList extends PIXI.Container {
     private _trackListGraphics: PIXI.Graphics;
     private _trackLineGraphics: PIXI.Graphics;
 
-    private _overflowContainer: HTMLDivElement;
     private _trackSettingsContainer: HTMLDivElement;
-    private _trackSettingsList : TrackSettingsList;
 
     private _verticalScroll : number = 0;
 
@@ -55,7 +53,7 @@ export class TrackList extends PIXI.Container {
             .drawRect(0, 0, sidebarWidth, height)
             .endFill();
         this._trackListGraphics.beginFill(UIColors.fgColor)
-            .drawRect(sidebarWidth, 0, 3, height)
+            .drawRect(sidebarWidth - 2, 0, 3, height)
             .drawRect(0, UIPositioning.timelineHeaderHeight - 2, width, 2)
             .endFill();
 
@@ -90,6 +88,11 @@ export class TrackList extends PIXI.Container {
         this._trackLineGraphics.y = value;
         this._verticalScroll = value;
         this._rerenderList();
+    }
+
+    public destroy() {
+        unmountComponentAtNode(this._trackSettingsContainer);
+        super.destroy({children: true});
     }
 
     private _nameChanged(index: number, value: string) {

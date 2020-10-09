@@ -29,11 +29,11 @@ export class BarHeader extends PIXI.Container {
         this.setX(x);
         this._headerGraphics.clear();
         this._headerGraphics.beginFill(UIColors.bgColor)
-                            .drawRect(1, 0, width, UIPositioning.timelineHeaderHeight - 2)
+                            .drawRect(1, 0, width, UIPositioning.timelineHeaderHeight)
                             .endFill()
                             .beginFill(UIColors.fgColor)
                             .drawRect(1, 0, 2, 40)
-                            .drawRect(1, UIPositioning.timelineHeaderHeight - 2, width, 2)
+                            .drawRect(1, UIPositioning.timelineHeaderHeight, width, 2)
                             .endFill();
                             
         // Add 1 to bar number display text because indexing and calculations start from 0.

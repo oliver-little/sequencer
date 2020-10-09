@@ -88,14 +88,20 @@ export class SongTimeline extends ScrollableTimeline {
                     }
                     else if (track instanceof SoundFileUITrack) {
                         endPosition = startPosition + track.eventDuration;
-                        if (track.getOneShotsBetweenTime(startPosition, endPosition).length > 0) {
+                        let existingEvents = track.getOneShotsBetweenTime(startPosition, endPosition);
+                        if (!track.track.allowOverlaps && existingEvents.length > 0) {
                             return;
+                        }
+                        else {
+                            if (existingEvents.length == 1 && existingEvents[0].startPosition == startPosition && existingEvents[0].endPosition == endPosition) {
+                                return;
+                            }
                         }
                     }
 
                     width = (this.metadata.positionQuarterNoteToBeats(endPosition) - this.metadata.positionQuarterNoteToBeats(startPosition)) * this.beatWidth;
                     // Fixes a bug where very small events won't display properly.
-                    width = Math.max(width, 3);
+                    width = Math.max(width, 5);
 
                     this._newEventGraphics.clear();
                     this._newEventGraphics.beginFill(UIColors.trackEventColor)
@@ -124,7 +130,7 @@ export class SongTimeline extends ScrollableTimeline {
             }
             else if (track instanceof SoundFileUITrack) {
                 let event = track.track.addOneShot(startPosition);
-                this._initialiseTimelineEvent(event, track);
+                this._initialiseOneShotTimelineEvent(event, track);
             }
             this._newEventData = undefined;
         }
@@ -146,7 +152,7 @@ export class SongTimeline extends ScrollableTimeline {
             }
             else if (track instanceof SoundFileUITrack) {
                 track.track.timeline.events.forEach(event => {
-                    this._initialiseTimelineEvent(event, track);
+                    this._initialiseOneShotTimelineEvent(event, track as SoundFileUITrack);
                 });
             }
         };
@@ -160,7 +166,7 @@ export class SongTimeline extends ScrollableTimeline {
      * @param {NoteUITrack} track The track to initialise the note group in
      * @memberof SongTimeline
      */
-    private _initialiseNoteGroup(noteGroup: number[], track: NoteUITrack): TrackTimelineEvent {
+    private _initialiseNoteGroup(noteGroup: number[], track: NoteUITrack): NoteGroupTimelineEvent {
         // starting x position is calculated as follows:
         // (Position of note group start in beats - the position of the first DISPLAYED bar in beats) * beat width * zoom + the start position of the first DISPLAYED bar in pixels
         let event = new NoteGroupTimelineEvent(this, track, noteGroup);
@@ -168,7 +174,7 @@ export class SongTimeline extends ScrollableTimeline {
         return event;
     }
 
-    private _initialiseTimelineEvent(event: BaseEvent, track: UITrack): TrackTimelineEvent {
+    private _initialiseOneShotTimelineEvent(event: BaseEvent, track: SoundFileUITrack): OneShotTimelineEvent {
         let timelineEvent = new OneShotTimelineEvent(this, track, event);
         this._eventContainer.addChild(timelineEvent);
         return timelineEvent;

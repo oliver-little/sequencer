@@ -85,6 +85,13 @@ export class NoteUITrack extends UITrack {
         return noteGroupsToReturn;
     }
 
+    /**
+     * Gets the index of a noteGroup
+     *
+     * @param {number[]} noteGroup The noteGroup to get the index of
+     * @returns {number} The index of the noteGroup (null if it doesn't exist)
+     * @memberof NoteUITrack
+     */
     public getNoteGroupIndex(noteGroup : number[]) : number {
         for (let i = 0; i < this._noteGroups.length; i++) {
             if (noteGroup[0] == this._noteGroups[i][0] && noteGroup[1] == this._noteGroups[i][1]) {
@@ -92,7 +99,7 @@ export class NoteUITrack extends UITrack {
             }
         }
 
-        throw new RangeError("NoteGroup does not exist.");
+        return null;
     }
 
     /**
@@ -317,6 +324,7 @@ export class NoteUITrack extends UITrack {
 export class SoundFileUITrack extends UITrack {
 
     public track : SoundFileTrack;
+    public displayActualWidth : Boolean = true;
 
     constructor(name : string, startY : number, height : number, track : SoundFileTrack) {
         super(name, startY, height, track);

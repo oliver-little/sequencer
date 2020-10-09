@@ -1,6 +1,7 @@
 import SongMetadata from "../SongManagement/SongMetadata.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
 import {v4 as uuid} from "uuid";
+import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 
 export interface ISongEvent {
     "eventType" : string,
@@ -12,6 +13,7 @@ export class BaseEvent {
 
     public startPosition: number;
     public id : string;
+    public removed : SimpleEvent;
 
     // Basic duration, has a different meaning for different kinds of events.
     protected _duration = 0; 
@@ -22,6 +24,7 @@ export class BaseEvent {
             this.duration = duration;
         }
         this.id = uuid();
+        this.removed = new SimpleEvent();
     }
 
     /**
@@ -39,6 +42,10 @@ export class BaseEvent {
 
     public get endPosition() : number {
         return this.startPosition + this.duration;
+    }
+
+    public eventRemoved() {
+        this.removed.emit();
     }
 
     public serialise() : ISongEvent {
