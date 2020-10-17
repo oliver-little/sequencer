@@ -79,3 +79,8 @@
     font-size: 1.2em;
     color: var(--timeline-highlight-color);
 }
+
+.trackSettingsCheckbox > label {
+    font-family: Arial, Helvetica, sans-serif;
+    color: white;
+}

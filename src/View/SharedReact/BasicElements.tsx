@@ -45,3 +45,19 @@ export class IconFileInput extends React.Component<IconFileInputProps> {
         </div>
     }
 }
+
+interface LabelledCheckboxProps {
+    className? : string,
+    state : boolean,
+    label : string,
+    onChange : Function
+}
+
+export class LabelledCheckbox extends React.Component<LabelledCheckboxProps> {
+    render() {
+        return <div className={this.props.className}>
+            <input type="checkbox" name={this.props.label} checked={this.props.state} onChange={(event) => {this.props.onChange(event.target.checked)}} />
+            <label htmlFor={this.props.label}>{this.props.label}</label>
+        </div>
+    }
+}

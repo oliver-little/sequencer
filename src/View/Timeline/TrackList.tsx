@@ -1,9 +1,9 @@
 import * as PIXI from "pixi.js";
 import * as React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
-import { UITrack } from "../UIObjects/UITrack.js";
+import { SoundFileUITrack, UITrack } from "../UIObjects/UITrack.js";
 import { UIColors, UIPositioning } from "../Shared/UITheme.js";
-import { FileInput, IconFileInput, Slider } from "../SharedReact/BasicElements.js";
+import { FileInput, IconFileInput, LabelledCheckbox, Slider } from "../SharedReact/BasicElements.js";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 
 /**
@@ -17,14 +17,14 @@ export class TrackList extends PIXI.Container {
 
     public tracks: UITrack[];
 
-    private _sidebarWidth : number;
+    private _sidebarWidth: number;
 
     private _trackListGraphics: PIXI.Graphics;
     private _trackLineGraphics: PIXI.Graphics;
 
     private _trackSettingsContainer: HTMLDivElement;
 
-    private _verticalScroll : number = 0;
+    private _verticalScroll: number = 0;
 
     /**
      * Creates an instance of TrackList.
@@ -34,7 +34,7 @@ export class TrackList extends PIXI.Container {
      * @param {UITrack[]} tracks A list of UITracks representing the tracks to display.
      * @memberof TrackList
      */
-    constructor(sidebarWidth : number, width: number, height: number, tracks: UITrack[]) {
+    constructor(sidebarWidth: number, width: number, height: number, tracks: UITrack[]) {
         super();
         this.tracks = tracks;
         this._sidebarWidth = sidebarWidth;
@@ -42,6 +42,8 @@ export class TrackList extends PIXI.Container {
         this._gainChanged = this._gainChanged.bind(this);
         this._nameChanged = this._nameChanged.bind(this);
         this._soundFileChanged = this._soundFileChanged.bind(this);
+        this._allowOverlapChanged = this._allowOverlapChanged.bind(this);
+        this._displayActualWidthChanged = this._displayActualWidthChanged.bind(this);
         this._updateSoundFile = this._updateSoundFile.bind(this);
 
         // Draw lines and background colour.
@@ -92,7 +94,7 @@ export class TrackList extends PIXI.Container {
 
     public destroy() {
         unmountComponentAtNode(this._trackSettingsContainer);
-        super.destroy({children: true});
+        super.destroy({ children: true });
     }
 
     private _nameChanged(index: number, value: string) {
@@ -111,7 +113,7 @@ export class TrackList extends PIXI.Container {
         xhr.open('GET', objecturl, true);
         xhr.responseType = 'blob';
         let onloadFunc = this._updateSoundFile;
-        xhr.onload = function(e) {
+        xhr.onload = function (e) {
             if (this.status == 200) {
                 onloadFunc(index, this.response);
             }
@@ -127,8 +129,27 @@ export class TrackList extends PIXI.Container {
         soundFileTrack.setSoundFile(blob);
     }
 
+    private _allowOverlapChanged(index: number, value: boolean) {
+        let soundFileTrack = this.tracks[index].track as SoundFileTrack;
+        soundFileTrack.allowOverlaps = value;
+        this._rerenderList();
+    }
+
+    private _displayActualWidthChanged(index: number, value: boolean) {
+        let soundFileTrack = this.tracks[index] as SoundFileUITrack;
+        soundFileTrack.displayActualWidth = value;
+        this._rerenderList();
+    }
+
     private _rerenderList() {
-        render(<TrackSettingsList tracks={this.tracks} onNameChange={this._nameChanged} onGainChange={this._gainChanged} onSoundFileUpdate={this._soundFileChanged} width={this._sidebarWidth} verticalScroll={this._verticalScroll} />, this._trackSettingsContainer);
+        render(<TrackSettingsList tracks={this.tracks} 
+            onNameChange={this._nameChanged} 
+            onGainChange={this._gainChanged} 
+            onSoundFileUpdate={this._soundFileChanged} 
+            onAllowOverlapChange={this._allowOverlapChanged}
+            onDisplayActualWidthChange={this._displayActualWidthChanged}
+            width={this._sidebarWidth} 
+            verticalScroll={this._verticalScroll} />, this._trackSettingsContainer);
     }
 }
 
@@ -137,15 +158,32 @@ interface TrackSettingsListProps {
     onNameChange: Function,
     onGainChange: Function,
     onSoundFileUpdate: Function,
+    onDisplayActualWidthChange: Function,
+    onAllowOverlapChange: Function,
     width: number,
     verticalScroll: number;
 }
 
 class TrackSettingsList extends React.Component<TrackSettingsListProps> {
     render() {
-        return (<div style={{position: "absolute", top: this.props.verticalScroll}}>
+        return (<div style={{ position: "absolute", top: this.props.verticalScroll }}>
             {this.props.tracks.map((track, index) => {
-                return <TrackSettingsBox key={index} index={index} name={track.name} onNameChange={this.props.onNameChange} gain={track.track.audioSource.masterGain} onGainChange={this.props.onGainChange} width={this.props.width} height={track.height} soundFileChange={(track.track instanceof SoundFileTrack ? this.props.onSoundFileUpdate : undefined)} />;
+                let soundFileProps = undefined;
+                if (track instanceof SoundFileUITrack) {
+                    soundFileProps = {
+                        soundFileChange: this.props.onSoundFileUpdate,
+                        displayActualWidth: track.displayActualWidth,
+                        displayActualWidthChange: this.props.onDisplayActualWidthChange,
+                        allowOverlap: track.track.allowOverlaps,
+                        allowOverlapChange: this.props.onAllowOverlapChange,
+                    }
+                }
+
+                return <TrackSettingsBox key={index} index={index}
+                    name={track.name} onNameChange={this.props.onNameChange}
+                    gain={track.track.audioSource.masterGain} onGainChange={this.props.onGainChange}
+                    width={this.props.width} height={track.height}
+                    soundFileProps={soundFileProps} />;
             })}
         </div>);
     }
@@ -159,7 +197,15 @@ interface TrackSettingsProps {
     onGainChange: Function,
     width: number,
     height: number
-    soundFileChange?: Function
+    soundFileProps?: TrackSettingsSoundFileProps
+}
+
+interface TrackSettingsSoundFileProps {
+    soundFileChange: Function
+    displayActualWidth: boolean,
+    displayActualWidthChange?: Function,
+    allowOverlap: boolean,
+    allowOverlapChange?: Function
 }
 
 class TrackSettingsBox extends React.Component<TrackSettingsProps> {
@@ -167,7 +213,6 @@ class TrackSettingsBox extends React.Component<TrackSettingsProps> {
         super(props);
         this.handleNameChange = this.handleNameChange.bind(this);
         this.handleGainChange = this.handleGainChange.bind(this);
-        this.handleSoundFileChange = this.handleSoundFileChange.bind(this);
     }
 
     handleNameChange(value: string) {
@@ -178,22 +223,23 @@ class TrackSettingsBox extends React.Component<TrackSettingsProps> {
         this.props.onGainChange(this.props.index, parseFloat(value));
     }
 
-    handleSoundFileChange(files: FileList) {
-        this.props.soundFileChange(this.props.index, files);
-    }
 
     render() {
 
-        let soundFileButton = null;
+        let soundFileInfo = null;
 
-        if (this.props.soundFileChange != undefined) {
-            soundFileButton = <IconFileInput className={"trackSettingsIconInput"} iconName={"fa fa-music"} onChange={this.handleSoundFileChange} accept="audio/*" />
+        if (this.props.soundFileProps != undefined) {
+            soundFileInfo = <>
+                <IconFileInput className={"trackSettingsIconInput"} iconName={"fa fa-music"} onChange={(files: FileList) => { this.props.soundFileProps.soundFileChange(this.props.index, files) }} accept="audio/*" />
+                <LabelledCheckbox className={"trackSettingsCheckbox"} label={"Display Actual Width"} state={this.props.soundFileProps.displayActualWidth} onChange={(value) => { this.props.soundFileProps.displayActualWidthChange(this.props.index, value) }} />
+                <LabelledCheckbox className={"trackSettingsCheckbox"} label={"Allow Overlaps"} state={this.props.soundFileProps.allowOverlap} onChange={(value) => { this.props.soundFileProps.allowOverlapChange(this.props.index, value) }} />
+            </>
         }
 
         return <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
             <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
             <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" onChange={this.handleGainChange} />
-            {soundFileButton}
+            {soundFileInfo}
         </div>
     }
 }
@@ -217,7 +263,7 @@ export class TrackLines extends PIXI.Graphics {
         super();
         this.beginFill(UIColors.fgColor);
         this.drawRect(0, -2, viewWidth, 3);
-        
+
         this.endFill();
     }
 }
