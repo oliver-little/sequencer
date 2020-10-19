@@ -50,6 +50,7 @@ export class TimelineView extends VerticalScrollView {
 
     public addedHandler() {
         this.trackList.addedHandler();
+        this.timeline.regenerateNoteGroups();
         this.timeline.regenerateAroundPosition(0);
     }
 

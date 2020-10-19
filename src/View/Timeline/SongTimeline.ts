@@ -23,6 +23,8 @@ export class SongTimeline extends ScrollableTimeline {
 
     public tracks: UITrack[];
 
+    private _noteGroupTimelineEvents : NoteGroupTimelineEvent[];
+
     // Event creation variables
     private _newEventGraphics: PIXI.Graphics;
     private _newEventData: INewEventData;
@@ -43,6 +45,7 @@ export class SongTimeline extends ScrollableTimeline {
         this.songManager = songManager;
         this.tracks = tracks;
         this._showSequencerCallback = showSequencerCallback;
+        this._noteGroupTimelineEvents = [];
 
         this._newEventGraphics = new PIXI.Graphics();
         this.addChild(this._newEventGraphics);
@@ -144,6 +147,27 @@ export class SongTimeline extends ScrollableTimeline {
         super.mouseWheelHandler(event, canvasX, canvasY);
     }
 
+    /**
+     * Removes all note groups and 
+     *
+     * @memberof SongTimeline
+     */
+    public regenerateNoteGroups() {
+        this._noteGroupTimelineEvents.forEach(timelineEvent => {
+            timelineEvent.destroy({children: true});
+        });
+
+        this._noteGroupTimelineEvents = [];
+
+        this.tracks.forEach(track => {
+            if (track instanceof NoteUITrack) {
+                track.noteGroups.forEach(noteGroup => {
+                    this._initialiseNoteGroup(noteGroup, track);
+                });
+            }
+        });
+    }
+
     protected _initialiseTrackTimelineEvents() {
         for (let i = 0; i < this.tracks.length; i++) {
             let track = this.tracks[i];
@@ -174,6 +198,7 @@ export class SongTimeline extends ScrollableTimeline {
         // (Position of note group start in beats - the position of the first DISPLAYED bar in beats) * beat width * zoom + the start position of the first DISPLAYED bar in pixels
         let event = new NoteGroupTimelineEvent(this, track, noteGroup, this._showSequencerCallback);
         this._eventContainer.addChild(event);
+        this._noteGroupTimelineEvents.push(event);
         return event;
     }
 

@@ -47,7 +47,7 @@ export class SequencerView extends VerticalScrollView {
         return SequencerTimeline.noteHeight * SequencerView.numNotes;
     }
 
-    public destroy(options?) {
+    public destroy() {
         unmountComponentAtNode(this._backButtonContainer);
         document.getElementById("applicationContainer").removeChild(this._backButtonContainer);
         super.destroy();
