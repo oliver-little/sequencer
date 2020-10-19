@@ -97,6 +97,14 @@ export class TrackList extends PIXI.Container {
         super.destroy({ children: true });
     }
 
+    public addedHandler() {
+        this._trackSettingsContainer.style.visibility = "visible";
+    }
+
+    public removedHandler() {
+        this._trackSettingsContainer.style.visibility = "hidden";
+    }
+
     private _nameChanged(index: number, value: string) {
         this.tracks[index].name = value;
         this._rerenderList();

@@ -87,5 +87,9 @@ export abstract class VerticalScrollView extends MouseTypeContainer {
         }
     }
 
+    public destroy() {
+        super.destroy({children : true});
+    }
+
     protected abstract updateVerticalScroll(value : number);
 }

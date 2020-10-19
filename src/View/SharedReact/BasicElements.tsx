@@ -61,3 +61,15 @@ export class LabelledCheckbox extends React.Component<LabelledCheckboxProps> {
         </div>
     }
 }
+
+interface FAButtonProps {
+    className? : string,
+    iconName : string,
+    onClick : Function
+}
+
+export class FAButton extends React.Component<FAButtonProps> {
+    render() {
+        return <button className={this.props.className} onClick={() => {this.props.onClick()}}><i className={this.props.iconName}></i></button>
+    }
+}

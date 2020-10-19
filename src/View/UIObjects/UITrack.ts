@@ -309,8 +309,7 @@ export class NoteUITrack extends UITrack {
 
     public removeEvent(event : NoteEvent) {
         let noteGroupIndex = this.getNoteGroupIndex(this.getNoteGroupsWithinTime(event.startPosition, event.endPosition)[0]);
-        console.log(noteGroupIndex);
-        this.track.timeline.removeEvent(event);
+        this.track.removeNote(event);
         this.checkNoteGroupBoundaries(noteGroupIndex);
     }
 }

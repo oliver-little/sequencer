@@ -318,6 +318,8 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
     private _noteGroup: number[];
     private _notes: NoteEvent[];
 
+    private _clickCallback : Function;
+
     /**
      * Creates an instance of NoteGroupTimelineEvent.
      * @param {SongTimeline} timeline The timeline object this event is part of
@@ -327,12 +329,13 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
      * @param {number[]} noteGroup The NoteGroup this event represents
      * @memberof NoteGroupTimelineEvent
      */
-    constructor(timeline: ScrollableTimeline, track: NoteUITrack, noteGroup: number[]) {
+    constructor(timeline: ScrollableTimeline, track: NoteUITrack, noteGroup: number[], clickCallback?: Function) {
         let [x, width] = timeline.getTimelineEventXWidth(noteGroup[0], noteGroup[1]);
         let y = track.startY;
         let height = track.height;
         super(timeline, track, x, width, y, height);
         this._noteGroup = noteGroup;
+        this._clickCallback = clickCallback;
         this.redraw();
     }
 
@@ -429,6 +432,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
     protected clickHandler() {
         console.log("Clicked NoteTrackTimelineEvent");
+        this._clickCallback(this.track);
     }
 }
 

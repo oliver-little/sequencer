@@ -78,7 +78,6 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
     // Timeline marker variables
     protected _timelineMarker: TimelineMarker;
-    protected _boundTimelineAnim: (time: number) => any;
 
     constructor(startX: number, endX: number, startY: number, endY: number, songManager: SongManager) {
         super();
@@ -105,8 +104,9 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._timelineMarker = new TimelineMarker();
         this.addChild(this._timelineMarker);
 
-        this._boundTimelineAnim = this._timelineMarkerAnim.bind(this);
-        this.songManager.playingChangedEvent.addListener(value => { this._playingStateChanged(value[0]) });
+        this._timelineMarkerAnim = this._timelineMarkerAnim.bind(this);
+        this._playingStateChanged = this._playingStateChanged.bind(this);
+        this.songManager.playingChangedEvent.addListener(this._playingStateChanged);
     }
 
     get metadata() {
@@ -269,6 +269,11 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._offsetChildren(offset);
     }
 
+    public destroy() {
+        this.songManager.playingChangedEvent.removeListener(this._playingStateChanged);
+        super.destroy({children : true});
+    }
+
     /**
      * Gets a bar position from a given coordinate relative to the stage.
      *
@@ -360,16 +365,17 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
             }
         }
 
+        // This wipes all events and regenerates them, there could be an efficiency improvement here by only destroying the ones necessary to destroy.
         if (this._eventContainer.children.length == 0) {
             this._initialiseTrackTimelineEvents();
         }
         else {
-            this._eventContainer.children.forEach(event => {
-                if (event instanceof TrackTimelineEvent) {
-                    event.reinitialise();
-                }
-            });
+            for (let i = 0; i < this._eventContainer.children.length; i++) {
+                let event = this._eventContainer.children[i] as TrackTimelineEvent;
+                event.reinitialise();
+            }
         }
+        
 
         this._redrawTimelineMarker();
     }
@@ -534,7 +540,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     protected _playingStateChanged(value: boolean) {
         if (value == true) {
             this.timelineMode = TimelineMode.Playback;
-            requestAnimationFrame(this._boundTimelineAnim);
+            requestAnimationFrame(this._timelineMarkerAnim);
         }
         else {
             this.timelineMode = TimelineMode.Edit;
@@ -545,7 +551,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._repositionTimelineMarker(this.songManager.quarterNotePosition);
 
         if (this.songManager.playing == true) {
-            requestAnimationFrame(this._boundTimelineAnim);
+            requestAnimationFrame(this._timelineMarkerAnim);
         }
     }
 

@@ -92,11 +92,10 @@ export class OscillatorTrack extends BaseTrack {
      */
     public removeNote(event: NoteEvent) {
         this.timeline.removeEvent(event);
-
-        if (event.pitch in this._pitchStrings) {
-            this._pitchStrings[event.pitch] -= 1
-            if (this._pitchStrings[event.pitch] < 1) {
-                delete this._pitchStrings[event.pitch]
+        if (event.pitchString in this._pitchStrings) {
+            this._pitchStrings[event.pitchString] -= 1
+            if (this._pitchStrings[event.pitchString] < 1) {
+                delete this._pitchStrings[event.pitchString]
             }
         }
     }

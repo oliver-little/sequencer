@@ -1,10 +1,14 @@
 import * as PIXI from "pixi.js";
+import * as React from "react";
+import { render, unmountComponentAtNode } from "react-dom";
 import { SequencerTimeline } from "./SequencerTimeline";
 import { NoteUITrack } from "../UIObjects/UITrack";
 import { SongManager } from "../../Model/SongManagement/SongManager";
 import { UIColors, UIFonts, UIPositioning } from "../Shared/UITheme";
 import { VerticalScrollView } from "../Shared/VerticalScrollView";
 import NoteHelper from "../../HelperModules/NoteHelper";
+import { FAButton } from "../SharedReact/BasicElements";
+import { navigationView } from "../Shared/NavigationView";
 
 export class SequencerView extends VerticalScrollView {
 
@@ -14,6 +18,8 @@ export class SequencerView extends VerticalScrollView {
 
     private _noteList : SequencerNotes;
     private _sidebarUI : PIXI.Graphics;
+
+    private _backButtonContainer: HTMLDivElement;
 
     constructor(renderer : PIXI.Renderer, track : NoteUITrack, songManager : SongManager) {
         super(renderer.width, renderer.height);
@@ -26,10 +32,25 @@ export class SequencerView extends VerticalScrollView {
         this._sidebarUI.beginFill(UIColors.fgColor).drawRect(this._sidebarPosition - 4, 0, 4, renderer.height);
         this._noteList = new SequencerNotes(this._sidebarPosition, renderer.width, renderer.height, SequencerView.numNotes);
         this.addChild(this.timeline, this._sidebarUI, this._noteList);
+
+        this._backButtonContainer = document.createElement("div");
+        Object.assign(this._backButtonContainer.style, {
+            position: "absolute",
+            top: "5px",
+            left: "5px"
+        });
+        document.getElementById("applicationContainer").appendChild(this._backButtonContainer);
+        render(<FAButton iconName="fa fa-arrow-left" onClick={() => {navigationView.back()}}/>, this._backButtonContainer);
     }
 
     get contentHeight() : number {
         return SequencerTimeline.noteHeight * SequencerView.numNotes;
+    }
+
+    public destroy(options?) {
+        unmountComponentAtNode(this._backButtonContainer);
+        document.getElementById("applicationContainer").removeChild(this._backButtonContainer);
+        super.destroy();
     }
 
     protected updateVerticalScroll(value : number) {
@@ -37,6 +58,7 @@ export class SequencerView extends VerticalScrollView {
         this.timeline.updateVerticalScroll(value);
         this._noteList.y = value;        
     }
+
 }
 
 class SequencerNotes extends PIXI.Container {

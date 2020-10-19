@@ -93,7 +93,6 @@ export class EventTimeline {
         }
 
         this.removeAt(index);
-        event.eventRemoved();
     }
 
     /**

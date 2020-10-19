@@ -6,6 +6,7 @@ import { OscillatorTrack } from "./Model/Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "./Model/Tracks/SoundFileTrack.js";
 import { SequencerView } from "./View/Sequencer/SequencerView.js";
 import { UIPositioning } from "./View/Shared/UITheme.js";
+import { navigationView } from "./View/Shared/NavigationView.js";
 
 /*const input = document.getElementById("soundFile");
     input.addEventListener("change", handleFiles, false);
@@ -93,9 +94,12 @@ window.onload = async function () {
             track = newUITracks[i] as NoteUITrack;
         }
     }
+
     let timeline = new TimelineView(app.renderer, newUITracks, songManager);
     //let timeline = new SequencerView(app.renderer, track, songManager);
     app.view.addEventListener("wheel", event => timeline.timeline.mouseWheelHandler(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));
     app.stage.addChild(timeline);
 
+    navigationView.controlledView = app.stage;
+    navigationView.show(timeline);
 }

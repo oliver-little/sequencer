@@ -1,8 +1,8 @@
 import * as PIXI from "pixi.js";
 import { UITrack, NoteUITrack, SoundFileUITrack } from "../UIObjects/UITrack.js";
-import { TrackTimelineEvent, NoteGroupTimelineEvent, OneShotTimelineEvent } from "../Shared/TrackTimelineEvent.js";
+import { NoteGroupTimelineEvent, OneShotTimelineEvent } from "../Shared/TrackTimelineEvent.js";
 import { UIColors, UIPositioning } from "../Shared/UITheme.js";
-import { BaseEvent } from "../../Model/Notation/SongEvents.js";
+import { BaseEvent, SecondsBaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
 import { TimelineMode, MouseClickType } from "../Shared/Enums.js";
@@ -27,6 +27,8 @@ export class SongTimeline extends ScrollableTimeline {
     private _newEventGraphics: PIXI.Graphics;
     private _newEventData: INewEventData;
 
+    private _showSequencerCallback : Function;
+
     /**
      *Creates an instance of SongTimeline.
      * @param {number} startX The x coordinate in the parent where this timeline should start (pixels)
@@ -36,10 +38,11 @@ export class SongTimeline extends ScrollableTimeline {
      * @param {UITrack[]} tracks The tracks this timeline should display
      * @memberof SongTimeline
      */
-    constructor(startX: number, endX: number, endY: number, songManager: SongManager, tracks: UITrack[]) {
+    constructor(startX: number, endX: number, endY: number, songManager: SongManager, tracks: UITrack[], showSequencerCallback : Function) {
         super(startX, endX, 0, endY, songManager);
         this.songManager = songManager;
         this.tracks = tracks;
+        this._showSequencerCallback = showSequencerCallback;
 
         this._newEventGraphics = new PIXI.Graphics();
         this.addChild(this._newEventGraphics);
@@ -169,12 +172,12 @@ export class SongTimeline extends ScrollableTimeline {
     private _initialiseNoteGroup(noteGroup: number[], track: NoteUITrack): NoteGroupTimelineEvent {
         // starting x position is calculated as follows:
         // (Position of note group start in beats - the position of the first DISPLAYED bar in beats) * beat width * zoom + the start position of the first DISPLAYED bar in pixels
-        let event = new NoteGroupTimelineEvent(this, track, noteGroup);
+        let event = new NoteGroupTimelineEvent(this, track, noteGroup, this._showSequencerCallback);
         this._eventContainer.addChild(event);
         return event;
     }
 
-    private _initialiseOneShotTimelineEvent(event: BaseEvent, track: SoundFileUITrack): OneShotTimelineEvent {
+    private _initialiseOneShotTimelineEvent(event: SecondsBaseEvent, track: SoundFileUITrack): OneShotTimelineEvent {
         let timelineEvent = new OneShotTimelineEvent(this, track, event);
         this._eventContainer.addChild(timelineEvent);
         return timelineEvent;
