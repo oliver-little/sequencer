@@ -4,6 +4,47 @@
     --timeline-highlight-color: #999999;
 }
 
+/* Main App */
+
+.fullScreen {
+    position: absolute;
+    overflow: hidden;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.sequencerAppTopBar {
+    width: 100%;
+    height: 20%;
+}
+
+.sequencerAppMainPanel {
+    width: 100%;
+    height: 80%;
+}
+
+.sequencerAppMainPanelLeft {
+    position: relative;
+    float: left;
+    width: 80%;
+    height: 100%;
+}
+
+#applicationContainer {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+.sequencerAppMainPanelRight {
+    float: left;
+    width: 20%;
+    height: 100%;
+}
+
 /* Metadata Edit Box */
 
 .metadataEditDiv {

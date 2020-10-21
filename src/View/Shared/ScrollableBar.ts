@@ -9,6 +9,7 @@ export class ScrollableBar extends PIXI.Container {
     protected _graphics: PIXI.Graphics;
     protected _barNumber : number;
     protected _numberOfBeats : number;
+    protected _beatWidth : number;
 
     protected _verticalScrollPosition : number;
 
@@ -54,6 +55,19 @@ export class ScrollableBar extends PIXI.Container {
         this._graphics.y = this._verticalScrollPosition;
     }
 
+    public resize(height: number) {
+        this._graphics.clear();
+        this._graphics.beginFill(UIColors.fgColor);
+
+
+        // Drawing the first line 1 pixel in fixes the bar draw drift.
+        this._graphics.drawRect(1, 0, 2, height);
+        for (let i = 1; i < this._numberOfBeats + 1; i++) {
+            this._graphics.drawRect(this._beatWidth * i, 0, 1, height);
+        }
+        this._graphics.endFill();
+    }
+
     public setX(value : number) {
         this.x = value;
         this._header.setX(value);
@@ -67,20 +81,13 @@ export class ScrollableBar extends PIXI.Container {
             this.x = x - beatWidth * numberOfBeats;
         }
 
-        this._graphics.clear();
-        this._graphics.beginFill(UIColors.fgColor);
-
-        // Drawing the first line 1 pixel in fixes the bar draw drift.
-        this._graphics.drawRect(1, 0, 2, height);
-        for (let i = 1; i < numberOfBeats + 1; i++) {
-            this._graphics.drawRect(beatWidth * i, 0, 1, height);
-        }
-        this._graphics.endFill();
-
         this._barNumber = barNumber;
         this._numberOfBeats = numberOfBeats;
+        this._beatWidth = beatWidth;
 
-        this._header.initialise(this.x, numberOfBeats * beatWidth, this.barNumber, metadataEventPosition, metadataEventActive);
+        this.resize(height);
+
+        this._header.initialise(this.x, numberOfBeats * this._beatWidth, this.barNumber, metadataEventPosition, metadataEventActive);
 
         return this;
     }

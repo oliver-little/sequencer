@@ -117,6 +117,35 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         return ScrollableTimeline.beatWidth * this._zoomScale;
     }
 
+    public resize(width : number, height : number) {
+        this.resizeInteractiveArea(width, height);
+        this.endX = width;
+        this.endY = height;
+
+        let barHeight = Math.max(this.contentHeight, this.endY);
+        for(let i = 0; i < this._barContainer.children.length; i++) {
+            let bar = this._barContainer.children[i] as ScrollableBar;
+            bar.resize(barHeight);
+        }
+
+        // Only need to do calculations on the right side because the left side doesn't move
+        let rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+        while (rightSideOffset < 100) { // If the right side is too close, need to add a new bar.
+            let lastBar = this._scrollObjects[this._scrollObjects.length - 1];
+            let bar = this._initialiseScrollableBar(lastBar.rightBound, lastBar.barNumber + 1, true);
+            this._scrollObjects.push(bar);
+
+            // Recalculate where the right side is.
+            rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+        }
+        while (rightSideOffset > 800) {
+            let bar = this._scrollObjects.pop();
+            this._returnScrollableBar(bar);
+
+            rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+        }
+    }
+
     public resizeInteractiveArea(width: number, height: number) {
         this._interactivityRect.clear();
         this._interactivityRect.beginFill(0x000000, 1.0);

@@ -3,6 +3,7 @@ import { ScrollableTimeline } from "./ScrollableTimeline";
 import { InteractiveContainer, MouseTypeContainer } from "./InteractiveContainer";
 import { MouseClickType } from "./Enums";
 import { UIPositioning } from "./UITheme";
+import { IFullScreenView } from "../Interfaces/IFullScreenView";
 
 interface pointerEventObject {
     pointerDownHandler(event : PIXI.InteractionEvent);
@@ -10,7 +11,7 @@ interface pointerEventObject {
     pointerUpHandler(event : PIXI.InteractionEvent);
 }
 
-export abstract class VerticalScrollView extends MouseTypeContainer {
+export abstract class VerticalScrollView extends MouseTypeContainer implements IFullScreenView {
     public timeline : ScrollableTimeline;
     public scrollingEnabled : boolean = true;
 
@@ -29,13 +30,21 @@ export abstract class VerticalScrollView extends MouseTypeContainer {
 
     constructor(width : number, height : number) {
         super();
-        this.endX = width;
-        this.endY = height;
         this._verticalScrollPosition = 0;
 
         this._interactivityRect = new PIXI.Graphics();
         this.addChild(this._interactivityRect);
+
+        this.endX = width;
+        this.endY = height;
         this.resizeInteractiveArea(width, height);
+    }
+
+    public resize(width: number, height: number) {
+        this.endX = width;
+        this.endY = height;
+        this.resizeInteractiveArea(width, height);
+        this.timeline.resize(width, height);
     }
 
 
@@ -85,6 +94,10 @@ export abstract class VerticalScrollView extends MouseTypeContainer {
             this.verticalScrollPosition = event.data.getLocalPosition(this).y - this._startPointerPosition.y + this._startVerticalScrollPosition;
             this.updateVerticalScroll(this.verticalScrollPosition);
         }
+    }
+
+    public mouseWheelHandler(event : WheelEvent, canvasX : number, canvasY : number) {
+        this.timeline.mouseWheelHandler(event, canvasX, canvasY);
     }
 
     public destroy() {

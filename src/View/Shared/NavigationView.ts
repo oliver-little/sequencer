@@ -1,14 +1,17 @@
+import { IFullScreenView } from "../Interfaces/IFullScreenView";
+
 export class NavigationView {
     
-    public controlledView : PIXI.Container;
+    public controlledStage : PIXI.Container;
+    public renderer : PIXI.Renderer;
 
-    private _viewStack : PIXI.DisplayObject[];
+    protected _viewStack : IFullScreenView[];
     
     constructor() {
         this._viewStack = [];
     }
 
-    get currentElement() : PIXI.DisplayObject {
+    get currentElement() : IFullScreenView {
         return this._viewStack[this._viewStack.length - 1];
     }
 
@@ -18,21 +21,22 @@ export class NavigationView {
      * @param {PIXI.Container} view
      * @memberof NavigationView
      */
-    public setControlledView(view : PIXI.Container) {
-        this.controlledView = view;
-        this.controlledView.removeChildren(0, this.controlledView.children.length);
+    public setStageRenderer(view : PIXI.Container, renderer : PIXI.Renderer) {
+        this.controlledStage = view;
+        this.renderer = renderer;
+        this.controlledStage.removeChildren(0, this.controlledStage.children.length);
     }
 
     /**
      * Replaces the default element of this navigation view 
      * (i.e: the first element after back cannot be called any more).
      *
-     * @param {PIXI.DisplayObject} element
+     * @param {IFullScreenView} element
      * @memberof NavigationView
      */
-    public setDefaultElement(element : PIXI.DisplayObject) {
+    public setDefaultElement(element : IFullScreenView) {
         if (this._viewStack.length == 0) {
-            this.controlledView.addChild(element);
+            this.controlledStage.addChild(element);
             this._viewStack.push(element);
         }
         else {
@@ -43,16 +47,16 @@ export class NavigationView {
     /**
      * Pushes a new element to the stack and displays it.
      *
-     * @param {PIXI.DisplayObject} element
+     * @param {IFullScreenView} element
      * @memberof NavigationView
      */
-    public show(element : PIXI.DisplayObject) {
+    public show(element : IFullScreenView) {
         if(this._viewStack.length > 0) {
-            this.controlledView.removeChild(this.currentElement);
+            this.controlledStage.removeChild(this.currentElement);
         }
 
         this._viewStack.push(element);
-        this.controlledView.addChild(this.currentElement);
+        this.controlledStage.addChild(this.currentElement);
     }
 
     /**
@@ -65,10 +69,17 @@ export class NavigationView {
             throw new Error("Cannot bring view stack below 1 element.");
         }
 
-        this.controlledView.removeChild(this.currentElement);
+        this.controlledStage.removeChild(this.currentElement);
         let removed = this._viewStack.pop();
         removed.destroy();
-        this.controlledView.addChild(this.currentElement);
+        this.controlledStage.addChild(this.currentElement);
+        this.currentElement.resize(this.renderer.width, this.renderer.height);
+    }
+
+    public passWheelEvent(event: WheelEvent, canvasX : number, canvasY : number) {
+        if (this.currentElement != undefined) {
+            this.currentElement.mouseWheelHandler(event, canvasX, canvasY);
+        }
     }
 }
 

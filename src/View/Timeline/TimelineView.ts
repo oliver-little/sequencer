@@ -15,13 +15,11 @@ export class TimelineView extends VerticalScrollView {
 
     protected _sidebarPosition : number = UIPositioning.timelineSidebarWidth;
 
-    private _renderer : PIXI.Renderer;
     private _songManager : SongManager;
     private _tracks : UITrack[];
 
-    constructor(renderer : PIXI.Renderer, tracks : UITrack[], songManager : SongManager) {
-        super(renderer.width, renderer.height);
-        this._renderer = renderer;
+    constructor(width: number, height: number, tracks : UITrack[], songManager : SongManager) {
+        super(width, height);
         this._songManager = songManager;
         this._tracks = tracks;
         this.interactive = true;
@@ -34,10 +32,15 @@ export class TimelineView extends VerticalScrollView {
         this.on("added", this.addedHandler);
         this.on("removed", this.removedHandler);
 
-        this.timeline = new SongTimeline(this._sidebarPosition, renderer.width, renderer.height, songManager, tracks, this.showSequencer);
+        this.timeline = new SongTimeline(this._sidebarPosition, width, height, songManager, tracks, this.showSequencer);
         this.addChild(this.timeline);
-        this.trackList = new TrackList(this._sidebarPosition, renderer.width, renderer.height, tracks);
+        this.trackList = new TrackList(this._sidebarPosition, width, height, tracks);
         this.addChild(this.trackList);
+    }
+
+    public resize(width: number, height: number) {
+        super.resize(width, height);
+        this.trackList.resize(width, height);
     }
 
     get contentHeight() {
@@ -45,7 +48,7 @@ export class TimelineView extends VerticalScrollView {
     }
 
     public showSequencer(track : NoteUITrack) {
-        navigationView.show(new SequencerView(this._renderer, track, this._songManager));
+        navigationView.show(new SequencerView(this.endX, this.endY, track, this._songManager));
     }
 
     public addedHandler() {

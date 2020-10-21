@@ -21,16 +21,14 @@ export class SequencerView extends VerticalScrollView {
 
     private _backButtonContainer: HTMLDivElement;
 
-    constructor(renderer : PIXI.Renderer, track : NoteUITrack, songManager : SongManager) {
-        super(renderer.width, renderer.height);
-        this.endX = renderer.width;
-        this.endY = renderer.height;        
+    constructor(width: number, height: number, track : NoteUITrack, songManager : SongManager) {
+        super(width, height);      
 
-        this.timeline = new SequencerTimeline(this._sidebarPosition, renderer.width, renderer.height, this.contentHeight, songManager, track);
+        this.timeline = new SequencerTimeline(this._sidebarPosition, width, height, this.contentHeight, songManager, track);
         // Contains the background UI for the sidebar, as well as the 
-        this._sidebarUI = new PIXI.Graphics().beginFill(UIColors.bgColor).drawRect(0, 0, this._sidebarPosition, renderer.height).endFill();
-        this._sidebarUI.beginFill(UIColors.fgColor).drawRect(this._sidebarPosition - 4, 0, 4, renderer.height);
-        this._noteList = new SequencerNotes(this._sidebarPosition, renderer.width, renderer.height, SequencerView.numNotes);
+        this._sidebarUI = new PIXI.Graphics().beginFill(UIColors.bgColor).drawRect(0, 0, this._sidebarPosition, height).endFill();
+        this._sidebarUI.beginFill(UIColors.fgColor).drawRect(this._sidebarPosition - 4, 0, 4, height).endFill();
+        this._noteList = new SequencerNotes(this._sidebarPosition, width, height, SequencerView.numNotes);
         this.addChild(this.timeline, this._sidebarUI, this._noteList);
 
         this._backButtonContainer = document.createElement("div");
@@ -45,6 +43,14 @@ export class SequencerView extends VerticalScrollView {
 
     get contentHeight() : number {
         return SequencerTimeline.noteHeight * SequencerView.numNotes;
+    }
+
+    public resize(width: number, height: number) {
+        super.resize(width, height);
+        this._sidebarUI.clear();
+        this._sidebarUI.beginFill(UIColors.bgColor).drawRect(0, 0, this._sidebarPosition, height).endFill()
+        this._sidebarUI.beginFill(UIColors.fgColor).drawRect(this._sidebarPosition - 4, 0, 4, height).endFill();
+        this._noteList.resize(width, height);
     }
 
     public destroy() {
@@ -64,27 +70,36 @@ export class SequencerView extends VerticalScrollView {
 class SequencerNotes extends PIXI.Container {
 
     private _horizontalLines : PIXI.Graphics;
+    private _numNotes : number;
 
     constructor(width : number, screenWidth : number, screenHeight : number, numNotes : number) {
         super();
 
-        numNotes = numNotes - 2;
+        this._numNotes = numNotes - 2;
 
         // Create and draw horizontal lines over the whole screen.
         this._horizontalLines = new PIXI.Graphics();
         this._horizontalLines.y = UIPositioning.timelineHeaderHeight;
-        this._horizontalLines.beginFill(UIColors.fgColor);
         for (let i = 0; i < numNotes; i++) {
             let height = i * SequencerTimeline.noteHeight;
-            this._horizontalLines.drawRect(0, height, screenWidth, 1);
             let text = new PIXI.Text(NoteHelper.noteNumberToNoteString(numNotes - 1 - i), UIFonts.trackFont);
             text.x = width / 2 - text.width/2;
             text.y = UIPositioning.timelineHeaderHeight + height + SequencerTimeline.noteHeight/2 - text.height/2;
             this.addChild(text);
         }
-        this._horizontalLines.endFill();
         this.addChild(this._horizontalLines);
 
-        this.mask = new PIXI.Graphics().beginFill(0xFFFFFF).drawRect(0, UIPositioning.timelineHeaderHeight, screenWidth, screenHeight).endFill();
+        this.resize(screenWidth, screenHeight);
+    }
+
+    public resize(width: number, height: number) {
+        this._horizontalLines.beginFill(UIColors.fgColor);
+        for (let i = 0; i < this._numNotes; i++) {
+            let currentHeight = i * SequencerTimeline.noteHeight;
+            this._horizontalLines.drawRect(0, currentHeight, width, 1);
+        }
+        this._horizontalLines.endFill();
+
+        this.mask = new PIXI.Graphics().beginFill(0xFFFFFF).drawRect(0, UIPositioning.timelineHeaderHeight, width, height).endFill();
     }
 }

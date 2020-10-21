@@ -49,20 +49,29 @@ export class TrackList extends PIXI.Container {
         // Draw lines and background colour.
 
         this._trackListGraphics = new PIXI.Graphics();
-        this.addChild(this._trackListGraphics);
+        this._trackLineGraphics = new PIXI.Graphics();
 
-        this._trackListGraphics.beginFill(UIColors.bgColor)
-            .drawRect(0, 0, sidebarWidth, height)
+
+        this.addChild(this._trackListGraphics, this._trackLineGraphics);
+
+        // Setup container for settings boxes
+        this._trackSettingsContainer = document.createElement("div");
+        document.getElementById("applicationContainer").appendChild(this._trackSettingsContainer);
+
+        this.resize(width, height);
+    }
+
+    public resize(width: number, height: number) {
+        this._trackListGraphics.clear().beginFill(UIColors.bgColor)
+            .drawRect(0, 0, this._sidebarWidth, height)
             .endFill();
         this._trackListGraphics.beginFill(UIColors.fgColor)
-            .drawRect(sidebarWidth - 2, 0, 3, height)
+            .drawRect(this._sidebarWidth - 2, 0, 3, height)
             .drawRect(0, UIPositioning.timelineHeaderHeight - 2, width, 2)
             .endFill();
 
-        this._trackLineGraphics = new PIXI.Graphics();
-        this._trackLineGraphics.beginFill(UIColors.fgColor);
-
-        tracks.forEach(track => {
+        this._trackLineGraphics.clear().beginFill(UIColors.fgColor);
+        this.tracks.forEach(track => {
             this._trackLineGraphics.drawRect(0, track.startY + track.height, width, 2);
         });
 
@@ -70,18 +79,13 @@ export class TrackList extends PIXI.Container {
         // Set mask so lines disappear once they go above the header
         this._trackLineGraphics.mask = new PIXI.Graphics().beginFill(0xFFFFFF).drawRect(0, UIPositioning.timelineHeaderHeight, width, height).endFill();
 
-        this.addChild(this._trackListGraphics, this._trackLineGraphics);
-
-        // Setup container for settings boxes
-        this._trackSettingsContainer = document.createElement("div");
         Object.assign(this._trackSettingsContainer.style, {
             position: "absolute",
-            top: tracks[0].startY.toString(),
-            width: sidebarWidth.toString(),
-            height: (height - tracks[0].startY).toString(),
+            top: this.tracks[0].startY.toString(),
+            width: this._sidebarWidth.toString(),
+            height: (height - this.tracks[0].startY).toString(),
             overflow: "hidden"
         });
-        document.getElementById("applicationContainer").appendChild(this._trackSettingsContainer);
 
         this._rerenderList();
     }
