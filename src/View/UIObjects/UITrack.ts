@@ -33,7 +33,12 @@ export class NoteUITrack extends UITrack {
 
     constructor(name: string, startY : number, height: number, baseTrack: OscillatorTrack, noteGroups?: number[][]) {
         super(name, startY, height, baseTrack);
-        this._noteGroups = noteGroups;
+        if (noteGroups != undefined) {
+            this._noteGroups = noteGroups;
+        }
+        else {
+            this._noteGroups = [];
+        }
         this.noteGroupsChanged = new SimpleEvent();
     }
 

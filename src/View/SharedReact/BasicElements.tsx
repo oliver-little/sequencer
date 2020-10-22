@@ -73,3 +73,58 @@ export class FAButton extends React.Component<FAButtonProps> {
         return <button className={this.props.className} onClick={() => {this.props.onClick()}}><i className={this.props.iconName}></i></button>
     }
 }
+
+interface DropdownProps {
+    title: string,
+    buttonClassName?: string,
+    optionsDivClassName?: string,
+    optionClassName?: string,
+    optionTitles: string[],
+    optionClickCallback: Function
+}
+
+export class Dropdown extends React.Component<DropdownProps> {
+
+    private _optionsDiv : React.RefObject<HTMLDivElement>
+
+    constructor(props) {
+        super(props);
+
+        this._optionsDiv = React.createRef();
+    }
+
+    private _handleDropdownClick() {
+        if (this._optionsDiv.current.style.visibility == "hidden") {
+            this._optionsDiv.current.style.visibility = "visible";
+        }
+        else {
+            this._optionsDiv.current.style.visibility = "hidden";
+        }
+    }
+
+    render() {
+        const objDivClasses = "dropdown" + (this.props.optionsDivClassName == undefined ? "" : " " + this.props.optionsDivClassName);
+        return <div>
+            <button className={this.props.buttonClassName} onClick={() => {this._handleDropdownClick()}}>{this.props.title}</button>
+            <div className={objDivClasses} ref={this._optionsDiv} style={{visibility: "hidden"}}>
+                {this.props.optionTitles.map((title, index) => {
+                    return <DropdownItem key={index} index={index} className={this.props.optionClassName} title={title} callback={(index) => {this._handleDropdownClick(); this.props.optionClickCallback(index);}} />
+                })}
+            </div>
+        </div>
+    }
+}
+
+interface DropdownItemProps {
+    className?: string,
+    title: string,
+    callback: Function,
+    index: number
+}
+
+export class DropdownItem extends React.Component<DropdownItemProps> {
+    render() {
+        const className="dropdownItem" + (this.props.className == undefined? "" : " " + this.props.className);
+        return <button className={className} onClick={() => {this.props.callback(this.props.index)}}>{this.props.title}</button>;
+    }
+}

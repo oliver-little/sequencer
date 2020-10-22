@@ -45,6 +45,44 @@
     height: 100%;
 }
 
+/* Dropdown box */
+.dropdown {
+    display: flex;
+    align-items: center;
+    justify-content:center;
+    flex-direction: column;
+}
+
+.dropdownItem {
+    background: none!important;
+    border: none;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    cursor: pointer;
+}
+
+.addTrackButton {
+    border: none;
+    border-radius: 2px;
+    padding: none;
+    margin-bottom: 2px;
+    height: 30px;
+    width: 30px;
+    font-size: 1.25em;
+    font-weight: bold;
+    background-color: var(--timeline-highlight-color);
+    color: var(--timeline-bg-color);
+}
+
+.addTrackOptionsDiv {
+    background-color: var(--timeline-fg-color);
+    border-radius: 5px;
+}
+
+.addTrackItem {
+    color: white;
+}
+
 /* Metadata Edit Box */
 
 .metadataEditDiv {

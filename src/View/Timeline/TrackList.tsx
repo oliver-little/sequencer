@@ -17,6 +17,9 @@ export class TrackList extends PIXI.Container {
 
     public tracks: UITrack[];
 
+    public endX: number;
+    public endY: number;
+
     private _sidebarWidth: number;
 
     private _trackListGraphics: PIXI.Graphics;
@@ -62,32 +65,17 @@ export class TrackList extends PIXI.Container {
     }
 
     public resize(width: number, height: number) {
+        this.endX = width;
+        this.endY = height;
         this._trackListGraphics.clear().beginFill(UIColors.bgColor)
-            .drawRect(0, 0, this._sidebarWidth, height)
+            .drawRect(0, 0, this._sidebarWidth, this.endY)
             .endFill();
         this._trackListGraphics.beginFill(UIColors.fgColor)
-            .drawRect(this._sidebarWidth - 2, 0, 3, height)
-            .drawRect(0, UIPositioning.timelineHeaderHeight - 2, width, 2)
+            .drawRect(this._sidebarWidth - 2, 0, 3, this.endY)
+            .drawRect(0, UIPositioning.timelineHeaderHeight - 2, this.endX, 2)
             .endFill();
 
-        this._trackLineGraphics.clear().beginFill(UIColors.fgColor);
-        this.tracks.forEach(track => {
-            this._trackLineGraphics.drawRect(0, track.startY + track.height, width, 2);
-        });
-
-        this._trackLineGraphics.endFill();
-        // Set mask so lines disappear once they go above the header
-        this._trackLineGraphics.mask = new PIXI.Graphics().beginFill(0xFFFFFF).drawRect(0, UIPositioning.timelineHeaderHeight, width, height).endFill();
-
-        Object.assign(this._trackSettingsContainer.style, {
-            position: "absolute",
-            top: this.tracks[0].startY.toString(),
-            width: this._sidebarWidth.toString(),
-            height: (height - this.tracks[0].startY).toString(),
-            overflow: "hidden"
-        });
-
-        this._rerenderList();
+        this.drawTracks();
     }
 
     public updateVerticalScroll(value: number) {
@@ -107,6 +95,33 @@ export class TrackList extends PIXI.Container {
 
     public removedHandler() {
         this._trackSettingsContainer.style.visibility = "hidden";
+    }
+
+    public drawTracks() {
+        this._trackLineGraphics.clear();
+        if (this.tracks.length > 0) {
+            this._trackLineGraphics.beginFill(UIColors.fgColor);
+            this.tracks.forEach(track => {
+                this._trackLineGraphics.drawRect(0, track.startY + track.height, this.endX, 2);
+            });
+
+            this._trackLineGraphics.endFill();
+            // Set mask so lines disappear once they go above the header
+            this._trackLineGraphics.mask = new PIXI.Graphics().beginFill(0xFFFFFF).drawRect(0, UIPositioning.timelineHeaderHeight, this.endX, this.endY).endFill();
+
+            Object.assign(this._trackSettingsContainer.style, {
+                position: "absolute",
+                top: this.tracks[0].startY.toString(),
+                width: this._sidebarWidth.toString(),
+                height: (this.endY - this.tracks[0].startY).toString(),
+                overflow: "hidden"
+            });
+
+            this._rerenderList();
+        }
+        else {
+            unmountComponentAtNode(this._trackSettingsContainer);
+        }
     }
 
     private _nameChanged(index: number, value: string) {
@@ -154,13 +169,13 @@ export class TrackList extends PIXI.Container {
     }
 
     private _rerenderList() {
-        render(<TrackSettingsList tracks={this.tracks} 
-            onNameChange={this._nameChanged} 
-            onGainChange={this._gainChanged} 
-            onSoundFileUpdate={this._soundFileChanged} 
+        render(<TrackSettingsList tracks={this.tracks}
+            onNameChange={this._nameChanged}
+            onGainChange={this._gainChanged}
+            onSoundFileUpdate={this._soundFileChanged}
             onAllowOverlapChange={this._allowOverlapChanged}
             onDisplayActualWidthChange={this._displayActualWidthChanged}
-            width={this._sidebarWidth} 
+            width={this._sidebarWidth}
             verticalScroll={this._verticalScroll} />, this._trackSettingsContainer);
     }
 }
@@ -253,29 +268,5 @@ class TrackSettingsBox extends React.Component<TrackSettingsProps> {
             <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" onChange={this.handleGainChange} />
             {soundFileInfo}
         </div>
-    }
-}
-
-/**
- * Draws horizontal lines across the view to divide tracks
- *
- * @export
- * @class TrackHorizontalLines
- * @extends {PIXI.Graphics}
- */
-export class TrackLines extends PIXI.Graphics {
-    /**
-     * Creates an instance of TrackLines.
-     * @param {UITrack[]} tracks The list of UITracks to draw lines for
-     * @param {number} viewWidth The width of the view (pixels)
-     * @param {number} viewHeight The height of the view (pixels)
-     * @memberof TrackLines
-     */
-    constructor(tracks: UITrack[], viewWidth: number) {
-        super();
-        this.beginFill(UIColors.fgColor);
-        this.drawRect(0, -2, viewWidth, 3);
-
-        this.endFill();
     }
 }
