@@ -76,33 +76,12 @@ export class PIXITimeline extends React.Component<PIXITimelineProps, PIXITimelin
         const parent = app.view.parentElement;
         app.renderer.resize(parent.clientWidth, parent.clientHeight);
 
-        // Create songManager and testing data
+        // Create songManager
         let songManager : SongManager = new SongManager();
-        let oscillatorTrack = songManager.addOscillatorTrack();
-        oscillatorTrack.addNote(0, "E5", "2n");
-        oscillatorTrack.addNote(0, "C0", "2n");
-        oscillatorTrack.addNote(0, "G5", "2n");
-        oscillatorTrack.addNote(2, "E5", "2n");
-        oscillatorTrack.addNote(2, "C6", "2n");
-        oscillatorTrack.addNote(2, "G5", "2n");
-        oscillatorTrack.addNote(3, "G6", "32n");
-
-        let newUITracks : UITrack[] = [];
-        for (let i = 0; i < songManager.tracks.length; i++) {
-            let modelTrack = songManager.tracks[i]
-            let newTrack = null;
-            if (modelTrack instanceof OscillatorTrack) {
-                newTrack = new NoteUITrack("", UIPositioning.timelineHeaderHeight + (250 * i), 250, modelTrack as OscillatorTrack, [[0, 2], [2, 4]]);
-            }
-            else if (modelTrack instanceof SoundFileTrack) {
-                newTrack = new SoundFileUITrack("", UIPositioning.timelineHeaderHeight + (250 * i), 250, modelTrack);
-            }
-            newUITracks.push(newTrack);
-        }
 
 
         // Create timeline and show on pixi app
-        let timeline = new TimelineView(app.renderer.width, app.renderer.height, newUITracks, songManager);
+        let timeline = new TimelineView(app.renderer.width, app.renderer.height, [], songManager);
 
         // Need to figure out a solution for passing mouseWheelEvents to current 
         app.view.addEventListener("wheel", event => navigationView.passWheelEvent(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));

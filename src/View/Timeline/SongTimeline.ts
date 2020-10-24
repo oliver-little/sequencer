@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
 import { UITrack, NoteUITrack, SoundFileUITrack } from "../UIObjects/UITrack.js";
-import { NoteGroupTimelineEvent, OneShotTimelineEvent } from "../Shared/TrackTimelineEvent.js";
+import { NoteGroupTimelineEvent, OneShotTimelineEvent, TrackTimelineEvent } from "../Shared/TrackTimelineEvent.js";
 import { UIColors, UIPositioning } from "../Shared/UITheme.js";
 import { BaseEvent, SecondsBaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
@@ -23,13 +23,13 @@ export class SongTimeline extends ScrollableTimeline {
 
     public tracks: UITrack[];
 
-    private _noteGroupTimelineEvents : NoteGroupTimelineEvent[];
+    private _noteGroupTimelineEvents: NoteGroupTimelineEvent[];
 
     // Event creation variables
     private _newEventGraphics: PIXI.Graphics;
     private _newEventData: INewEventData;
 
-    private _showSequencerCallback : Function;
+    private _showSequencerCallback: Function;
 
     /**
      *Creates an instance of SongTimeline.
@@ -40,7 +40,7 @@ export class SongTimeline extends ScrollableTimeline {
      * @param {UITrack[]} tracks The tracks this timeline should display
      * @memberof SongTimeline
      */
-    constructor(startX: number, endX: number, endY: number, songManager: SongManager, tracks: UITrack[], showSequencerCallback : Function) {
+    constructor(startX: number, endX: number, endY: number, songManager: SongManager, tracks: UITrack[], showSequencerCallback: Function) {
         super(startX, endX, 0, endY, songManager);
         this.songManager = songManager;
         this.tracks = tracks;
@@ -54,7 +54,12 @@ export class SongTimeline extends ScrollableTimeline {
     }
 
     get contentHeight() {
-        return UIPositioning.timelineHeaderHeight + this.tracks[this.tracks.length - 1].startY + this.tracks[this.tracks.length - 1].height;
+        if (this.tracks.length == 0) {
+            return 0;
+        }
+        else {
+            return this.tracks[this.tracks.length - 1].startY + this.tracks[this.tracks.length - 1].height;
+        }
     }
 
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
@@ -148,13 +153,41 @@ export class SongTimeline extends ScrollableTimeline {
     }
 
     /**
-     * Removes all note groups and 
+     * Clears all tracks and redraws them all, including TrackTimelineEvents
+     * Use when inserting or removing a UITrack
+     *
+     * @memberof SongTimeline
+     */
+    public regenerateTracks() {
+        for (let i = 0; i < this._eventContainer.children.length; i++) {
+            let timelineEvent = this._eventContainer.children[i] as TrackTimelineEvent;
+            timelineEvent.destroy({children: true});
+        }
+        this._initialiseTrackTimelineEvents();
+    }
+
+    /**
+     * Reinitialises the TrackTimelineEvents for a given Track
+     *
+     * @memberof SongTimeline
+     */
+    public reinitialiseTrack(track : UITrack) {
+        for (let i = 0; i < this._eventContainer.children.length; i++) {
+            let timelineEvent = this._eventContainer.children[i] as TrackTimelineEvent;
+            if (timelineEvent.track == track) {
+                timelineEvent.reinitialise();
+            }
+        }
+    }
+
+    /**
+     * Removes all note group timeline events and creates them again.
      *
      * @memberof SongTimeline
      */
     public regenerateNoteGroups() {
         this._noteGroupTimelineEvents.forEach(timelineEvent => {
-            timelineEvent.destroy({children: true});
+            timelineEvent.destroy({ children: true });
         });
 
         this._noteGroupTimelineEvents = [];

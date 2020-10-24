@@ -32,7 +32,7 @@ export class TimelineView extends VerticalScrollView {
         this.showSequencer = this.showSequencer.bind(this);
         this.addedHandler = this.addedHandler.bind(this);
         this.removedHandler = this.removedHandler.bind(this);
-
+        this._trackRemoved = this._trackRemoved.bind(this);
         
         this.on("added", this.addedHandler);
         this.on("removed", this.removedHandler);
@@ -40,6 +40,7 @@ export class TimelineView extends VerticalScrollView {
         this.timeline = new SongTimeline(this._sidebarPosition, width, height, songManager, tracks, this.showSequencer);
         this.addChild(this.timeline);
         this.trackList = new TrackList(this._sidebarPosition, width, height, tracks);
+        this.trackList.trackRemoved.addListener(this._trackRemoved);
         this.addChild(this.trackList);
 
         this._newTrackDropdownContainer = document.createElement("div");
@@ -54,7 +55,12 @@ export class TimelineView extends VerticalScrollView {
     }
 
     get contentHeight() {
-        return this._tracks[this._tracks.length - 1].startY + this._tracks[this._tracks.length - 1].height;
+        if (this._tracks.length == 0) {
+            return 0;
+        }
+        else {
+            return this._tracks[this._tracks.length - 1].startY + this._tracks[this._tracks.length - 1].height;
+        }
     }
 
     public resize(width: number, height: number) {
@@ -65,6 +71,7 @@ export class TimelineView extends VerticalScrollView {
     public destroy() {
         unmountComponentAtNode(this._newTrackDropdownContainer);
         document.getElementById("applicationContainer").removeChild(this._newTrackDropdownContainer);
+        this.trackList.trackRemoved.removeListener(this._trackRemoved);
         this.removeAllListeners();
         super.destroy();
     }
@@ -87,7 +94,8 @@ export class TimelineView extends VerticalScrollView {
 
     public addOscillatorTrack() {
         let track = this._songManager.addOscillatorTrack();
-        this._tracks.push(new NoteUITrack("Track " + (this._tracks.length+1).toString(), this.contentHeight, 250, track));
+        let startY = this.contentHeight != 0 ? this.contentHeight : UIPositioning.timelineHeaderHeight;
+        this._tracks.push(new NoteUITrack("Track " + (this._tracks.length+1).toString(), startY, 250, track));
         this.trackList.drawTracks();
         // Force a resize event to edit bar heights
         this.timeline.resize(this.endX, this.endY);
@@ -95,7 +103,8 @@ export class TimelineView extends VerticalScrollView {
 
     public async addSoundFileTrack() {
         let track = await this._songManager.addSoundFileTrack();
-        this._tracks.push(new SoundFileUITrack("Track " + (this._tracks.length+1).toString(), this.contentHeight, 250, track));
+        let startY = this.contentHeight != 0 ? this.contentHeight : UIPositioning.timelineHeaderHeight;
+        this._tracks.push(new SoundFileUITrack("Track " + (this._tracks.length+1).toString(), startY, 250, track));
         this.trackList.drawTracks();
         this.timeline.resize(this.endX, this.endY);
     }
@@ -104,6 +113,10 @@ export class TimelineView extends VerticalScrollView {
         value = Math.min(0, value);
         this.timeline.updateVerticalScroll(value);
         this.trackList.updateVerticalScroll(value);
+    }
+
+    private _trackRemoved() {
+        this.timeline.regenerateTracks();
     }
 
     private _renderNewTrackObject() {

@@ -136,6 +136,20 @@
     cursor: pointer;
 }
 
+.trackSettingsDeleteButton {
+    margin-top: 0px;
+    position: absolute;
+    top: 0px;
+    left: 0px; 
+    width: 25px;
+    height: 25px;
+    border: none;
+    border-radius: 2px;
+
+    background-color: var(--timeline-highlight-color);
+    color: var(--timeline-bg-color);
+}
+
 .trackSettingsIconInput {
     cursor: pointer;
     border-radius: 5px;

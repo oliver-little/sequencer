@@ -5,6 +5,7 @@ import { SoundFileUITrack, UITrack } from "../UIObjects/UITrack.js";
 import { UIColors, UIPositioning } from "../Shared/UITheme.js";
 import { FileInput, IconFileInput, LabelledCheckbox, Slider } from "../SharedReact/BasicElements.js";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
+import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 
 /**
  * Container for a the settings of a list of tracks.
@@ -19,6 +20,8 @@ export class TrackList extends PIXI.Container {
 
     public endX: number;
     public endY: number;
+
+    public trackRemoved : SimpleEvent;
 
     private _sidebarWidth: number;
 
@@ -41,6 +44,7 @@ export class TrackList extends PIXI.Container {
         super();
         this.tracks = tracks;
         this._sidebarWidth = sidebarWidth;
+        this.trackRemoved = new SimpleEvent();
 
         this._gainChanged = this._gainChanged.bind(this);
         this._nameChanged = this._nameChanged.bind(this);
@@ -48,6 +52,7 @@ export class TrackList extends PIXI.Container {
         this._allowOverlapChanged = this._allowOverlapChanged.bind(this);
         this._displayActualWidthChanged = this._displayActualWidthChanged.bind(this);
         this._updateSoundFile = this._updateSoundFile.bind(this);
+        this._deleteTrack = this._deleteTrack.bind(this);
 
         // Draw lines and background colour.
 
@@ -168,6 +173,16 @@ export class TrackList extends PIXI.Container {
         this._rerenderList();
     }
 
+    private _deleteTrack(index: number) {
+        this.tracks.splice(index, 1);
+        this.tracks[0].startY = UIPositioning.timelineHeaderHeight;
+        for(let i = 1; i < this.tracks.length; i++) {
+            this.tracks[i].startY = this.tracks[i-1].startY + this.tracks[i-1].height;
+        }
+        this.drawTracks();
+        this.trackRemoved.emit();
+    }
+
     private _rerenderList() {
         render(<TrackSettingsList tracks={this.tracks}
             onNameChange={this._nameChanged}
@@ -175,6 +190,7 @@ export class TrackList extends PIXI.Container {
             onSoundFileUpdate={this._soundFileChanged}
             onAllowOverlapChange={this._allowOverlapChanged}
             onDisplayActualWidthChange={this._displayActualWidthChanged}
+            onDeleteTrack={this._deleteTrack}
             width={this._sidebarWidth}
             verticalScroll={this._verticalScroll} />, this._trackSettingsContainer);
     }
@@ -187,6 +203,7 @@ interface TrackSettingsListProps {
     onSoundFileUpdate: Function,
     onDisplayActualWidthChange: Function,
     onAllowOverlapChange: Function,
+    onDeleteTrack: Function,
     width: number,
     verticalScroll: number;
 }
@@ -209,6 +226,7 @@ class TrackSettingsList extends React.Component<TrackSettingsListProps> {
                 return <TrackSettingsBox key={index} index={index}
                     name={track.name} onNameChange={this.props.onNameChange}
                     gain={track.track.audioSource.masterGain} onGainChange={this.props.onGainChange}
+                    deleteTrack={this.props.onDeleteTrack}
                     width={this.props.width} height={track.height}
                     soundFileProps={soundFileProps} />;
             })}
@@ -222,6 +240,7 @@ interface TrackSettingsProps {
     onNameChange: Function,
     gain: number,
     onGainChange: Function,
+    deleteTrack : Function
     width: number,
     height: number
     soundFileProps?: TrackSettingsSoundFileProps
@@ -263,10 +282,13 @@ class TrackSettingsBox extends React.Component<TrackSettingsProps> {
             </>
         }
 
-        return <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
-            <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
-            <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" onChange={this.handleGainChange} />
-            {soundFileInfo}
+        return <div style={{position: "relative"}}>
+            <button className="trackSettingsDeleteButton" onClick={() => {this.props.deleteTrack(this.props.index)}}>X</button>
+            <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
+                <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
+                <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" onChange={this.handleGainChange} />
+                {soundFileInfo}
+            </div>
         </div>
     }
 }
