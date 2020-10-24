@@ -94,11 +94,11 @@ export class Dropdown extends React.Component<DropdownProps> {
     }
 
     private _handleDropdownClick() {
-        if (this._optionsDiv.current.style.visibility == "hidden") {
-            this._optionsDiv.current.style.visibility = "visible";
+        if (this._optionsDiv.current.style.display == "none") {
+            this._optionsDiv.current.style.removeProperty("display");
         }
         else {
-            this._optionsDiv.current.style.visibility = "hidden";
+            this._optionsDiv.current.style.display = "none";
         }
     }
 
@@ -106,7 +106,7 @@ export class Dropdown extends React.Component<DropdownProps> {
         const objDivClasses = "dropdown" + (this.props.optionsDivClassName == undefined ? "" : " " + this.props.optionsDivClassName);
         return <div>
             <button className={this.props.buttonClassName} onClick={() => {this._handleDropdownClick()}}>{this.props.title}</button>
-            <div className={objDivClasses} ref={this._optionsDiv} style={{visibility: "hidden"}}>
+            <div className={objDivClasses} ref={this._optionsDiv} style={{display: "none"}}>
                 {this.props.optionTitles.map((title, index) => {
                     return <DropdownItem key={index} index={index} className={this.props.optionClassName} title={title} callback={(index) => {this._handleDropdownClick(); this.props.optionClickCallback(index);}} />
                 })}

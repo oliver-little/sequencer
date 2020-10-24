@@ -21,7 +21,8 @@ export class TrackList extends PIXI.Container {
     public endX: number;
     public endY: number;
 
-    public trackRemoved : SimpleEvent;
+    public trackRemoved: SimpleEvent;
+    public trackEdited: SimpleEvent;
 
     private _sidebarWidth: number;
 
@@ -45,6 +46,7 @@ export class TrackList extends PIXI.Container {
         this.tracks = tracks;
         this._sidebarWidth = sidebarWidth;
         this.trackRemoved = new SimpleEvent();
+        this.trackEdited = new SimpleEvent();
 
         this._gainChanged = this._gainChanged.bind(this);
         this._nameChanged = this._nameChanged.bind(this);
@@ -95,11 +97,11 @@ export class TrackList extends PIXI.Container {
     }
 
     public addedHandler() {
-        this._trackSettingsContainer.style.visibility = "visible";
+        this._trackSettingsContainer.style.removeProperty("display");
     }
 
     public removedHandler() {
-        this._trackSettingsContainer.style.visibility = "hidden";
+        this._trackSettingsContainer.style.display = "none";
     }
 
     public drawTracks() {
@@ -145,9 +147,11 @@ export class TrackList extends PIXI.Container {
         xhr.open('GET', objecturl, true);
         xhr.responseType = 'blob';
         let onloadFunc = this._updateSoundFile;
+        let event = this.trackEdited;
         xhr.onload = function (e) {
             if (this.status == 200) {
                 onloadFunc(index, this.response);
+                event.emit(index);
             }
             else {
                 throw new Error("Loading failed, error code:" + this.status);
@@ -164,20 +168,24 @@ export class TrackList extends PIXI.Container {
     private _allowOverlapChanged(index: number, value: boolean) {
         let soundFileTrack = this.tracks[index].track as SoundFileTrack;
         soundFileTrack.allowOverlaps = value;
+        this.trackEdited.emit(index);
         this._rerenderList();
     }
 
     private _displayActualWidthChanged(index: number, value: boolean) {
         let soundFileTrack = this.tracks[index] as SoundFileUITrack;
         soundFileTrack.displayActualWidth = value;
+        this.trackEdited.emit(index);
         this._rerenderList();
     }
 
     private _deleteTrack(index: number) {
         this.tracks.splice(index, 1);
-        this.tracks[0].startY = UIPositioning.timelineHeaderHeight;
-        for(let i = 1; i < this.tracks.length; i++) {
-            this.tracks[i].startY = this.tracks[i-1].startY + this.tracks[i-1].height;
+        if (this.tracks.length > 0) {
+            this.tracks[0].startY = UIPositioning.timelineHeaderHeight;
+            for (let i = 1; i < this.tracks.length; i++) {
+                this.tracks[i].startY = this.tracks[i - 1].startY + this.tracks[i - 1].height;
+            }
         }
         this.drawTracks();
         this.trackRemoved.emit();
@@ -240,7 +248,7 @@ interface TrackSettingsProps {
     onNameChange: Function,
     gain: number,
     onGainChange: Function,
-    deleteTrack : Function
+    deleteTrack: Function
     width: number,
     height: number
     soundFileProps?: TrackSettingsSoundFileProps
@@ -282,8 +290,8 @@ class TrackSettingsBox extends React.Component<TrackSettingsProps> {
             </>
         }
 
-        return <div style={{position: "relative"}}>
-            <button className="trackSettingsDeleteButton" onClick={() => {this.props.deleteTrack(this.props.index)}}>X</button>
+        return <div style={{ position: "relative" }}>
+            <button className="trackSettingsDeleteButton" onClick={() => { this.props.deleteTrack(this.props.index) }}>X</button>
             <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
                 <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
                 <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" onChange={this.handleGainChange} />
