@@ -147,11 +147,9 @@ export class TrackList extends PIXI.Container {
         xhr.open('GET', objecturl, true);
         xhr.responseType = 'blob';
         let onloadFunc = this._updateSoundFile;
-        let event = this.trackEdited;
         xhr.onload = function (e) {
             if (this.status == 200) {
                 onloadFunc(index, this.response);
-                event.emit(index);
             }
             else {
                 throw new Error("Loading failed, error code:" + this.status);
@@ -160,9 +158,10 @@ export class TrackList extends PIXI.Container {
         xhr.send();
     }
 
-    private _updateSoundFile(index: number, blob: Blob) {
+    private async _updateSoundFile(index: number, blob: Blob) {
         let soundFileTrack = this.tracks[index].track as SoundFileTrack;
-        soundFileTrack.setSoundFile(blob);
+        await soundFileTrack.setSoundFile(blob);
+        this.trackEdited.emit(index);
     }
 
     private _allowOverlapChanged(index: number, value: boolean) {
@@ -175,7 +174,6 @@ export class TrackList extends PIXI.Container {
     private _displayActualWidthChanged(index: number, value: boolean) {
         let soundFileTrack = this.tracks[index] as SoundFileUITrack;
         soundFileTrack.displayActualWidth = value;
-        this.trackEdited.emit(index);
         this._rerenderList();
     }
 

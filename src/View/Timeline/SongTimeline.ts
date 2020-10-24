@@ -174,7 +174,7 @@ export class SongTimeline extends ScrollableTimeline {
     public reinitialiseTrack(track : UITrack) {
         for (let i = 0; i < this._eventContainer.children.length; i++) {
             let timelineEvent = this._eventContainer.children[i] as TrackTimelineEvent;
-            if (timelineEvent.track == track) {
+            if (timelineEvent.track === track) {
                 timelineEvent.reinitialise();
             }
         }
