@@ -44,8 +44,8 @@ export class SongTimeline extends ScrollableTimeline {
         super(startX, endX, 0, endY, songManager);
         this.songManager = songManager;
         this.tracks = tracks;
-        this._showSequencerCallback = showSequencerCallback;
         this._noteGroupTimelineEvents = [];
+        this._showSequencerCallback = showSequencerCallback;
 
         this._newEventGraphics = new PIXI.Graphics();
         this.addChild(this._newEventGraphics);
@@ -159,10 +159,13 @@ export class SongTimeline extends ScrollableTimeline {
      * @memberof SongTimeline
      */
     public regenerateTracks() {
-        for (let i = 0; i < this._eventContainer.children.length; i++) {
-            let timelineEvent = this._eventContainer.children[i] as TrackTimelineEvent;
-            timelineEvent.destroy({children: true});
+        while (this._eventContainer.children[0]) {
+            let timelineEvent = this._eventContainer.children[0] as TrackTimelineEvent;
+            timelineEvent.destroy();
         }
+
+        this._noteGroupTimelineEvents = [];
+
         this._initialiseTrackTimelineEvents();
     }
 
@@ -187,7 +190,7 @@ export class SongTimeline extends ScrollableTimeline {
      */
     public regenerateNoteGroups() {
         this._noteGroupTimelineEvents.forEach(timelineEvent => {
-            timelineEvent.destroy({ children: true });
+            timelineEvent.destroy();
         });
 
         this._noteGroupTimelineEvents = [];

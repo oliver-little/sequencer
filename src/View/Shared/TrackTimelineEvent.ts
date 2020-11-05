@@ -138,6 +138,10 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
         this.redraw();
     }
 
+    public destroy() {
+        super.destroy({children: true});
+    }
+
     /**
      * Redraws the current TrackTimelineEvent 
      * (should be called when any variables relating to how this object should be drawn are changed)
@@ -280,7 +284,7 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
      * @memberof TrackTimelineEvent
      */
     public deleteEvent() {
-        this.destroy({ children: true });
+        this.destroy();
     }
 
     /**
@@ -475,6 +479,11 @@ export class OneShotTimelineEvent extends TrackTimelineEvent {
         }
     }
 
+    public destroy() {
+        this.event.removed.removeListener(this._modelEventRemoved);
+        super.destroy();
+    }
+
     public deleteEvent() {
         this.track.track.timeline.removeEvent(this.event);
         super.deleteEvent();
@@ -560,6 +569,11 @@ export class NoteTimelineEvent extends TrackTimelineEvent {
             this._lastNoteNumber = Math.floor(noteYPosition / SequencerTimeline.noteHeight);
             this.y =  this._startYPosition - (this._lastNoteNumber - oldNoteNumber) * SequencerTimeline.noteHeight;
         }
+    }
+
+    public destroy() {
+        this.event.removed.removeListener(this._modelEventRemoved);
+        super.destroy();
     }
 
     public deleteEvent() {
