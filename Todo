@@ -6,10 +6,9 @@ To Add UI:
 - Add selected effect to TrackTimelineEvents
 - Scrollbars, both vertical and horizontal
 - Ability to move all notes in a note group in the sequencer view.
-- Selective PIXI imports to reduce package size
 - Loading spinners, for async operations like loading in a new file: https://chevtek.io/how-to-create-versatile-loading-spinner-management-in-react/
-
 - Connections for tracks with chains and global bus - https://github.com/lukasoppermann/html5sortable
+- Update TrackTimelineEvent with on drag, not only on mouse release
 
 Other:
 - Look at licenses for dependencies before deploying, need to figure out the best way to include them.

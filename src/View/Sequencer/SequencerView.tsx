@@ -75,14 +75,15 @@ class SequencerNotes extends PIXI.Container {
     constructor(width : number, screenWidth : number, screenHeight : number, numNotes : number) {
         super();
 
+        // Fixes drawing C0 to C8
         this._numNotes = numNotes - 2;
 
         // Create and draw horizontal lines over the whole screen.
         this._horizontalLines = new PIXI.Graphics();
         this._horizontalLines.y = UIPositioning.timelineHeaderHeight;
-        for (let i = 0; i < numNotes; i++) {
+        for (let i = 0; i < this._numNotes; i++) {
             let height = i * SequencerTimeline.noteHeight;
-            let text = new PIXI.Text(NoteHelper.noteNumberToNoteString(numNotes - 1 - i), UIFonts.trackFont);
+            let text = new PIXI.Text(NoteHelper.noteNumberToNoteString(this._numNotes - 1 - i), UIFonts.trackFont);
             text.x = width / 2 - text.width/2;
             text.y = UIPositioning.timelineHeaderHeight + height + SequencerTimeline.noteHeight/2 - text.height/2;
             this.addChild(text);

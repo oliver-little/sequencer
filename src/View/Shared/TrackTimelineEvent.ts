@@ -363,17 +363,17 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
     public setNotes(notes: NoteEvent[], highestNote: string, lowestNote: string, noteGroup: number[]) {
         let noteRange = NoteHelper.distanceBetweenNotes(highestNote, lowestNote) + 1;
-
-        let start = noteGroup[0];
-        let end = noteGroup[1];
+        let metadata = this.timeline.metadata;
+        let start = metadata.positionQuarterNoteToBeats(noteGroup[0]);
+        let end = metadata.positionQuarterNoteToBeats(noteGroup[1]);
         let noteHeight = (this.track.height - this.paddingHeight * 2) / noteRange;
         let positionMap = position => {
-            return (position - start) / (end - start);
+            return (metadata.positionQuarterNoteToBeats(position) - start) / (end - start);
         }
         this._contentGraphics.beginFill(UIColors.trackEventHighlightColor, this._opacity);
         notes.forEach(note => {
             let startX = positionMap(note.startPosition) * this.assignedWidth;
-            let endX = positionMap(note.startPosition + note.duration) * this.assignedWidth;
+            let endX = positionMap(note.endPosition) * this.assignedWidth;
             this._contentGraphics.drawRect(startX,
                 NoteHelper.distanceBetweenNotes(highestNote, note.pitchString) * noteHeight + this.paddingHeight,
                 endX - startX - 2,
@@ -392,7 +392,10 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
         let beatChange = dragDistance.x / this.timeline.beatWidth;
 
         noteGroup[0] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(noteGroup[0]) + beatChange);
-        noteGroup[1] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(noteGroup[1]) + beatChange);
+        
+        // Use the new noteGroup position to calculate the number of quarter notes the event was moved by
+        let quarterNoteChange = noteGroup[0] - this._noteGroup[0];
+        noteGroup[1] = noteGroup[1] + quarterNoteChange;
 
         // Check if new position is clear
         let groups = this.track.getNoteGroupsWithinTime(noteGroup[0], noteGroup[1]);
@@ -411,10 +414,10 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
             this.x = this._startXPosition;
         }
         else {
-            // Update note position by converting to beats, adding the change, then converting back.
+            // Update note position by offsetting by the calculated quarter note change amount.s
             this._notes.forEach(note => {
                 this.track.track.timeline.removeEvent(note);
-                note.startPosition = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(note.startPosition) + beatChange);
+                note.startPosition = note.startPosition + quarterNoteChange;
                 this.track.track.timeline.addEvent(note);
             });
 
@@ -422,6 +425,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
             this.track.removeNoteGroup(this._noteGroup[0]);
             this.track.addNoteGroup(noteGroup[0], noteGroup[1]);
             this._noteGroup = noteGroup;
+            this.reinitialise();
         }
     }
 
@@ -496,7 +500,7 @@ export class OneShotTimelineEvent extends TrackTimelineEvent {
 
     protected dragHandler(dragDistance: PIXI.Point) {
         let beatChange = dragDistance.x / this.timeline.beatWidth;
-        let newStartPosition = this.timeline.metadata.positionQuarterNoteToBeats(this.event.startPosition) + beatChange;
+        let newStartPosition = this.timeline.metadata.positionBeatsToQuarterNote(this.timeline.metadata.positionQuarterNoteToBeats(this.event.startPosition) + beatChange);
         let eventsInPeriod = this.track.track.timeline.getEventsBetweenTimes(newStartPosition, newStartPosition + this.event.duration);
 
         let timePeriodClear = true;
@@ -513,6 +517,7 @@ export class OneShotTimelineEvent extends TrackTimelineEvent {
         else {
             let eventIndex = this.track.track.timeline.getIndexOfEvent(this.event);
             this.track.track.timeline.editEvent(eventIndex, newStartPosition);
+            this.reinitialise();
         }
     }
 
@@ -590,7 +595,7 @@ export class NoteTimelineEvent extends TrackTimelineEvent {
         let beatChange = dragDistance.x / this.timeline.beatWidth;
         // Add the note change to the new note string, floor it, make sure it isn't less than 0, and convert it back to a string.
         let newNotePitch = NoteHelper.noteNumberToNoteString(this._lastNoteNumber);
-        let newStartPosition = this.timeline.metadata.positionQuarterNoteToBeats(this.event.startPosition) + beatChange;
+        let newStartPosition = this.timeline.metadata.positionBeatsToQuarterNote(this.timeline.metadata.positionQuarterNoteToBeats(this.event.startPosition) + beatChange);
         let eventsInPeriod = this.track.track.timeline.getEventsBetweenTimes(newStartPosition, newStartPosition + this.event.duration) as NoteEvent[];
 
         let timePeriodClear = true;
@@ -607,6 +612,7 @@ export class NoteTimelineEvent extends TrackTimelineEvent {
         }
         else {
             this.track.editEvent(this.event, newStartPosition, newNotePitch);
+            this.reinitialise();
         }
     }
 
