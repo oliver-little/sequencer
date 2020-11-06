@@ -106,6 +106,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
         this._timelineMarkerAnim = this._timelineMarkerAnim.bind(this);
         this._playingStateChanged = this._playingStateChanged.bind(this);
+        this._repositionTimelineMarker = this._repositionTimelineMarker.bind(this);
         this.songManager.playingChangedEvent.addListener(this._playingStateChanged);
     }
 
@@ -570,9 +571,13 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         if (value == true) {
             this.timelineMode = TimelineMode.Playback;
             requestAnimationFrame(this._timelineMarkerAnim);
+
         }
         else {
             this.timelineMode = TimelineMode.Edit;
+            if (!this.songManager.quarterNotePositionChangedEvent.hasListener(this._repositionTimelineMarker)) {
+                this.songManager.quarterNotePositionChangedEvent.addListener(this._repositionTimelineMarker);
+            }
         }
     }
 

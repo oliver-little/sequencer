@@ -20,6 +20,7 @@ export class SongManager {
     public context: AudioContext|OfflineAudioContext;
     public scheduleEvent: SimpleEvent;
     public playingChangedEvent: SimpleEvent;
+    public quarterNotePositionChangedEvent : SimpleEvent;
 
     protected _tracks: BaseTrack[];
     protected _playing = false;
@@ -37,6 +38,7 @@ export class SongManager {
         this.connectionManager = new ConnectionManager(this.context);
         this.scheduleEvent = new SimpleEvent();
         this.playingChangedEvent = new SimpleEvent();
+        this.quarterNotePositionChangedEvent = new SimpleEvent();
         this._tracks = [];
 
         this._boundQuarterNoteUpdateFunction = this.quarterNoteUpdateFunction.bind(this);
@@ -52,6 +54,7 @@ export class SongManager {
 
     set quarterNotePosition(value : number) {
         this._quarterNotePosition = value;
+        this.quarterNotePositionChangedEvent.emit(this._quarterNotePosition);
     }
 
     get tracks() {
@@ -93,6 +96,14 @@ export class SongManager {
         return newTrack;
     }
 
+    public removeTrack(track : BaseTrack) {
+        let index = this._tracks.indexOf(track);
+        if (index != -1) {
+            this._tracks.splice(index, 1);
+        }
+        track.destroy();
+    }
+
     /**
      * Starts playback at the given quarter note position
      *
@@ -130,11 +141,20 @@ export class SongManager {
     public stop() {
         this._playing = false;
         this.playingChangedEvent.emit(this._playing);
-        clearInterval(this.playingIntervalIDs[0])
-        clearInterval(this.playingIntervalIDs[1]);
+        clearInterval(this.playingIntervalIDs);
         this._tracks.forEach(element => {
             element.stop();
         });
+    }
+
+    /**
+     * Stops and returns the timeline to the start of playback
+     *
+     * @memberof SongManager
+     */
+    public stopToBeginning() {
+        this.stop();
+        this.quarterNotePosition = 0;
     }
 
     /**
@@ -184,6 +204,11 @@ export class SongManager {
         };
     }
 
+    public destroy() {
+        this.scheduleEvent.removeAllListeners();
+        this.playingChangedEvent.removeAllListeners();
+    }
+
     /**
      * Saves the current song to a WAV file
      *
@@ -222,9 +247,9 @@ export class SongManager {
     }
 
     protected quarterNoteUpdateFunction() {
-        let timeSinceStart = this.context.currentTime - this._startTime;
-        this.quarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
         if (this.playing) {
+            let timeSinceStart = this.context.currentTime - this._startTime;
+            this.quarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
             requestAnimationFrame(this._boundQuarterNoteUpdateFunction);
         }
     }

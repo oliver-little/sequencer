@@ -37,6 +37,7 @@ export abstract class BaseTrack {
     protected _startTime = 0; // Stores the AudioContext time at which playback was started.
     protected _playing = false;
 
+    private _scheduleEventFunc : Function;
 
     /**
      *Creates an instance of BaseTrack.
@@ -52,7 +53,8 @@ export abstract class BaseTrack {
         this._context = context;
         this._metadata = metadata;
         this._scheduleEvent = scheduleEvent;
-        this._scheduleEvent.addListener(function(quarterNotePosition : number) {this.scheduleSongEvents(quarterNotePosition)}.bind(this));
+        this._scheduleEventFunc = function(quarterNotePosition : number) {this.scheduleSongEvents(quarterNotePosition)}.bind(this)
+        this._scheduleEvent.addListener(this._scheduleEventFunc);
 
         this.audioSource = audioSource;
         this.id = id === undefined ? uuid() : id;
@@ -139,7 +141,7 @@ export abstract class BaseTrack {
     public destroy() {
         this.stop();
         this.audioSource.destroy();
-        this._scheduleEvent.removeAllListeners();
+        this._scheduleEvent.removeListener(this._scheduleEventFunc);
         this.audioSource = null;
     }
 }

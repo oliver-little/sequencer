@@ -6,6 +6,7 @@ import { UIColors, UIPositioning } from "../Shared/UITheme.js";
 import { FileInput, IconFileInput, LabelledCheckbox, Slider } from "../SharedReact/BasicElements.js";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
+import { SongManager } from "../../Model/SongManagement/SongManager.js";
 
 /**
  * Container for a the settings of a list of tracks.
@@ -16,6 +17,7 @@ import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
  */
 export class TrackList extends PIXI.Container {
 
+    public songManager : SongManager;
     public tracks: UITrack[];
 
     public endX: number;
@@ -41,9 +43,10 @@ export class TrackList extends PIXI.Container {
      * @param {UITrack[]} tracks A list of UITracks representing the tracks to display.
      * @memberof TrackList
      */
-    constructor(sidebarWidth: number, width: number, height: number, tracks: UITrack[]) {
+    constructor(sidebarWidth: number, width: number, height: number, songManager : SongManager, tracks: UITrack[]) {
         super();
         this.tracks = tracks;
+        this.songManager = songManager;
         this._sidebarWidth = sidebarWidth;
         this.trackRemoved = new SimpleEvent();
         this.trackEdited = new SimpleEvent();
@@ -188,7 +191,7 @@ export class TrackList extends PIXI.Container {
         }
         this.drawTracks();
         this.trackRemoved.emit();
-        removedTrack.destroy();
+        this.songManager.removeTrack(removedTrack.track);
     }
 
     private _rerenderList() {

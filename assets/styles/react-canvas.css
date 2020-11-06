@@ -2,6 +2,7 @@
     --timeline-bg-color: #303030;
     --timeline-fg-color: #5F5F5F;
     --timeline-highlight-color: #999999;
+    --timeline-highlight2-color: #DDDDDD;
 }
 
 /* Main App */
@@ -43,6 +44,28 @@
     float: left;
     width: 20%;
     height: 100%;
+}
+
+/* Playback Panel */
+.playbackPanel {
+    box-sizing: border-box;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding-left: 2%;
+    padding-right: 2%;
+    background-color: var(--timeline-bg-color);
+    border-bottom: 2px solid var(--timeline-fg-color);
+}
+
+.panelButton {
+    border: none;
+    border-radius: 2px;
+    margin-left: 1%;
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    background-color: var(--timeline-highlight2-color);
 }
 
 /* Dropdown box */

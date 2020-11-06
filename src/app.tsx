@@ -1,6 +1,6 @@
 import * as React from "react";
 import {render} from "react-dom";
-import { SequencerApp } from "./View/SharedReact/SequencerApp";
+import { SequencerApp } from "./View/ReactUI/SequencerApp";
 
 /*const input = document.getElementById("soundFile");
     input.addEventListener("change", handleFiles, false);

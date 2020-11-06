@@ -1,22 +1,36 @@
 import * as PIXI from "pixi.js";
 import * as React from "react";
 import { SongManager } from "../../Model/SongManagement/SongManager";
-import { OscillatorTrack } from "../../Model/Tracks/OscillatorTrack";
-import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack";
 import { navigationView } from "../Shared/NavigationView";
-import { UIColors, UIPositioning } from "../Shared/UITheme";
-import { VerticalScrollView } from "../Shared/VerticalScrollView";
+import { UIColors } from "../Shared/UITheme";
 import { TimelineView } from "../Timeline/TimelineView";
-import { NoteUITrack, SoundFileUITrack, UITrack } from "../UIObjects/UITrack";
+import { PlaybackPanel } from "./PlaybackPanel";
 
-export class SequencerApp extends React.Component {
+// Global songManager
+
+interface SequencerAppState {
+    songManager : SongManager;
+}
+
+export class SequencerApp extends React.Component<{}, SequencerAppState> {
+    constructor(props) {
+        super(props);
+        this.state = {
+            songManager : new SongManager(),
+        }
+    }
+
+    componentWillUnmount() {
+        this.state.songManager.destroy();
+    }
+
     render() {
         return <div className="fullScreen">
             <div className="sequencerAppTopBar">
-                Header bar
+                <PlaybackPanel songManager={this.state.songManager} />
             </div>
             <div className="sequencerAppMainPanel">
-                <PIXITimeline className="sequencerAppMainPanelLeft" />
+                <PIXITimeline className="sequencerAppMainPanelLeft" songManager={this.state.songManager} />
                 <div className="sequencerAppMainPanelRight">
                     Right panel
                 </div>
@@ -26,12 +40,12 @@ export class SequencerApp extends React.Component {
 }
 
 interface PIXITimelineProps {
-    className?: string
+    className?: string,
+    songManager : SongManager
 }
 
 interface PIXITimelineState {
-    pixiApp: PIXI.Application,
-    songManager: SongManager
+    pixiApp: PIXI.Application
 }
 
 export class PIXITimeline extends React.Component<PIXITimelineProps, PIXITimelineState> {
@@ -45,7 +59,6 @@ export class PIXITimeline extends React.Component<PIXITimelineProps, PIXITimelin
 
         this.state = {
             pixiApp : null,
-            songManager : null
         }
         
         PIXI.settings.ROUND_PIXELS = true;
@@ -76,19 +89,15 @@ export class PIXITimeline extends React.Component<PIXITimelineProps, PIXITimelin
         const parent = app.view.parentElement;
         app.renderer.resize(parent.clientWidth, parent.clientHeight);
 
-        // Create songManager
-        let songManager : SongManager = new SongManager();
-
-
         // Create timeline and show on pixi app
-        let timeline = new TimelineView(app.renderer.width, app.renderer.height, [], songManager);
+        let timeline = new TimelineView(app.renderer.width, app.renderer.height, [], this.props.songManager);
 
         // Need to figure out a solution for passing mouseWheelEvents to current 
         app.view.addEventListener("wheel", event => navigationView.passWheelEvent(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));
     
         navigationView.setStageRenderer(app.stage, app.renderer);
         navigationView.show(timeline);
-        this.setState({pixiApp: app, songManager : songManager}, this._resizePIXIApp);
+        this.setState({pixiApp: app}, this._resizePIXIApp);
 
     }
 

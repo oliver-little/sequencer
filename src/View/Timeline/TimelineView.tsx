@@ -40,7 +40,7 @@ export class TimelineView extends VerticalScrollView {
 
         this.timeline = new SongTimeline(this._sidebarPosition, width, height, songManager, tracks, this.showSequencer);
         this.addChild(this.timeline);
-        this.trackList = new TrackList(this._sidebarPosition, width, height, tracks);
+        this.trackList = new TrackList(this._sidebarPosition, width, height, songManager, tracks);
         this.trackList.trackRemoved.addListener(this._trackRemoved);
         this.trackList.trackEdited.addListener(this._trackEdited);
         this.addChild(this.trackList);
