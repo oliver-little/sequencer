@@ -137,7 +137,7 @@ export class ConnectionManager {
             this._possibleConnections["chain" + chainNo] = object;
 
             object.chainName = "chain" + chainNo;
-            this.createConnections(object, EffectsChain.defaults.connections);
+            this.createConnections(object, EffectsChain.createDefaults().connections);
         }
         else {
             this._possibleConnections[settings.chainName] = object;

@@ -6,4 +6,5 @@ export interface IInstrument extends ICustomOutputAudioNode {
     masterGain : number;
     stop();
     serialise() : IInstrumentSettings;
+    destroy();
 }

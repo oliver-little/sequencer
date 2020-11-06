@@ -15,7 +15,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
 
     private _chainNodes = [];
 
-    constructor(context: AudioContext | OfflineAudioContext, settings: IChainSettings = EffectsChain.defaults) {
+    constructor(context: AudioContext | OfflineAudioContext, settings: IChainSettings = EffectsChain.createDefaults()) {
         this.id = uuid();
 
         this._context = context;
@@ -173,12 +173,14 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
         return this._settings;
     }
 
-    public static defaults : IChainSettings = {
-        "chainName" : "",
-        "effects" : [],
-        "preGain" : 1,
-        "postGain" : 1,
-        "connections" : ["context"]
+    public static createDefaults() : IChainSettings {
+        return {
+            "chainName" : "",
+            "effects" : [],
+            "preGain" : 1,
+            "postGain" : 1,
+            "connections" : ["context"]
+        }
     }
 }
 

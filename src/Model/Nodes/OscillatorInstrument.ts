@@ -29,7 +29,7 @@ export class OscillatorInstrument implements IInstrument {
      * @param {IOscillatorSettings} [settings=JSON.parse(oscillatorDefaults)] An object describing the settings for this track
      * @memberof OscillatorInstrument
      */
-    constructor(context : AudioContext|OfflineAudioContext, settings : IOscillatorSettings = OscillatorInstrument.defaults) {
+    constructor(context : AudioContext|OfflineAudioContext, settings : IOscillatorSettings = OscillatorInstrument.createDefaults()) {
         this._settings = settings;
         this.id = uuid();
 
@@ -212,6 +212,11 @@ export class OscillatorInstrument implements IInstrument {
         return this._settings;
     }
 
+    public destroy() {
+        this._masterGain = null;
+        this._sources = [];
+    }
+
     /**
      * Creates a new oscillator, with a gain object attached to it.
      *
@@ -233,14 +238,16 @@ export class OscillatorInstrument implements IInstrument {
         return {oscillator : source, gain : sourceGain, usage : []};
     }
 
-    public static defaults : IOscillatorSettings = {
-        "type": "oscillator",
-        "oscillatorType": "sine",
-        "gain": 0.5,
-        "envelopeEnabled" : true,
-        "envelope": {
-            "attack": 0.1,
-            "release": 0.1
+    public static createDefaults() : IOscillatorSettings {
+        return {
+            "type": "oscillator",
+            "oscillatorType": "sine",
+            "gain": 0.5,
+            "envelopeEnabled" : true,
+            "envelope": {
+                "attack": 0.1,
+                "release": 0.1
+            }
         }
     }
 }

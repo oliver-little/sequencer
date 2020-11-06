@@ -30,7 +30,7 @@ export class SoundFileInstrument implements IInstrument {
      * @returns
      * @memberof SoundFileInstrument
      */
-    static async create(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings = SoundFileInstrument.defaults) {
+    static async create(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings = SoundFileInstrument.createDefaults()) {
         const o = new SoundFileInstrument(context, settings);
         await o.initialise();
         return o;
@@ -42,7 +42,7 @@ export class SoundFileInstrument implements IInstrument {
      * @param {IMP3Settings} settings
      * @memberof MP3Instrument
      */
-    constructor(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings = SoundFileInstrument.defaults) {
+    constructor(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings = SoundFileInstrument.createDefaults()) {
         this._settings = settings;
         this.id = uuid();
 
@@ -167,6 +167,12 @@ export class SoundFileInstrument implements IInstrument {
         return this._settings;
     }
 
+    public destroy() {
+        this._masterGain = null;
+        this._playingNodes = [];
+        this._audioBuffer = null;
+    }
+
     private static createBufferSource(context : AudioContext|OfflineAudioContext, buffer : AudioBuffer) : AudioBufferSourceNode {
         let bufferSource = context.createBufferSource();
         bufferSource.buffer = buffer;
@@ -213,10 +219,12 @@ export class SoundFileInstrument implements IInstrument {
     }
 
     
-    public static defaults : ISoundFileSettings = {
-        "type": "soundFile",
-        "gain": 1,
-        "soundData": ""
+    public static createDefaults() : ISoundFileSettings {
+        return {
+            "type": "soundFile",
+            "gain": 1,
+            "soundData": ""
+        };
     }
 }
 

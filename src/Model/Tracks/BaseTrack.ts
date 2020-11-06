@@ -135,4 +135,11 @@ export abstract class BaseTrack {
             "connections" : [],
         }
     }
+
+    public destroy() {
+        this.stop();
+        this.audioSource.destroy();
+        this._scheduleEvent.removeAllListeners();
+        this.audioSource = null;
+    }
 }

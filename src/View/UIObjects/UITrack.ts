@@ -15,6 +15,10 @@ export class UITrack {
         this.height = height;
         this.track = track;
     }
+
+    public destroy() {
+        this.track.destroy();
+    }
 }
 
 /**
@@ -316,6 +320,11 @@ export class NoteUITrack extends UITrack {
         let noteGroupIndex = this.getNoteGroupIndex(this.getNoteGroupsWithinTime(event.startPosition, event.endPosition)[0]);
         this.track.removeNote(event);
         this.checkNoteGroupBoundaries(noteGroupIndex);
+    }
+
+    public destroy() {
+        this.noteGroupsChanged.removeAllListeners();
+        super.destroy();
     }
 }
 

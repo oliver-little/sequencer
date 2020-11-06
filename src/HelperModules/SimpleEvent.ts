@@ -36,6 +36,10 @@ export class SimpleEvent{
         this._callbacks.splice(index, 1);
     }
 
+    public removeAllListeners() {
+        this._callbacks = [];
+    }
+
     public emit(...args : any) : void {
         this._callbacks.forEach(element => {
             element(...args);

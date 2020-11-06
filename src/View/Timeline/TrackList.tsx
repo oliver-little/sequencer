@@ -178,6 +178,7 @@ export class TrackList extends PIXI.Container {
     }
 
     private _deleteTrack(index: number) {
+        let removedTrack = this.tracks[index];
         this.tracks.splice(index, 1);
         if (this.tracks.length > 0) {
             this.tracks[0].startY = UIPositioning.timelineHeaderHeight;
@@ -187,6 +188,7 @@ export class TrackList extends PIXI.Container {
         }
         this.drawTracks();
         this.trackRemoved.emit();
+        removedTrack.destroy();
     }
 
     private _rerenderList() {
