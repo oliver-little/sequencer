@@ -170,13 +170,13 @@ export class TrackList extends PIXI.Container {
     private _allowOverlapChanged(index: number, value: boolean) {
         let soundFileTrack = this.tracks[index].track as SoundFileTrack;
         soundFileTrack.allowOverlaps = value;
-        this.trackEdited.emit(index);
         this._rerenderList();
     }
 
     private _displayActualWidthChanged(index: number, value: boolean) {
         let soundFileTrack = this.tracks[index] as SoundFileUITrack;
         soundFileTrack.displayActualWidth = value;
+        this.trackEdited.emit(index);
         this._rerenderList();
     }
 
