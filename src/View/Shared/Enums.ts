@@ -20,3 +20,13 @@ export enum MouseClickType {
     MiddleClick,
     None
 }
+
+// Length of notes to add
+export enum NoteLength {
+    Bar,
+    Half,
+    Quarter,
+    Eighth,
+    Sixteenth,
+    ThirtySecond
+}

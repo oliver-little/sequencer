@@ -4,6 +4,7 @@ import { SongManager } from "../../Model/SongManagement/SongManager";
 import { navigationView } from "../Shared/NavigationView";
 import { UIColors } from "../Shared/UITheme";
 import { TimelineView } from "../Timeline/TimelineView";
+import { EditPanel } from "./EditPanel";
 import { PlaybackPanel } from "./PlaybackPanel";
 
 // Global songManager
@@ -28,6 +29,7 @@ export class SequencerApp extends React.Component<{}, SequencerAppState> {
         return <div className="fullScreen">
             <div className="sequencerAppTopBar">
                 <PlaybackPanel songManager={this.state.songManager} />
+                <EditPanel />
             </div>
             <div className="sequencerAppMainPanel">
                 <PIXITimeline className="sequencerAppMainPanelLeft" songManager={this.state.songManager} />

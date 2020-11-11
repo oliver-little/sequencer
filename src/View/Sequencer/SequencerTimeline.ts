@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
-import { TimelineMode, MouseClickType } from "../Shared/Enums.js";
+import { TimelineMode, MouseClickType, NoteLength } from "../Shared/Enums.js";
 import { NoteUITrack } from "../UIObjects/UITrack.js";
 import { TrackTimelineEvent, NoteTimelineEvent } from "../Shared/TrackTimelineEvent.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
@@ -9,15 +9,6 @@ import { UIColors, UIPositioning } from "../Shared/UITheme.js";
 import { NoteEvent } from "../../Model/Notation/SongEvents.js";
 import { NoteGroupMarker } from "./NoteGroupMarker.js";
 import { ObjectPool } from "../../HelperModules/ObjectPool.js";
-
-enum NoteLength {
-    Bar,
-    Half,
-    Quarter,
-    Eighth,
-    Sixteenth,
-    ThirtySecond
-}
 
 interface INewNoteData {
     pitchString: string,
