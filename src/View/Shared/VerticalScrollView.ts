@@ -38,6 +38,9 @@ export abstract class VerticalScrollView extends MouseTypeContainer implements I
         this.endX = width;
         this.endY = height;
         this.resizeInteractiveArea(width, height);
+
+        this.on("added", this.addedHandler);
+        this.on("removed", this.removedHandler);
     }
 
     public resize(width: number, height: number) {
@@ -98,6 +101,14 @@ export abstract class VerticalScrollView extends MouseTypeContainer implements I
 
     public mouseWheelHandler(event : WheelEvent, canvasX : number, canvasY : number) {
         this.timeline.mouseWheelHandler(event, canvasX, canvasY);
+    }
+
+    public addedHandler() {
+        this.timeline.addedHandler();
+    }
+
+    public removedHandler() {
+        this.timeline.removedHandler();
     }
 
     public destroy() {

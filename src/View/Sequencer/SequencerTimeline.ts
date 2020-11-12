@@ -9,6 +9,7 @@ import { UIColors, UIPositioning } from "../Settings/UITheme.js";
 import { NoteEvent } from "../../Model/Notation/SongEvents.js";
 import { NoteGroupMarker } from "./NoteGroupMarker.js";
 import { ObjectPool } from "../../HelperModules/ObjectPool.js";
+import { editType } from "../Settings/EditType.js";
 
 interface INewNoteData {
     pitchString: string,
@@ -21,7 +22,7 @@ export class SequencerTimeline extends ScrollableTimeline {
     static noteHeight = 20;
 
     static noteLengthDict = {
-        [NoteLength.Bar]: 4,
+        [NoteLength.Whole]: 4,
         [NoteLength.Half]: 2,
         [NoteLength.Quarter]: 1,
         [NoteLength.Eighth]: 0.5,
@@ -30,7 +31,10 @@ export class SequencerTimeline extends ScrollableTimeline {
     }
 
     public timelineMode: TimelineMode = TimelineMode.Edit;
-    public noteLength: NoteLength = NoteLength.Quarter;
+    
+    public get noteLength() : NoteLength {
+        return editType.noteLength;
+    }
 
     public track: NoteUITrack;
 
@@ -140,6 +144,11 @@ export class SequencerTimeline extends ScrollableTimeline {
     public mouseWheelHandler(event: WheelEvent, canvasX: number, canvasY: number) {
         this._newEventGraphics.visible = false;
         super.mouseWheelHandler(event, canvasX, canvasY);
+    }
+
+    public addedHandler() {
+        super.addedHandler();
+        editType.noteLengthDisabled = false;
     }
 
     public destroy() {

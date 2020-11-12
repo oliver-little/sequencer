@@ -8,6 +8,7 @@ import { TimelineMarker } from "./TimelineMarker.js";
 import { UIPositioning } from "../Settings/UITheme.js";
 import { MouseTypeContainer } from "./InteractiveContainer.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
+import { editType } from "../Settings/EditType.js";
 
 /**
  * Provides a basic implementation of a timeline, including pooled bar objects using ScrollableBar
@@ -45,7 +46,9 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
      * @type {EventSnapType}
      * @memberof SongTimeline
      */
-    public dragType: EventSnapType = EventSnapType.Beat;
+    public get dragType() : EventSnapType {
+        return editType.snapType;
+    }
 
     /**
      * Event called when the timeline's position is changed in any way (pan, zoom)
@@ -79,6 +82,8 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     // Timeline marker variables
     protected _timelineMarker: TimelineMarker;
 
+    private _onScreen : boolean;
+
     constructor(startX: number, endX: number, startY: number, endY: number, songManager: SongManager) {
         super();
         this.startX = startX;
@@ -86,6 +91,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this.endX = endX;
         this.endY = endY;
         this.songManager = songManager;
+        this._onScreen = true;
         this.timelineViewChange = new SimpleEvent();
 
         this._scrollObjects = [];
@@ -297,6 +303,18 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
             offset = this.startX - this._scrollObjects[0].leftBound;
         }
         this._offsetChildren(offset);
+    }
+
+    public addedHandler() {
+        this._onScreen = true;
+        this._playingStateChanged(this.songManager.playing);
+        this.regenerateAroundPosition(0);
+    }
+
+    public removedHandler() {
+        this._onScreen = false;
+        this._playingStateChanged(false);
+        this._mouseClickType = MouseClickType.None;
     }
 
     public destroy() {
@@ -568,7 +586,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     }
 
     protected _playingStateChanged(value: boolean) {
-        if (value == true) {
+        if (value == true && this._onScreen) {
             this.timelineMode = TimelineMode.Playback;
             requestAnimationFrame(this._timelineMarkerAnim);
 
@@ -613,6 +631,8 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
      * @memberof ScrollableTimeline
      */
     protected _repositionTimelineMarker(position: number) {
-        this._timelineMarker.x = this.getTimelineEventX(position);
+        if (this._onScreen) {
+            this._timelineMarker.x = this.getTimelineEventX(position);
+        }
     }
 }

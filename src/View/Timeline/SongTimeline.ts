@@ -6,6 +6,7 @@ import { BaseEvent, SecondsBaseEvent } from "../../Model/Notation/SongEvents.js"
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
 import { TimelineMode, MouseClickType } from "../Settings/Enums.js";
+import { editType } from "../Settings/EditType.js";
 
 interface INewEventData {
     track: UITrack,
@@ -65,7 +66,7 @@ export class SongTimeline extends ScrollableTimeline {
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
         this._newEventGraphics.visible = false;
         super.pointerMoveHandler(event);
-        if (this._mouseClickType == MouseClickType.None) {
+        if (this.timelineMode == TimelineMode.Edit && this._mouseClickType == MouseClickType.None) {
             this._newEventData = undefined;
             // Display new event outline (set width for note events, same length as soundfile for soundfile)
             let mousePos = event.data.getLocalPosition(this.parent);
@@ -126,6 +127,9 @@ export class SongTimeline extends ScrollableTimeline {
                     break;
                 }
             }
+        }
+        else {
+            this._newEventGraphics.visible = false;
         }
     }
 
@@ -202,6 +206,12 @@ export class SongTimeline extends ScrollableTimeline {
                 });
             }
         });
+    }
+
+    public addedHandler() {
+        this.regenerateNoteGroups();
+        editType.noteLengthDisabled = true;
+        super.addedHandler();
     }
 
     protected _initialiseTrackTimelineEvents() {

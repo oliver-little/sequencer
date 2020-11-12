@@ -92,7 +92,15 @@ button:focus {
     margin-right: 10px;
 }
 
-.selectionButton.selected {
+.noteButton {
+    font-size: 2em;
+}
+
+.noteButton > span {
+    line-height: 50%;
+}
+
+.selectionButton.selected:enabled {
     outline: 2px solid blue;
 }
 

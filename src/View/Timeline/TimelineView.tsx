@@ -10,6 +10,7 @@ import { UIPositioning } from "../Settings/UITheme";
 import { navigationView } from "../Shared/NavigationView";
 import { SequencerView } from "../Sequencer/SequencerView";
 import { Dropdown } from "../SharedReact/BasicElements";
+import { editType } from "../Settings/EditType";
 
 export class TimelineView extends VerticalScrollView {
 
@@ -83,14 +84,15 @@ export class TimelineView extends VerticalScrollView {
     }
 
     public addedHandler() {
+        super.addedHandler();
         this.trackList.addedHandler();
-        this.timeline.regenerateNoteGroups();
-        this.timeline.regenerateAroundPosition(0);
         this._renderNewTrackObject();
     }
 
     public removedHandler() {
+        super.addedHandler();
         this.trackList.removedHandler();
+        this.timeline.removedHandler();
         unmountComponentAtNode(this._newTrackDropdownContainer);
     }
 

@@ -239,16 +239,14 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
      * @memberof TrackTimelineEvent
      */
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {
-        if (this.timeline.timelineMode == TimelineMode.Edit) {
-            event.stopPropagation();
-            if (this._mouseClickType == MouseClickType.LeftClick) {
-                // Reset x position
-                this.x = this._startXPosition;
-                this.clickHandler();
-            }
-            else if (this._mouseClickType == MouseClickType.RightClick) {
-                this.deleteEvent();
-            }
+        event.stopPropagation();
+        if (this._mouseClickType == MouseClickType.LeftClick) {
+            // Reset x position
+            this.x = this._startXPosition;
+            this.clickHandler();
+        }
+        else if (this.timeline.timelineMode == TimelineMode.Edit && this._mouseClickType == MouseClickType.RightClick) {
+            this.deleteEvent();
         }
     }
 
@@ -260,7 +258,6 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
      */
     public pointerUpDragHandler(event: PIXI.InteractionEvent) {
         if (this.timeline.timelineMode == TimelineMode.Edit) {
-            event.stopPropagation();
             if (this._mouseClickType == MouseClickType.LeftClick) {
                 let point = event.data.getLocalPosition(this.parent);
                 let moveX = this.timeline.snapCoordinateToDragType(point.x) - this._snappedStartPointerPosition.x;
@@ -439,7 +436,6 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
     }
 
     protected clickHandler() {
-        console.log("Clicked NoteTrackTimelineEvent");
         this._clickCallback(this.track);
     }
 }
@@ -522,9 +518,7 @@ export class OneShotTimelineEvent extends TrackTimelineEvent {
     }
 
     protected clickHandler() {
-        console.log("Clicked OneShotTimelineEvent");
     }
-
 }
 
 /**
@@ -617,6 +611,5 @@ export class NoteTimelineEvent extends TrackTimelineEvent {
     }
 
     protected clickHandler() {
-        console.log("Clicked NoteTimelineEvent");
     }
 }

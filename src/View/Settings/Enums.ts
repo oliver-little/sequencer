@@ -23,7 +23,7 @@ export enum MouseClickType {
 
 // Length of notes to add
 export enum NoteLength {
-    Bar,
+    Whole,
     Half,
     Quarter,
     Eighth,
