@@ -1,8 +1,8 @@
 import * as PIXI from "pixi.js";
 import { ScrollableTimeline } from "./ScrollableTimeline";
 import { InteractiveContainer, MouseTypeContainer } from "./InteractiveContainer";
-import { MouseClickType } from "./Enums";
-import { UIPositioning } from "./UITheme";
+import { MouseClickType } from "../Settings/Enums";
+import { UIPositioning } from "../Settings/UITheme";
 import { IFullScreenView } from "../Interfaces/IFullScreenView";
 
 interface pointerEventObject {

@@ -1,8 +1,8 @@
 import * as PIXI from "pixi.js";
 import * as React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
-import { SoundFileUITrack, UITrack } from "../UIObjects/UITrack.js";
-import { UIColors, UIPositioning } from "../Shared/UITheme.js";
+import { SoundFileUITrack, UITrack } from "../Shared/UITrack.js";
+import { UIColors, UIPositioning } from "../Settings/UITheme.js";
 import { FileInput, IconFileInput, LabelledCheckbox, Slider } from "../SharedReact/BasicElements.js";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";

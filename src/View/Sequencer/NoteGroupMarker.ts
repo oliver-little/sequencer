@@ -1,8 +1,8 @@
 import * as PIXI from "pixi.js";
 import { MouseTypeContainer } from "../Shared/InteractiveContainer.js";
-import { MouseClickType } from "../Shared/Enums.js";
+import { MouseClickType } from "../Settings/Enums.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
-import { UIColors, UIPositioning } from "../Shared/UITheme.js";
+import { UIColors, UIPositioning } from "../Settings/UITheme.js";
 
 export class NoteGroupMarker extends PIXI.Container {
 

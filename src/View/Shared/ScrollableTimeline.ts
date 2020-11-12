@@ -2,10 +2,10 @@ import * as PIXI from "pixi.js";
 import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { ScrollableBar } from "./ScrollableBar.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
-import { MouseClickType, TimelineMode, EventSnapType } from "./Enums.js";
+import { MouseClickType, TimelineMode, EventSnapType } from "../Settings/Enums.js";
 import { TrackTimelineEvent } from "./TrackTimelineEvent.js";
 import { TimelineMarker } from "./TimelineMarker.js";
-import { UIPositioning } from "./UITheme.js";
+import { UIPositioning } from "../Settings/UITheme.js";
 import { MouseTypeContainer } from "./InteractiveContainer.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 

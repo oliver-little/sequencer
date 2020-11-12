@@ -1,11 +1,11 @@
 import * as PIXI from "pixi.js";
-import { UITrack, NoteUITrack, SoundFileUITrack } from "../UIObjects/UITrack.js";
+import { UITrack, NoteUITrack, SoundFileUITrack } from "../Shared/UITrack.js";
 import { NoteGroupTimelineEvent, OneShotTimelineEvent, TrackTimelineEvent } from "../Shared/TrackTimelineEvent.js";
-import { UIColors, UIPositioning } from "../Shared/UITheme.js";
+import { UIColors, UIPositioning } from "../Settings/UITheme.js";
 import { BaseEvent, SecondsBaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
-import { TimelineMode, MouseClickType } from "../Shared/Enums.js";
+import { TimelineMode, MouseClickType } from "../Settings/Enums.js";
 
 interface INewEventData {
     track: UITrack,

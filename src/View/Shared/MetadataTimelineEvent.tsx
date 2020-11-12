@@ -3,8 +3,8 @@ import * as React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
 import { MouseTypeContainer } from "./InteractiveContainer";
 import { MetadataEvent } from "../../Model/Notation/SongEvents";
-import { MouseClickType } from "./Enums";
-import { UIColors, UIPositioning } from "./UITheme";
+import { MouseClickType } from "../Settings/Enums";
+import { UIColors, UIPositioning } from "../Settings/UITheme";
 import { ScrollableTimeline } from "./ScrollableTimeline";
 import { MetadataEditBox } from "./MetadataEditBox";
 

@@ -1,11 +1,11 @@
 import * as PIXI from "pixi.js";
-import { UIColors, UIPositioning } from "./UITheme.js";
+import { UIColors, UIPositioning } from "../Settings/UITheme.js";
 import { NoteEvent, BaseEvent } from "../../Model/Notation/SongEvents.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
-import { UITrack, NoteUITrack, SoundFileUITrack } from "../UIObjects/UITrack.js";
+import { UITrack, NoteUITrack, SoundFileUITrack } from "./UITrack.js";
 import { ScrollableTimeline } from "./ScrollableTimeline.js";
 import { MouseTypeContainer } from "./InteractiveContainer.js";
-import { MouseClickType, TimelineMode } from "./Enums.js";
+import { MouseClickType, TimelineMode } from "../Settings/Enums.js";
 import { SequencerTimeline } from "../Sequencer/SequencerTimeline.js";
 
 

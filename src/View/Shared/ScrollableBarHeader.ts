@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js";
-import { UIFonts, UIColors, UIPositioning } from "./UITheme.js";
+import { UIFonts, UIColors, UIPositioning } from "../Settings/UITheme.js";
 import { ScrollableTimeline } from "./ScrollableTimeline.js";
 import { MetadataTimelineEvent } from "./MetadataTimelineEvent.js";
 

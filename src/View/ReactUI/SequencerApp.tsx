@@ -2,7 +2,7 @@ import * as PIXI from "pixi.js";
 import * as React from "react";
 import { SongManager } from "../../Model/SongManagement/SongManager";
 import { navigationView } from "../Shared/NavigationView";
-import { UIColors } from "../Shared/UITheme";
+import { UIColors } from "../Settings/UITheme";
 import { TimelineView } from "../Timeline/TimelineView";
 import { EditPanel } from "./EditPanel";
 import { PlaybackPanel } from "./PlaybackPanel";

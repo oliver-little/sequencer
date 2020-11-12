@@ -1,5 +1,5 @@
 import * as PIXI from "pixi.js"
-import { MouseClickType } from "./Enums";
+import { MouseClickType } from "../Settings/Enums";
 import { PointHelper } from "../../HelperModules/PointHelper";
 
 /**
