@@ -202,9 +202,11 @@ export class OscillatorInstrument implements IInstrument {
      * @memberof OscillatorInstrument
      */
     public stop() {
+        console.log(this._sources);
         this._sources.forEach(element => {
-            element.gain.gain.cancelAndHoldAtTime(0);
-            element.gain.gain.linearRampToValueAtTime(0, this._settings.envelope.release);
+            element.gain.gain.cancelScheduledValues(0);
+            element.gain.gain.setValueAtTime(element.gain.gain.value, this._context.currentTime);
+            element.gain.gain.exponentialRampToValueAtTime(0.0001, this._context.currentTime + 0.1);
         });
     }
 

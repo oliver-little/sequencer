@@ -52,9 +52,31 @@ export class SongManager {
         return this._quarterNotePosition;
     }
 
+    
+    /**
+     * Used for external setting of quarterNotePosition (forces the update function to use a new start time)
+     *
+     * @memberof SongManager
+     */
     set quarterNotePosition(value : number) {
+        this._internalQuarterNotePosition = value;
+        this._startTime = this.context.currentTime - this.metadata.positionQuarterNoteToSeconds(this._quarterNotePosition);
+        if (this._playing) {
+            this._tracks.forEach(element => {
+                element.start(this._quarterNotePosition);
+            });
+        }
+    }
+
+    /**
+     * Used for internal setting of quarterNotePosition (updates the value and emits the event signifying it was changed)
+     *
+     * @private
+     * @memberof SongManager
+     */
+    private set _internalQuarterNotePosition(value : number) {
         this._quarterNotePosition = value;
-        this.quarterNotePositionChangedEvent.emit(this._quarterNotePosition);
+        this.quarterNotePositionChangedEvent.emit(value);
     }
 
     get tracks() {
@@ -129,7 +151,7 @@ export class SongManager {
         // Schedule quarter note update function until playing stops using animation frame (to keep animations smooth)
         requestAnimationFrame(this._boundQuarterNoteUpdateFunction);
         this._tracks.forEach(element => {
-            element.start(startPosition);
+            element.start(this._quarterNotePosition);
         });
     }
 
@@ -249,7 +271,7 @@ export class SongManager {
     protected quarterNoteUpdateFunction() {
         if (this.playing) {
             let timeSinceStart = this.context.currentTime - this._startTime;
-            this.quarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
+            this._internalQuarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
             requestAnimationFrame(this._boundQuarterNoteUpdateFunction);
         }
     }

@@ -72,6 +72,7 @@ export abstract class BaseTrack {
      * @memberof BaseTrack
      */
     public start(startPosition) : void {
+        this.stop();
         if (startPosition == 0) {
             this._startTime = this._context.currentTime;
         }

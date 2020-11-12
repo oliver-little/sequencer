@@ -234,9 +234,14 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     }
 
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {
-        // TODO: move timeline marker on click in playback mode
         if (this._mouseClickType == MouseClickType.LeftClick) {
             this.x = this._startXPosition;
+
+            if (this.timelineMode == TimelineMode.Playback || this._startPointerPosition.y < UIPositioning.timelineHeaderHeight) {
+                let [barPosition, beatPosition, numberOfBeats] = this._getBarFromStageCoordinates(this._startPointerPosition.x);
+                barPosition += beatPosition/numberOfBeats;
+                this.songManager.quarterNotePosition = this.metadata.positionBarsToQuarterNote(barPosition);
+            }
         }
     }
 
