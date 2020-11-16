@@ -106,10 +106,24 @@ button:focus {
 
 /* Dropdown box */
 .dropdown {
+    /* Keeps the dropdown out of the way until it is clicked */
+    position: absolute;
+    left: 100vw;
+
     display: flex;
     align-items: center;
     justify-content:center;
-    flex-direction: column;
+    flex-direction: column;;
+
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.dropdown.dropdownVisible {
+    position: static;
+    transform: translateY(0px);
+    opacity: 1;
 }
 
 .dropdownItem {

@@ -83,30 +83,33 @@ interface DropdownProps {
     optionClickCallback: Function
 }
 
-export class Dropdown extends React.Component<DropdownProps> {
+interface DropdownState {
+    dropdownVisible : boolean
+}
+
+export class Dropdown extends React.Component<DropdownProps, DropdownState> {
 
     private _optionsDiv : React.RefObject<HTMLDivElement>
 
     constructor(props) {
         super(props);
 
+        this.state = {
+            dropdownVisible: false
+        }
+
         this._optionsDiv = React.createRef();
     }
 
     private _handleDropdownClick() {
-        if (this._optionsDiv.current.style.display == "none") {
-            this._optionsDiv.current.style.removeProperty("display");
-        }
-        else {
-            this._optionsDiv.current.style.display = "none";
-        }
+        this.setState({dropdownVisible: !this.state.dropdownVisible});
     }
 
     render() {
-        const objDivClasses = "dropdown" + (this.props.optionsDivClassName == undefined ? "" : " " + this.props.optionsDivClassName);
+        const objDivClasses = "dropdown" + (this.props.optionsDivClassName == undefined ? "" : " " + this.props.optionsDivClassName) + (this.state.dropdownVisible ? " dropdownVisible" : "");
         return <div>
             <button className={this.props.buttonClassName} onClick={() => {this._handleDropdownClick()}}>{this.props.title}</button>
-            <div className={objDivClasses} ref={this._optionsDiv} style={{display: "none"}}>
+            <div className={objDivClasses} ref={this._optionsDiv}>
                 {this.props.optionTitles.map((title, index) => {
                     return <DropdownItem key={index} index={index} className={this.props.optionClassName} title={title} callback={(index) => {this._handleDropdownClick(); this.props.optionClickCallback(index);}} />
                 })}
