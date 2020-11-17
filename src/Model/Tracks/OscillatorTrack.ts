@@ -1,10 +1,10 @@
 import SongMetadata from "../SongManagement/SongMetadata.js";
 import { OscillatorInstrument } from "../Nodes/OscillatorInstrument.js";
-import { NoteEvent, BaseEvent, ISongEvent } from "../Notation/SongEvents.js";
-import { BaseTrack } from "./BaseTrack.js";
+import { NoteEvent, BaseEvent } from "../Notation/SongEvents.js";
+import { BaseTrack, IOscillatorTrackSettings } from "./BaseTrack.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
-import { IOscillatorSettings } from "../Interfaces/IInstrumentSettings.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
+import { ConnectionManager } from "../SongManagement/ConnectionManager.js";
 
 export class OscillatorTrack extends BaseTrack {
 
@@ -21,9 +21,10 @@ export class OscillatorTrack extends BaseTrack {
      * @param {IOscillatorSettings} settings An object that fulfills the IOscillatorSettings interface
      * @memberof OscillatorTrack
      */
-    constructor(metadata: SongMetadata, context: AudioContext | OfflineAudioContext, scheduleEvent: SimpleEvent, settings?: IOscillatorSettings) {
-        let instrument = new OscillatorInstrument(context, settings);
-        super(metadata, context, scheduleEvent, instrument);
+    constructor(metadata: SongMetadata, context: AudioContext | OfflineAudioContext, scheduleEvent: SimpleEvent, connectionManager : ConnectionManager, settings?: IOscillatorTrackSettings) {
+        let instrument = new OscillatorInstrument(context, settings ? settings.source : undefined);
+
+        super(metadata, context, scheduleEvent, instrument, connectionManager);
 
         this._pitchStrings = {};
     }

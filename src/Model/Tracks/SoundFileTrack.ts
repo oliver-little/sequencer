@@ -1,9 +1,9 @@
-import {BaseTrack} from "./BaseTrack.js";
+import {BaseTrack, ISoundFileTrackSettings} from "./BaseTrack.js";
 import { SoundFileInstrument } from "../Nodes/SoundFileInstrument.js";
 import SongMetadata from "../SongManagement/SongMetadata.js";
-import { ISoundFileSettings } from "../Interfaces/IInstrumentSettings.js";
 import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
 import { SecondsBaseEvent, BaseEvent } from "../Notation/SongEvents.js";
+import { ConnectionManager } from "../SongManagement/ConnectionManager.js";
 
 export class SoundFileTrack extends BaseTrack {
     public audioSource : SoundFileInstrument;
@@ -19,8 +19,8 @@ export class SoundFileTrack extends BaseTrack {
      * @param {ISoundFileSettings} settings
      * @memberof SoundFileTrack
      */
-    public static async create(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, settings? : ISoundFileSettings) {
-        const o = new SoundFileTrack(metadata, context, scheduleEvent, settings);
+    public static async create(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, connectionManager : ConnectionManager, settings? : ISoundFileTrackSettings) {
+        const o = new SoundFileTrack(metadata, context, scheduleEvent, connectionManager, settings);
         await o.initialise();
         return o;
     }
@@ -43,8 +43,8 @@ export class SoundFileTrack extends BaseTrack {
      * @param {ISoundFileSettings} settings
      * @memberof SoundFileTrack
      */
-    constructor(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, settings? : ISoundFileSettings) {
-        super(metadata, context, scheduleEvent, new SoundFileInstrument(context, settings));
+    constructor(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, connectionManager : ConnectionManager, settings? : ISoundFileTrackSettings) {
+        super(metadata, context, scheduleEvent, new SoundFileInstrument(context, settings ? settings.source : undefined), connectionManager);
     }
 
     public async initialise() {

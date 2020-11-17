@@ -202,7 +202,6 @@ export class OscillatorInstrument implements IInstrument {
      * @memberof OscillatorInstrument
      */
     public stop() {
-        console.log(this._sources);
         this._sources.forEach(element => {
             element.gain.gain.cancelScheduledValues(0);
             element.gain.gain.setValueAtTime(element.gain.gain.value, this._context.currentTime);

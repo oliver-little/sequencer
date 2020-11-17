@@ -110,6 +110,7 @@ export class ConnectionManager {
         if (object.id in this._currentConnections) {
             let index = this._currentConnections[object.id].indexOf(connection);
             if (index != -1) {
+                object.disconnect(this._possibleConnections[connection]);
                 this._currentConnections[object.id].splice(index, 1);
             }
             else {
@@ -119,6 +120,17 @@ export class ConnectionManager {
         else {
             throw new Error("Object does not have any connections.");
         }
+    }
+
+    /**
+     * Removes all existing connections from a node
+     *
+     * @param {ICustomOutputAudioNode} object
+     * @memberof ConnectionManager
+     */
+    public removeAllConnections(object : ICustomOutputAudioNode) {
+        object.disconnectAll();
+        delete this._currentConnections[object.id];
     }
 
     /**

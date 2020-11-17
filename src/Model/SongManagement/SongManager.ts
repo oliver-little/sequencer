@@ -1,7 +1,7 @@
 import SongMetadata from "./SongMetadata.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 import { IOscillatorSettings, ISoundFileSettings, IChainSettings } from "../Interfaces/IInstrumentSettings.js";
-import { BaseTrack, ITrackSettings } from "../Tracks/BaseTrack.js";
+import { BaseTrack, IOscillatorTrackSettings, ISoundFileTrackSettings, ITrackSettings } from "../Tracks/BaseTrack.js";
 import { OscillatorTrack } from "../Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "../Tracks/SoundFileTrack.js";
 import { ConnectionManager } from "./ConnectionManager.js";
@@ -90,13 +90,9 @@ export class SongManager {
      * @returns {OscillatorTrack}
      * @memberof SongManager
      */
-    public addOscillatorTrack(connections : string[] = ["context"], settings?: IOscillatorSettings, events? : ISongEvent[]): OscillatorTrack {
-        let newTrack = new OscillatorTrack(this.metadata, this.context, this.scheduleEvent, settings);
-        if (events != undefined) {
-            newTrack.timeline.deserialise(events, this.metadata);
-        }
+    public addOscillatorTrack(settings? : IOscillatorTrackSettings): OscillatorTrack {
+        let newTrack = new OscillatorTrack(this.metadata, this.context, this.scheduleEvent, this.connectionManager, settings);
         this._tracks.push(newTrack);
-        this.connectionManager.createConnections(newTrack.audioSource, connections);
         return newTrack;
     }
 
@@ -108,13 +104,9 @@ export class SongManager {
      * @returns {Promise<SoundFileTrack>}
      * @memberof SongManager
      */
-    public async addSoundFileTrack(connections : string[] = ["context"], settings?: ISoundFileSettings, events? : ISongEvent[]) : Promise<SoundFileTrack> {
-        let newTrack = await SoundFileTrack.create(this.metadata, this.context, this.scheduleEvent, settings);
-        if (events != undefined) {
-            newTrack.timeline.deserialise(events, this.metadata);
-        }
+    public async addSoundFileTrack(settings? : ISoundFileTrackSettings) : Promise<SoundFileTrack> {
+        let newTrack = await SoundFileTrack.create(this.metadata, this.context, this.scheduleEvent, this.connectionManager, settings);
         this._tracks.push(newTrack);
-        this.connectionManager.createConnections(newTrack.audioSource, connections);
         return newTrack;
     }
 
@@ -189,7 +181,6 @@ export class SongManager {
         let serialisedTracks = []
         this._tracks.forEach(track => {
             let trackSettings = track.serialise();
-            trackSettings.connections = this.connectionManager.getConnections(track.audioSource);
             serialisedTracks.push(trackSettings);
         });
         let serialisedChains = this.connectionManager.serialiseChains();
@@ -217,10 +208,13 @@ export class SongManager {
             let track = settings.tracks[i];
             switch (track.source.type) {
                 case "oscillator": 
-                    this.addOscillatorTrack(track.connections, track.source as IOscillatorSettings, track.events);
+                    this.addOscillatorTrack(track as IOscillatorTrackSettings);
                     break;
                 case "soundFile":
-                    await this.addSoundFileTrack(track.connections, track.source as ISoundFileSettings, track.events);
+                    await this.addSoundFileTrack(track as ISoundFileTrackSettings);
+                    break;
+                default:
+                    throw new Error("Invalid track type.");
                     break;
             }
         };

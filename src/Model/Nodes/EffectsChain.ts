@@ -28,11 +28,11 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
 
         // Populate chain from settings
         if (this._settings.effects.length > 0) {
-            let currentEffect = this._tuna[this._settings.effects[0].effectType](this._settings.effects[0].properties);
+            let currentEffect = this.stringToEffectsObject(this._settings.effects[0].effectType, this._settings.effects[0].properties);
             this._chainNodes.push(currentEffect);
             this._preGain.connect(currentEffect)
             for (let i = 1; i < this._settings.effects.length; i++) {
-                currentEffect = this._tuna[this._settings.effects[i].effectType](this._settings.effects[i].properties)
+                currentEffect = this.stringToEffectsObject(this._settings.effects[i].effectType, this._settings.effects[i].properties)
                 this._chainNodes[i-1].connect(currentEffect);
                 this._chainNodes.push(currentEffect);
             }
@@ -96,7 +96,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
         if (index < 0 || index > this._chainNodes.length) {
             throw new RangeError("Index out of range");
         }
-        let effect = new this._tuna[effectType](properties);
+        let effect = this.stringToEffectsObject(effectType, properties);
 
         // Connect effect
         if (index > 0) {
@@ -180,6 +180,43 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
             "preGain" : 1,
             "postGain" : 1,
             "connections" : ["context"]
+        }
+    }
+
+    public stringToEffectsObject(effectString : string, s? : {[property: string] : any}) {
+        switch (effectString) {
+            case "Chorus":
+                return this._tuna.Chorus(s);
+            case "Delay":
+                return this._tuna.Delay(s);
+            case "Overdrive":
+                return this._tuna.Overdrive(s);
+            case "Compressor":
+                return this._tuna.Compressor(s);
+            case "Convolver":
+                return this._tuna.Convolver(s);
+            case "Filter":
+                return this._tuna.Filter(s);
+            case "Cabinet":
+                return this._tuna.Cabinet(s);
+            case "Tremolo":
+                return this._tuna.Tremolo(s);
+            case "WahWah":
+                return this._tuna.WahWah(s);
+            case "Phaser":
+                return this._tuna.Phaser(s);
+            case "Bitcrusher":
+                return this._tuna.Bitcrusher(s);
+            case "Moog":
+                return this._tuna.MoogFilter(s);
+            case "PingPongDelay":
+                return this._tuna.PingPongDelay(s);
+            case "Panner":
+                return this._tuna.Panner(s);
+            case "Gain":
+                return this._context.createGain();
+            default:
+                throw new Error("Invalid effect name.");
         }
     }
 }
