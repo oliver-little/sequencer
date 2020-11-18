@@ -6,6 +6,7 @@ import { UIColors } from "../Settings/UITheme";
 import { TimelineView } from "../Timeline/TimelineView";
 import { EditPanel } from "./EditPanel";
 import { PlaybackPanel } from "./PlaybackPanel";
+import { EffectsChainPanel } from "./EffectsChainPanel";
 
 // Global songManager
 
@@ -34,7 +35,7 @@ export class SequencerApp extends React.Component<{}, SequencerAppState> {
             <div className="sequencerAppMainPanel">
                 <PIXITimeline className="sequencerAppMainPanelLeft" songManager={this.state.songManager} />
                 <div className="sequencerAppMainPanelRight">
-                    Right panel
+                    <EffectsChainPanel connectionManager={this.state.songManager.connectionManager} />
                 </div>
             </div>
         </div>

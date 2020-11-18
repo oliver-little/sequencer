@@ -1,7 +1,8 @@
 import { ICustomInputAudioNode, ICustomOutputAudioNode } from "../Interfaces/ICustomAudioNode.js";
-import { IChainSettings } from "../Interfaces/IInstrumentSettings.js";
+import { IChainSettings, IEffect, IEffectProperty } from "../Interfaces/IInstrumentSettings.js";
 import { Tuna } from "../../../dependencies/tuna.js";
 import {v4 as uuid} from "uuid";
+import { ConnectionManager } from "../SongManagement/ConnectionManager.js";
 
 export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNode {
 
@@ -48,6 +49,14 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
         return this._chainNodes.length;
     }
 
+    get effects() : IEffect[] {
+        return this._settings.effects;
+    }
+
+    get effectNodes() {
+        return this._chainNodes;
+    }
+
     /**
      * The name assigned to this EffectsChain by the connection manager
      *
@@ -89,10 +98,10 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
      *
      * @param {number} position The index to add the effect to in the chain, between 0 and the number of nodes in the chain (inclusive)
      * @param {string} effectType The name of the effect
-     * @param {{[property : string] : any}} properties Properties object, different for each effect (see https://github.com/Theodeus/tuna/wiki/Node-examples for usage)
+     * @param {IEffectProperty[]} properties Properties object, different for each effect (see https://github.com/Theodeus/tuna/wiki/Node-examples for usage)
      * @memberof EffectsChain
      */
-    public addEffect(index: number, effectType: string, properties: { [property: string]: any }) {
+    public addEffect(index: number, effectType: string, properties: IEffectProperty[]) {
         if (index < 0 || index > this._chainNodes.length) {
             throw new RangeError("Index out of range");
         }
@@ -157,6 +166,10 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
                 let temp = this._chainNodes[index1];
                 this._chainNodes[index1] = this._chainNodes[index2];
                 this._chainNodes[index2] = temp;
+
+                temp = this._settings.effects[index1];
+                this._settings.effects[index1] = this._settings.effects[index2];
+                this._settings.effects[index2] = temp;
                 // Reconnect nodes
                 this._chainNodes[index1-1].connect(this._chainNodes[index1]);
                 this._chainNodes[index1].connect(this._chainNodes[index1+1]);
@@ -169,6 +182,42 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
         }
     }
 
+    /**
+     * Moves an effect at a given index to a new index
+     *
+     * @param {number} index The index to move from
+     * @param {number} newIndex The index to move to
+     * @memberof EffectsChain
+     */
+    public moveEffect(index : number, newIndex : number) {
+        index = Math.max(Math.min(this.effectCount, index), 0);
+        newIndex = Math.max(Math.min(this.effectCount, newIndex), 0);
+
+        if (index != newIndex) {
+            this._chainNodes[index].disconnect();
+            this._chainNodes[index-1].disconnect();
+            this._chainNodes[index-1].connect(this._chainNodes[index+1]);
+
+            let effect = this._chainNodes[index];
+            this._chainNodes.splice(index, 1);
+
+            this._chainNodes[newIndex-1].disconnect();
+            this._chainNodes.splice(newIndex, 0, effect);
+            this._chainNodes[newIndex-1].connect(this._chainNodes[newIndex]);
+            this._chainNodes[newIndex].connect(this._chainNodes[newIndex+1]);
+
+            let temp = this._settings.effects[index];
+            this._settings.effects.splice(index, 1);
+            this._settings.effects.splice(newIndex, 0, temp);
+        }
+    }
+
+    /**
+     * Returns a copy of this effects chain's settings (note that its current connections are NOT accurate)
+     *
+     * @returns {IChainSettings}
+     * @memberof EffectsChain
+     */
     public serialise() : IChainSettings{
         return this._settings;
     }
@@ -183,41 +232,51 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
         }
     }
 
-    public stringToEffectsObject(effectString : string, s? : {[property: string] : any}) {
+    public stringToEffectsObject(effectString : string, properties? : IEffectProperty[]) {
+        let p = this._convertPropertyToObject(properties);
         switch (effectString) {
             case "Chorus":
-                return this._tuna.Chorus(s);
+                return this._tuna.Chorus(p);
             case "Delay":
-                return this._tuna.Delay(s);
+                return this._tuna.Delay(p);
             case "Overdrive":
-                return this._tuna.Overdrive(s);
+                return this._tuna.Overdrive(p);
             case "Compressor":
-                return this._tuna.Compressor(s);
+                return this._tuna.Compressor(p);
             case "Convolver":
-                return this._tuna.Convolver(s);
+                return this._tuna.Convolver(p);
             case "Filter":
-                return this._tuna.Filter(s);
+                return this._tuna.Filter(p);
             case "Cabinet":
-                return this._tuna.Cabinet(s);
+                return this._tuna.Cabinet(p);
             case "Tremolo":
-                return this._tuna.Tremolo(s);
+                return this._tuna.Tremolo(p);
             case "WahWah":
-                return this._tuna.WahWah(s);
+                return this._tuna.WahWah(p);
             case "Phaser":
-                return this._tuna.Phaser(s);
+                return this._tuna.Phaser(p);
             case "Bitcrusher":
-                return this._tuna.Bitcrusher(s);
+                return this._tuna.Bitcrusher(p);
             case "Moog":
-                return this._tuna.MoogFilter(s);
+                return this._tuna.MoogFilter(p);
             case "PingPongDelay":
-                return this._tuna.PingPongDelay(s);
+                return this._tuna.PingPongDelay(p);
             case "Panner":
-                return this._tuna.Panner(s);
+                return this._tuna.Panner(p);
             case "Gain":
                 return this._context.createGain();
             default:
                 throw new Error("Invalid effect name.");
         }
+    }
+
+    private _convertPropertyToObject(properties : IEffectProperty[]) {
+        let newObj = {};
+        properties.forEach((prop) => {
+            newObj[prop.propertyName] = prop.value;
+        });
+
+        return newObj;
     }
 }
 

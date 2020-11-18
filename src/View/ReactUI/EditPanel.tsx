@@ -57,7 +57,7 @@ interface FractionProps {
     d : number
 }
 
-class Fraction extends React.Component<FractionProps> {
+class Fraction extends React.PureComponent<FractionProps> {
     render() {
         return <p><sup>{this.props.n}</sup>&#x2044;<sub>{this.props.d}</sub></p>
     }

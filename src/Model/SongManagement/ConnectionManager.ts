@@ -146,9 +146,10 @@ export class ConnectionManager {
             while (("Chain " + chainNo) in this._possibleConnections) {
                 chainNo++;
             };
-            this._possibleConnections["Chain " + chainNo] = object;
+            let name = "Chain " + chainNo.toString();
+            this._possibleConnections[name] = object;
 
-            object.chainName = "Chain " + chainNo;
+            object.chainName = name;
             this.createConnections(object, EffectsChain.createDefaults().connections);
         }
         else {
@@ -177,12 +178,28 @@ export class ConnectionManager {
         }
     }
 
+    public getChain(name : string) : EffectsChain {
+        if (name == "Bus") {
+            return this._bus;
+        }
+        else {
+            let chain = this._chains.find((value) => {value.chainName === name});
+            if (chain !== undefined) {
+                return chain;
+            }
+            else {
+                throw new Error("Invalid chain name");
+            }
+        }
+    }
+
     public serialiseChains() : Array<IChainSettings> {
         let serialisedChains = []
-        this.chains.forEach(chain => {
-            serialisedChains.push(chain.serialise());
+        this.chains.concat(this.bus).forEach(chain => {
+            let chainSettings = chain.serialise();
+            chainSettings.connections = this._currentConnections[chain.chainName];
+            serialisedChains.push(chainSettings);
         });
-        serialisedChains.push(this.bus.serialise());
         return serialisedChains;
     }
 

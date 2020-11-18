@@ -5,12 +5,20 @@ interface SliderProps {
     min: string,
     max: string,
     step: string,
-    onChange: Function,
+    onChange: Function
+    value : string
 }
 
-export class Slider extends React.Component<SliderProps> {
+export class Slider extends React.PureComponent<SliderProps> {
+
+    private _sliderRef : HTMLInputElement;
+
+    componentDidUpdate() {
+        this._sliderRef.value = this.props.value;
+    }
+
     render() {
-        return <input className={this.props.className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} onChange={(event) => { this.props.onChange(event.target.value) }} />
+        return <input className={this.props.className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => {this._sliderRef = ref}} onChange={(event) => { this.props.onChange(event.target.value) }} />
     }
 }
 
@@ -20,7 +28,7 @@ interface FileInputProps {
     accept: string,
 }
 
-export class FileInput extends React.Component<FileInputProps> {
+export class FileInput extends React.PureComponent<FileInputProps> {
     render() {
         return <input className={this.props.className} type="file" onChange={(event) => this.props.onChange(event.target.files)} accept={this.props.accept} />
     }
@@ -30,7 +38,7 @@ interface IconFileInputProps extends FileInputProps {
     iconName: string,
 }
 
-export class IconFileInput extends React.Component<IconFileInputProps> {
+export class IconFileInput extends React.PureComponent<IconFileInputProps> {
 
     private _inputRef: HTMLInputElement;
 
@@ -68,7 +76,7 @@ interface FAButtonProps {
     onClick: Function
 }
 
-export class FAButton extends React.Component<FAButtonProps> {
+export class FAButton extends React.PureComponent<FAButtonProps> {
     render() {
         return <button className={this.props.className} onClick={() => { this.props.onClick() }}><i className={this.props.iconName}></i></button>
     }
