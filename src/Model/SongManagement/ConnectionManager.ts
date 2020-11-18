@@ -14,10 +14,10 @@ export class ConnectionManager {
     constructor (context : AudioContext|OfflineAudioContext) {
         this._context = context;
         this._bus = new EffectsChain(context);
-        this._bus.chainName = "bus";
+        this._bus.chainName = "Bus";
         this._bus.connect(context.destination);
 
-        this._possibleConnections = {"context" : this._context.destination, "bus" : this._bus};
+        this._possibleConnections = {"Context" : this._context.destination, "Bus" : this._bus};
         this._currentConnections = {};
         this._chains = [];
     }
@@ -143,12 +143,12 @@ export class ConnectionManager {
         let object = new EffectsChain(this._context, settings);
         if (settings === undefined) {
             let chainNo = 0;
-            while (("chain" + chainNo) in this._possibleConnections) {
+            while (("Chain " + chainNo) in this._possibleConnections) {
                 chainNo++;
             };
-            this._possibleConnections["chain" + chainNo] = object;
+            this._possibleConnections["Chain " + chainNo] = object;
 
-            object.chainName = "chain" + chainNo;
+            object.chainName = "Chain " + chainNo;
             this.createConnections(object, EffectsChain.createDefaults().connections);
         }
         else {
@@ -167,7 +167,7 @@ export class ConnectionManager {
      * @memberof ConnectionManager
      */
     public removeChain(name : string) {
-        if (name.startsWith("chain") && name in this._possibleConnections) {
+        if (name.startsWith("Chain ") && name in this._possibleConnections) {
             let index = this._chains.indexOf(this._possibleConnections[name] as EffectsChain);
             this._chains.splice(index, 1);
             delete this._possibleConnections[name];
@@ -188,7 +188,7 @@ export class ConnectionManager {
 
     public deserialiseChains(newChains : Array<IChainSettings>) {
         newChains.forEach(chain => {
-            if (chain.chainName === "bus") {
+            if (chain.chainName === "Bus") {
                 this._bus = new EffectsChain(this._context, chain);
                 this.createConnections(this._bus, chain.connections);
             }

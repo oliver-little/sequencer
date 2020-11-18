@@ -229,9 +229,8 @@ interface TrackSettingsListProps {
 
 class TrackSettingsList extends React.Component<TrackSettingsListProps> {
     render() {
-        if (this.props.tracks) {
+        if (this.props.tracks.length > 0) {
             let possibleConnections = this.props.tracks[0].track.possibleConnections;
-
             return (<div style={{ position: "absolute", top: this.props.verticalScroll }}>
                 {this.props.tracks.map((track, index) => {
                     let soundFileProps = undefined;
@@ -256,6 +255,9 @@ class TrackSettingsList extends React.Component<TrackSettingsListProps> {
                         connectionChanged={this.props.onConnectionChanged} />;
                 })}
             </div>);
+        }
+        else {
+            return null;
         }
     }
 }
@@ -321,7 +323,7 @@ class TrackSettingsBox extends React.Component<TrackSettingsProps> {
                 <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
                 <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" onChange={this.handleGainChange} />
                 {soundFileInfo}
-                <BoxSelect className={"trackListBoxSelect"} selected={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
+                <BoxSelect selected={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
             </div>
         </div>
     }

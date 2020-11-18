@@ -157,32 +157,33 @@ button:focus {
 }
 
 /* Box Select */
-.boxSelect {
+.boxSelectOverlay {
     display: flex;
     flex-direction: column;
     align-items: center;
     border-radius: 5px;
-    transition: width 0.2s ease, height 0.2s ease;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    overflow: hidden;
+    background-color: white;
+}
+
+.boxSelectOverlay.animVisible {
+    opacity: 1;
+    transform: none;
 }
 
 .boxSelectButton {
-    background-color: transparent;
     outline: none;
     border:none;
-
-    padding: 2px 10px 2px 10px;
     width: 100%;
+    padding: 2px 10px 2px 10px;
     border-radius: 5px;
-    overflow: hidden;
 }
 
 .boxSelectButton:hover {
     background-color: white;
     filter: brightness(50%);
-}
-
-.trackListBoxSelect {
-    background-color: var(--timeline-highlight-color);
 }
 
 /* Metadata Edit Box */
@@ -221,10 +222,6 @@ button:focus {
     margin-bottom: 2px;
 }
 
-.trackSettingsDiv > * {
-    margin-top: 20px;
-}
-
 .trackSettingsName {
     border: none;
     text-align: center;
@@ -232,10 +229,13 @@ button:focus {
     color: white;
     background-color: var(--timeline-bg-color);
     padding: none;
+    margin-top: 20px;
 }
 
 .trackSettingsSlider {
     cursor: pointer;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .trackSettingsDeleteButton {
@@ -278,4 +278,8 @@ button:focus {
 .trackSettingsCheckbox > label {
     font-family: Arial, Helvetica, sans-serif;
     color: white;
+}
+
+.trackSettingsCheckbox {
+    margin: 10px 0 0 0;
 }

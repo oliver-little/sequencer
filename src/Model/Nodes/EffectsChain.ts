@@ -179,7 +179,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
             "effects" : [],
             "preGain" : 1,
             "postGain" : 1,
-            "connections" : ["context"]
+            "connections" : ["Context"]
         }
     }
 

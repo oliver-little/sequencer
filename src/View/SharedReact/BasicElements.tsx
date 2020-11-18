@@ -137,7 +137,7 @@ export class DropdownItem extends React.Component<DropdownItemProps> {
 }
 
 interface BoxSelectProps {
-    className?: string,
+    overlayClassName?: string,
     selectButtonClassName?: string,
     title?: string,
     selected: number,
@@ -151,26 +151,19 @@ interface BoxSelectState {
 
 export class BoxSelect extends React.Component<BoxSelectProps, BoxSelectState> {
 
-    private _selectContainer: React.RefObject<HTMLDivElement>;
+    private _selectButton: React.RefObject<HTMLButtonElement>;
 
     constructor(props) {
         super(props);
 
         this._selectOptionClicked = this._selectOptionClicked.bind(this);
 
-        this._selectContainer = React.createRef();
+        this._selectButton = React.createRef();
+
 
         this.state = {
             selectVisible: false,
         }
-    }
-
-    componentDidMount() {
-        this._updateSize();
-    }
-
-    componentDidUpdate() {
-        this._updateSize();
     }
 
     private _selectOptionClicked(index: number) {
@@ -178,40 +171,56 @@ export class BoxSelect extends React.Component<BoxSelectProps, BoxSelectState> {
         this.setState({ selectVisible: false });
     }
 
-    // This function implements a workaround to the fact that width and height: auto cannot be animated. It calculates the width and height intended for the box and sets it as the inline style
-    private _updateSize() {
-        let childWidth = 0;
-        let childHeight = 0;
-        for (let i = 0; i < this._selectContainer.current.children.length; i++) {
-            let child = this._selectContainer.current.children[i];
-            childWidth = Math.max(child.scrollWidth, childWidth);
-            childHeight += child.scrollHeight;
+    render() {
+        const buttonClassName = "boxSelectButton" + (this.props.selectButtonClassName ? " " + this.props.selectButtonClassName : "");
+
+        return <div>
+            <button className={buttonClassName} onClick={() => { this.setState({ selectVisible: !this.state.selectVisible }) }} ref={this._selectButton}>{this.props.options[this.props.selected]}</button>
+            {this.state.selectVisible && <BoxSelectOverlay buttonClassName={buttonClassName} selected={this.props.selected} options={this.props.options} positioningButton={this._selectButton} selectOptionClickedCallback={this._selectOptionClicked} />}
+        </div>
+    }
+}
+
+interface BoxSelectOverlayProps {
+    className?: string,
+    buttonClassName?: string,
+    selected: number,
+    options: string[],
+    positioningButton: React.RefObject<HTMLButtonElement>,
+    selectOptionClickedCallback: Function
+}
+
+interface BoxSelectOverlayState {
+    selectedOffsetTop: number
+    overlayWidthDifference : number
+    anim: string
+}
+
+class BoxSelectOverlay extends React.Component<BoxSelectOverlayProps, BoxSelectOverlayState> {
+
+    private _currentSelectedButton: HTMLButtonElement;
+    private _overlayDiv: HTMLDivElement;
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            selectedOffsetTop: 0,
+            overlayWidthDifference: 0,
+            anim: ""
         }
-        this._selectContainer.current.style.width = childWidth.toString();
-        this._selectContainer.current.style.height = childHeight.toString();
+    }
+
+    componentDidMount() {
+        this.setState({ selectedOffsetTop: this._currentSelectedButton.offsetTop, overlayWidthDifference: (this._overlayDiv.offsetWidth - this.props.positioningButton.current.offsetWidth) / 2 });
+        setTimeout(() => { this.setState({ anim: " animVisible" }) }, 10);
     }
 
     render() {
-        const mainClassName = "boxSelect" + (this.props.className ? " " + this.props.className : "");
-        const buttonClassName = "boxSelectButton" + (this.props.selectButtonClassName ? " " + this.props.selectButtonClassName : "");
-
-        let topOptions, bottomOptions = null;
-        if (this.state.selectVisible) {
-            {
-                topOptions = this.props.options.slice(0, this.props.selected).map((value, index) => {
-                    return <button className={buttonClassName} key={index} onClick={() => { this._selectOptionClicked(index) }}>{value}</button>
-                })
-                bottomOptions = this.props.options.slice(this.props.selected + 1, this.props.options.length).map((value, index) => {
-                    index = this.props.selected + 1 + index;
-                    return <button className={buttonClassName} key={index} onClick={() => { this._selectOptionClicked(index) }}>{value}</button>
-                });
-            }
-        }
-
-        return <div className={mainClassName} ref={this._selectContainer}>
-            <button className={buttonClassName} onClick={() => { this.setState({ selectVisible: !this.state.selectVisible }) }}>{this.props.options[this.props.selected]}</button>
-            {topOptions}
-            {bottomOptions}
-        </div>
+        const overlayClassName = "boxSelectOverlay" + (this.props.className ? " " + this.props.className : "");
+        let options = this.props.options.map((value, index) => {
+            return <button className={this.props.buttonClassName} key={index} onClick={() => { this.props.selectOptionClickedCallback(index) }} ref={(ref) => { this.props.selected === index ? this._currentSelectedButton = ref : null }}>{value}</button>
+        });
+        return <div className={overlayClassName + this.state.anim} ref={(ref) => { this._overlayDiv = ref }} style={{ position: "absolute", top: (this.props.positioningButton.current.offsetTop - this.state.selectedOffsetTop), left: this.props.positioningButton.current.offsetLeft - this.state.overlayWidthDifference }}>{options}</div>
     }
 }

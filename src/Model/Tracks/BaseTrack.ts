@@ -77,7 +77,7 @@ export abstract class BaseTrack {
         }
         else {
             this.id = uuid();
-            this._connectionManager.createConnections(this.audioSource, ["context"]);
+            this._connectionManager.createConnections(this.audioSource, ["Context"]);
         }
     }
 
