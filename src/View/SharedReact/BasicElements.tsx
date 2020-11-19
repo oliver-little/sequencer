@@ -13,6 +13,10 @@ export class Slider extends React.PureComponent<SliderProps> {
 
     private _sliderRef : HTMLInputElement;
 
+    componentDidMount() {
+        this._sliderRef.value = this.props.value;
+    }
+
     componentDidUpdate() {
         this._sliderRef.value = this.props.value;
     }

@@ -2,14 +2,14 @@ import * as React from "react";
 import { EffectsChain } from "../../Model/Nodes/EffectsChain";
 import { ConnectionManager } from "../../Model/SongManagement/ConnectionManager";
 import { IEffect, IEffectBooleanProperty, IEffectNumberProperty, IEffectNumberRange, IEffectProperty, IEffectStringProperty } from "../../Model/Interfaces/IInstrumentSettings";
-import { Slider } from "../SharedReact/BasicElements";
+import { Dropdown, Slider } from "../SharedReact/BasicElements";
 
 interface EffectsChainPanelProps {
     connectionManager : ConnectionManager
 }
 
 interface EffectsChainPanelState {
-    currentChain : number
+    currentChainNumber : number
 }
 
 export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, EffectsChainPanelState> {
@@ -17,53 +17,70 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
     constructor(props) {
         super(props);
 
+        this._effectChanged = this._effectChanged.bind(this);
+        this._newEffect = this._newEffect.bind(this);
+
         this.state = {
-            currentChain: 0
+            currentChainNumber: 0
         }
+    }
+
+    get currentChain() {
+        return this.chainsAndBus[this.state.currentChainNumber];
     }
 
     get chainsAndBus() {
         return this.props.connectionManager.chains.concat([this.props.connectionManager.bus]);
     }
 
+    // Curried function to prevent passing down of index
+    private _effectChanged (index : number) {
+        return (propertyIndex : number) => {
+            return (value : any) => {
+                let property = this.currentChain.effects[index].properties[propertyIndex];
+                property.value = value;
+                this.currentChain.effectNodes[index][property.propertyName] = value;
+
+                this.setState({currentChainNumber : this.state.currentChainNumber});
+            }
+        }
+    }
+
+    private _newEffect(newEffectIndex : number) {
+        this.currentChain.addEffect(this.currentChain.effects.length, EffectsChain.possibleEffects[newEffectIndex]);
+        this.setState({currentChainNumber : this.state.currentChainNumber});
+    }
 
     render() {
-        let currentChain = this.chainsAndBus[this.state.currentChain];
 
         return <div className={"effectsChainPanel"}>
             <div>
-                {currentChain.chainName}
+                {this.currentChain.chainName}
             </div>
-            <EffectsChainInfo effectsChain={this.chainsAndBus[this.state.currentChain]} />
+            <EffectsChainInfo effectsChain={this.currentChain.effects} effectPropertyChanged={this._effectChanged} newEffect={this._newEffect} />
         </div>
     }
 }
 
 interface EffectsChainInfoProps {
-    effectsChain : EffectsChain
+    effectsChain : IEffect[],
+    effectPropertyChanged : Function,
+    newEffect : Function
+    /*preGainValue : number,
+    preGainValueChanged : Function,
+    postGainValue : number,
+    postGainValueChanged : Function,*/
+
 }
 
 class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
 
-    constructor(props) {
-        super(props);
-        this._effectChanged = this._effectChanged.bind(this);
-    }
-
-    // Curried function to prevent passing down of index
-    private _effectChanged (index : number) {
-        return (propertyIndex : number) => {
-            return () => {
-                console.log(index, propertyIndex);
-            }
-        }
-    }
-
     render() {
         return <div>
-            {this.props.effectsChain.effects.map((effect, index) => {
-                <ChainEffect key={index} {...effect} onPropertyChange={this._effectChanged(index)} />
+            {this.props.effectsChain.map((effect, index) => {
+                return <ChainEffect key={index} {...effect} onPropertyChange={this.props.effectPropertyChanged(index)} />
             })}
+            <Dropdown title={"+"} optionTitles={EffectsChain.possibleEffects.map((effect) => {return effect.effectType})} optionClickCallback={this.props.newEffect}/>
         </div>;
     }
 }
@@ -79,18 +96,21 @@ class ChainEffect extends React.Component<ChainEffectProps> {
                 <p>{this.props.effectType}</p>
             </div>
             {this.props.properties.map((property, index) => {
-                switch (property.kind) {
+                switch (property.type) {
                     case "number":
                         if (property.hasOwnProperty("min")) {
-                            return <RangeEffectProperty key={index} {...property as IEffectNumberRange} onChange={this.props.onPropertyChange(index)} />
+                            return <RangeEffectProperty key={index} {...property as IEffectNumberRange} onChange={this.props.onPropertyChange(index)} />;
                         }
                         else {
-                            return <NumberEffectProperty key={index} {...property as IEffectNumberProperty} onChange={this.props.onPropertyChange(index)} />
+                            return <NumberEffectProperty key={index} {...property as IEffectNumberProperty} onChange={this.props.onPropertyChange(index)} />;
                         }   
                     case "string":
-                        return <StringEffectProperty key={index} {...property as IEffectStringProperty} onChange={this.props.onPropertyChange(index)} />
+                        return <StringEffectProperty key={index} {...property as IEffectStringProperty} onChange={this.props.onPropertyChange(index)} />;
                     case "boolean":
-                        return <BooleanEffectProperty key={index} {...property as IEffectBooleanProperty} onChange={this.props.onPropertyChange(index)} />        
+                        return <BooleanEffectProperty key={index} {...property as IEffectBooleanProperty} onChange={this.props.onPropertyChange(index)} />;
+                    default:
+                        console.log("Unknown property type: " + property.type);
+                        return null;  
                 }
             })}
         </div>

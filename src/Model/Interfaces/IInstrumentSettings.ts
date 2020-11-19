@@ -34,14 +34,15 @@ interface IChainSettings {
 }
 
 interface IEffectProperty {
-    kind : string
+    type : string
     "propertyName" : string,
+    "displayName"? : string,
     "value" : any,
     "editable" : boolean
 }
 
 interface IEffectNumberProperty extends IEffectProperty {
-    kind : "number"
+    type : "number"
     "value" : number
     "step" : number
 }
@@ -52,13 +53,19 @@ interface IEffectNumberRange extends IEffectNumberProperty {
 }
 
 interface IEffectBooleanProperty extends IEffectProperty {
-    kind : "boolean",
+    type : "boolean",
     "value" : boolean
 }
 
 interface IEffectStringProperty extends IEffectProperty {
-    kind : "string",
+    type : "string",
     "value" : string,
+}
+
+interface IEffectListProperty<T> extends IEffectProperty {
+    type : "list"
+    "value" : number,
+    "options" : T[]
 }
 
 interface IEffect {
@@ -66,4 +73,4 @@ interface IEffect {
     "properties" : IEffectProperty[],
 }
 
-export {IOscillatorSettings, ISoundFileSettings, IInstrumentSettings, IAmplitudeEnvelope, IChainSettings, IEffect, IEffectProperty, IEffectNumberProperty, IEffectNumberRange, IEffectBooleanProperty, IEffectStringProperty};
+export {IOscillatorSettings, ISoundFileSettings, IInstrumentSettings, IAmplitudeEnvelope, IChainSettings, IEffect, IEffectProperty, IEffectNumberProperty, IEffectNumberRange, IEffectBooleanProperty, IEffectStringProperty, IEffectListProperty};
