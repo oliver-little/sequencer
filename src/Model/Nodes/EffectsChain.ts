@@ -255,12 +255,10 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
             this._chainNodes[index - 1].connect(effect);
         }
         else {
-            console.log("connecting to pre");
             this._preGain.disconnect();
             this._preGain.connect(effect);
         }
         if (index === this._chainNodes.length) {
-            console.log("connecting to post");
             effect.connect(this._postGain);
             this._chainNodes.push(effect);
         }
@@ -289,11 +287,12 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
         let node = null;
 
         if (index > 0) {
-            node = this._chainNodes[index - 1].disconnect();
+            node = this._chainNodes[index - 1];
         }
         else {
-            node = this._preGain.disconnect();
+            node = this._preGain;
         }
+        node.disconnect();
         if (index === this._chainNodes.length - 1) {
             node.connect(this._postGain);
         }
@@ -306,158 +305,217 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
 
     // Effect Type Declarations
 
-    public static Chorus: IEffect = {
-        effectType: "Chorus",
-        properties: [
-            { type: "number", propertyName: "rate", value: 1.5, editable: true, step: 0.01, min: 0.01, max: 8 } as IEffectNumberRange,
-            { type: "number", propertyName: "feedback", value: 0.4, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", propertyName: "depth", value: 0.7, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", propertyName: "delay", value: 0.0045, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
-        ]
+    public static Chorus(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Chorus",
+            properties: [
+                { type: "number", propertyName: "rate", value: 1.5, editable: true, step: 0.01, min: 0.01, max: 8 } as IEffectNumberRange,
+                { type: "number", propertyName: "feedback", value: 0.4, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", propertyName: "depth", value: 0.7, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", propertyName: "delay", value: 0.0045, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
+            ]
+        }
     }
 
-    public static Delay: IEffect = {
-        effectType: "Delay",
-        properties: [
-            { type: "number", propertyName: "feedback", value: 0.45, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", displayName: "Delay Time", propertyName: "delayTime", value: 100, editable: true, step: 1, min: 1, max: 10000 } as IEffectNumberRange,
-            { type: "number", displayName: "Wet Level", propertyName: "wetLevel", value: 0.5, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", displayName: "Dry Level", propertyName: "dryLevel", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", propertyName: "cutoff", value: 20000, editable: true, step: 1, min: 20, max: 22050 } as IEffectNumberRange,
-            { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
-        ]
+    public static Delay(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Delay",
+            properties: [
+                { type: "number", propertyName: "feedback", value: 0.45, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", displayName: "Delay Time", propertyName: "delayTime", value: 100, editable: true, step: 1, min: 1, max: 10000 } as IEffectNumberRange,
+                { type: "number", displayName: "Wet Level", propertyName: "wetLevel", value: 0.5, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", displayName: "Dry Level", propertyName: "dryLevel", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", propertyName: "cutoff", value: 20000, editable: true, step: 1, min: 20, max: 22050 } as IEffectNumberRange,
+                { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
+            ]
+        }
     }
 
-    public static Phaser: IEffect = {
-        effectType: "Phaser",
-        properties: [
-            { type: "number", propertyName: "rate", value: 0.1, editable: true, step: 0.01, min: 0, max: 8 } as IEffectNumberRange,
-            { type: "number", propertyName: "depth", value: 0.6, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", propertyName: "feedback", value: 0.7, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", displayName: "Stereo Phase", propertyName: "stereoPhase", value: 40, editable: true, step: 1, min: 0, max: 180 } as IEffectNumberRange,
-            { type: "number", displayName: "Base Modulation Frequency", propertyName: "baseModulationFrequency", value: 700, editable: true, step: 1, min: 500, max: 1500 } as IEffectNumberRange,
-            { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
-        ]
+    public static Phaser(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Phaser",
+            properties: [
+                { type: "number", propertyName: "rate", value: 0.1, editable: true, step: 0.01, min: 0, max: 8 } as IEffectNumberRange,
+                { type: "number", propertyName: "depth", value: 0.6, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", propertyName: "feedback", value: 0.7, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", displayName: "Stereo Phase", propertyName: "stereoPhase", value: 40, editable: true, step: 1, min: 0, max: 180 } as IEffectNumberRange,
+                { type: "number", displayName: "Base Modulation Frequency", propertyName: "baseModulationFrequency", value: 700, editable: true, step: 1, min: 500, max: 1500 } as IEffectNumberRange,
+                { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
+            ]
+        }
     }
 
-    public static Overdrive: IEffect = {
-        effectType: "Overdrive",
-        properties: [
-            { type: "number", displayName: "Output Gain", propertyName: "outputGain", value: 0, editable: true, step: 1, min: -42, max: 0 } as IEffectNumberRange,
-            { type: "number", propertyName: "drive", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", displayName: "Curve Amount", propertyName: "curveAmount", value: 0.725, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", displayName: "Algorithm Index", propertyName: "algorithmIndex", value: 0, editable: true, step: 1, min: 0, max: 5 } as IEffectNumberRange,
-            { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
-        ]
+    public static Overdrive(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Overdrive",
+            properties: [
+                { type: "number", displayName: "Output Gain", propertyName: "outputGain", value: 0, editable: true, step: 1, min: -42, max: 0 } as IEffectNumberRange,
+                { type: "number", propertyName: "drive", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", displayName: "Curve Amount", propertyName: "curveAmount", value: 0.725, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", displayName: "Algorithm Index", propertyName: "algorithmIndex", value: 0, editable: true, step: 1, min: 0, max: 5 } as IEffectNumberRange,
+                { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
+            ]
+        }
     }
 
-    public static Compressor: IEffect = {
-        effectType: "Compressor",
-        properties: [
-            { type: "number", propertyName: "threshold", value: -20, editable: true, step: 1, min: -100, max: 0 } as IEffectNumberRange,
-            { type: "number", displayName: "Makeup Gain", propertyName: "makeupGain", value: 1, editable: true, step: 1, min: 0, max: 200 } as IEffectNumberRange,
-            { type: "number", propertyName: "attack", value: 1, editable: true, step: 1, min: 0, max: 1000 } as IEffectNumberRange,
-            { type: "number", propertyName: "release", value: 250, editable: true, step: 1, min: 0, max: 3000 } as IEffectNumberRange,
-            { type: "number", propertyName: "ratio", value: 4, editable: true, step: 1, min: 1, max: 20 } as IEffectNumberRange,
-            { type: "number", propertyName: "knee", value: 5, editable: true, step: 1, min: 0, max: 40 } as IEffectNumberRange,
-            { type: "boolean", displayName: "Auto Makeup", propertyName: "automakeup", value: false, editable: true } as IEffectBooleanProperty,
-            { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
-        ]
+    public static Compressor(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Compressor",
+            properties: [
+                { type: "number", propertyName: "threshold", value: -20, editable: true, step: 1, min: -100, max: 0 } as IEffectNumberRange,
+                { type: "number", displayName: "Makeup Gain", propertyName: "makeupGain", value: 1, editable: true, step: 1, min: 0, max: 200 } as IEffectNumberRange,
+                { type: "number", propertyName: "attack", value: 1, editable: true, step: 1, min: 0, max: 1000 } as IEffectNumberRange,
+                { type: "number", propertyName: "release", value: 250, editable: true, step: 1, min: 0, max: 3000 } as IEffectNumberRange,
+                { type: "number", propertyName: "ratio", value: 4, editable: true, step: 1, min: 1, max: 20 } as IEffectNumberRange,
+                { type: "number", propertyName: "knee", value: 5, editable: true, step: 1, min: 0, max: 40 } as IEffectNumberRange,
+                { type: "boolean", displayName: "Auto Makeup", propertyName: "automakeup", value: false, editable: true } as IEffectBooleanProperty,
+                { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
+            ]
+        }
     }
 
-    public static Convolver: IEffect = {
-        effectType: "Convolver",
-        properties: [
-            { type: "number", displayName: "High Cut", propertyName: "highCut", value: 22050, editable: true, step: 1, min: 20, max: 22050 } as IEffectNumberRange,
-            { type: "number", displayName: "Low Cut", propertyName: "lowCut", value: 20, editable: true, step: 1, min: 20, max: 22050 } as IEffectNumberRange,
-            { type: "number", displayName: "Wet Level", propertyName: "wetLevel", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", displayName: "Dry Level", propertyName: "dryLevel", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", propertyName: "level", value: 0.7, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "string", propertyName: "impulse", value: "/dependencies/impulses/impulse_rev.wav", editable: false } as IEffectStringProperty,
-            { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
-        ]
+    public static Convolver(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Convolver",
+            properties: [
+                { type: "number", displayName: "High Cut", propertyName: "highCut", value: 22050, editable: true, step: 1, min: 20, max: 22050 } as IEffectNumberRange,
+                { type: "number", displayName: "Low Cut", propertyName: "lowCut", value: 20, editable: true, step: 1, min: 20, max: 22050 } as IEffectNumberRange,
+                { type: "number", displayName: "Wet Level", propertyName: "wetLevel", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", displayName: "Dry Level", propertyName: "dryLevel", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", propertyName: "level", value: 0.7, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "string", propertyName: "impulse", value: "/dependencies/impulses/impulse_rev.wav", editable: false } as IEffectStringProperty,
+                { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
+            ]
+        }
     }
 
-    public static Filter: IEffect = {
-        effectType: "Filter",
-        properties: [
-            { type: "number", propertyName: "frequency", value: 22050, editable: true, step: 1, min: 20, max: 22050 } as IEffectNumberRange,
-            { type: "number", propertyName: "Q", value: 1, editable: true, step: 0.001, min: 0.001, max: 100 } as IEffectNumberRange,
-            { type: "number", propertyName: "gain", value: 0, editable: true, step: 1, min: -40, max: 40 } as IEffectNumberRange,
-            { type: "list", displayName: "Filter Type", propertyName: "filterType", value: 0, editable: true, options: ["lowpass", "highpass", "bandpass", "lowshelf", "highshelf", "peaking", "notch", "allpass"] } as IEffectListProperty<string>,
-            { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
-        ]
+    public static Filter(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Filter",
+            properties: [
+                { type: "number", propertyName: "frequency", value: 22050, editable: true, step: 1, min: 20, max: 22050 } as IEffectNumberRange,
+                { type: "number", propertyName: "Q", value: 1, editable: true, step: 0.001, min: 0.001, max: 100 } as IEffectNumberRange,
+                { type: "number", propertyName: "gain", value: 0, editable: true, step: 1, min: -40, max: 40 } as IEffectNumberRange,
+                { type: "list", displayName: "Filter Type", propertyName: "filterType", value: 0, editable: true, options: ["lowpass", "highpass", "bandpass", "lowshelf", "highshelf", "peaking", "notch", "allpass"] } as IEffectListProperty<string>,
+                { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
+            ]
+        }
     }
 
-    public static Cabinet: IEffect = {
-        effectType: "Cabinet",
-        properties: [
-            { type: "number", displayName: "Makeup Gain", propertyName: "makeupGain", value: 1, editable: true, step: 0.1, min: 0, max: 20 } as IEffectNumberRange,
-            { type: "string", displayName: "Impulse Path", propertyName: "impulsePath", value: "/dependencies/impulses/impulse_guitar.wav", editable: false } as IEffectStringProperty,
-            { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
-        ]
+    public static Cabinet(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Cabinet",
+            properties: [
+                { type: "number", displayName: "Makeup Gain", propertyName: "makeupGain", value: 1, editable: true, step: 0.1, min: 0, max: 20 } as IEffectNumberRange,
+                { type: "string", displayName: "Impulse Path", propertyName: "impulsePath", value: "/dependencies/impulses/impulse_guitar.wav", editable: false } as IEffectStringProperty,
+                { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
+            ]
+        }
     }
 
-    public static Tremolo: IEffect = {
-        effectType: "Tremolo",
-        properties: [
-            { type: "number", propertyName: "intensity", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", propertyName: "rate", value: 5, editable: true, step: 0.001, min: 0.001, max: 8 } as IEffectNumberRange,
-            { type: "number", propertyName: "stereoPhase", value: 0, editable: true, step: 1, min: 0, max: 180 } as IEffectNumberRange,
-            { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
-        ]
+    public static Tremolo(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Tremolo",
+            properties: [
+                { type: "number", propertyName: "intensity", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", propertyName: "rate", value: 5, editable: true, step: 0.001, min: 0.001, max: 8 } as IEffectNumberRange,
+                { type: "number", propertyName: "stereoPhase", value: 0, editable: true, step: 1, min: 0, max: 180 } as IEffectNumberRange,
+                { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
+            ]
+        }
     }
 
-    public static WahWah: IEffect = {
-        effectType: "WahWah",
-        properties: [
-            { type: "boolean", displayName: "Auto", propertyName: "automode", value: true, editable: true } as IEffectBooleanProperty,
-            { type: "number", displayName: "Base Frequency", propertyName: "baseFrequency", value: 0.5, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", displayName: "Excursion Octaves", propertyName: "excursionOctaves", value: 2, editable: true, step: 1, min: 1, max: 6 } as IEffectNumberRange,
-            { type: "number", propertyName: "sweep", value: 0.2, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", propertyName: "resonance", value: 10, editable: true, step: 1, min: 1, max: 100 } as IEffectNumberRange,
-            { type: "number", propertyName: "sensitivity", value: 0.5, editable: true, step: 0.01, min: -1, max: 1 } as IEffectNumberRange,
-            { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
-        ]
+    public static WahWah(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "WahWah",
+            properties: [
+                { type: "boolean", displayName: "Auto", propertyName: "automode", value: true, editable: true } as IEffectBooleanProperty,
+                { type: "number", displayName: "Base Frequency", propertyName: "baseFrequency", value: 0.5, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", displayName: "Excursion Octaves", propertyName: "excursionOctaves", value: 2, editable: true, step: 1, min: 1, max: 6 } as IEffectNumberRange,
+                { type: "number", propertyName: "sweep", value: 0.2, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", propertyName: "resonance", value: 10, editable: true, step: 1, min: 1, max: 100 } as IEffectNumberRange,
+                { type: "number", propertyName: "sensitivity", value: 0.5, editable: true, step: 0.01, min: -1, max: 1 } as IEffectNumberRange,
+                { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
+            ]
+        }
     }
 
-    public static Bitcrusher: IEffect = {
-        effectType: "Bitcrusher",
-        properties: [
-            { type: "number", propertyName: "bits", value: 4, editable: true, step: 1, min: 1, max: 16 } as IEffectNumberRange,
-            { type: "number", displayName: "Normal Frequency", propertyName: "normFreq", value: 0.1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", displayName: "Buffer Size", propertyName: "bufferSize", value: 4096, editable: true, step: 1, min: 256, max: 16384 } as IEffectNumberRange,
-        ]
+    public static Bitcrusher(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Bitcrusher",
+            properties: [
+                { type: "number", propertyName: "bits", value: 4, editable: true, step: 1, min: 1, max: 16 } as IEffectNumberRange,
+                { type: "number", displayName: "Normal Frequency", propertyName: "normFreq", value: 0.1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", displayName: "Buffer Size", propertyName: "bufferSize", value: 4096, editable: true, step: 1, min: 256, max: 16384 } as IEffectNumberRange,
+            ]
+        }
     }
 
-    public static Moog: IEffect = {
-        effectType: "Moog",
-        properties: [
-            { type: "number", propertyName: "cutoff", value: 0.065, editable: true, step: 0.001, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", propertyName: "resonance", value: 3.5, editable: true, step: 0.01, min: 0, max: 4 } as IEffectNumberRange,
-            { type: "number", displayName: "Buffer Size", propertyName: "bufferSize", value: 4096, editable: true, step: 1, min: 256, max: 16384 } as IEffectNumberRange,
-        ]
+    public static Moog(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Moog",
+            properties: [
+                { type: "number", propertyName: "cutoff", value: 0.065, editable: true, step: 0.001, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", propertyName: "resonance", value: 3.5, editable: true, step: 0.01, min: 0, max: 4 } as IEffectNumberRange,
+                { type: "number", displayName: "Buffer Size", propertyName: "bufferSize", value: 4096, editable: true, step: 1, min: 256, max: 16384 } as IEffectNumberRange,
+            ]
+        }
     }
 
-    public static PingPongDelay: IEffect = {
-        effectType: "PingPongDelay",
-        properties: [
-            { type: "number", propertyName: "wetLevel", value: 1.5, editable: true, step: 0.01, min: 0.01, max: 8 } as IEffectNumberRange,
-            { type: "number", propertyName: "feedback", value: 0.4, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-            { type: "number", displayName: "Delay Time (Left)", propertyName: "delayTimeLeft", value: 200, editable: true, step: 1, min: 1, max: 10000 } as IEffectNumberRange,
-            { type: "number", displayName: "Delay Time (Right)", propertyName: "delayTimeRight", value: 400, editable: true, step: 1, min: 1, max: 10000 } as IEffectNumberRange,
-        ]
+    public static PingPongDelay(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "PingPongDelay",
+            properties: [
+                { type: "number", propertyName: "wetLevel", value: 1.5, editable: true, step: 0.01, min: 0.01, max: 8 } as IEffectNumberRange,
+                { type: "number", propertyName: "feedback", value: 0.4, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", displayName: "Delay Time (Left)", propertyName: "delayTimeLeft", value: 200, editable: true, step: 1, min: 1, max: 10000 } as IEffectNumberRange,
+                { type: "number", displayName: "Delay Time (Right)", propertyName: "delayTimeRight", value: 400, editable: true, step: 1, min: 1, max: 10000 } as IEffectNumberRange,
+            ]
+        }
     }
 
-    public static Panner: IEffect = {
-        effectType: "Panner",
-        properties: [{ type: "number", propertyName: "pan", value: 0, editable: true, step: 0.01, min: -1, max: 1 } as IEffectNumberRange]
+    public static Panner(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Panner",
+            properties: [{ type: "number", propertyName: "pan", value: 0, editable: true, step: 0.01, min: -1, max: 1 } as IEffectNumberRange]
+        }
     }
 
-    public static Gain: IEffect = {
-        effectType: "Gain",
-        properties: [{ type: "number", propertyName: "gain", value: 1, editable: true, step: 0.01, min: 0, max: 2 } as IEffectNumberRange]
+    public static Gain(): IEffect {
+        return {
+            id: uuid(),
+            effectType: "Gain",
+            properties: [{ type: "number", propertyName: "gain", value: 1, editable: true, step: 0.01, min: 0, max: 2 } as IEffectNumberRange]
+        }
     }
-    public static possibleEffects: IEffect[] = [EffectsChain.Chorus, EffectsChain.Delay, EffectsChain.PingPongDelay, EffectsChain.Overdrive, EffectsChain.Gain, EffectsChain.Compressor, EffectsChain.Panner, EffectsChain.Convolver, EffectsChain.Tremolo, EffectsChain.Filter, EffectsChain.Bitcrusher, EffectsChain.Phaser, EffectsChain.WahWah, EffectsChain.Moog, EffectsChain.Cabinet];
+    public static possibleEffects : Map<string, (() =>IEffect)> = new Map([["Chorus", EffectsChain.Chorus], 
+        ["Delay", EffectsChain.Delay], 
+        ["Ping Pong Delay", EffectsChain.PingPongDelay], 
+        ["Overdrive", EffectsChain.Overdrive], 
+        ["Gain", EffectsChain.Gain], 
+        ["Compressor",  EffectsChain.Compressor], 
+        ["Pan", EffectsChain.Panner], 
+        ["Convolver Reverb", EffectsChain.Convolver], 
+        ["Tremolo", EffectsChain.Tremolo], 
+        ["Filter", EffectsChain.Filter], 
+        ["Bitcrusher", EffectsChain.Bitcrusher], 
+        ["Phaser", EffectsChain.Phaser], 
+        ["Wah", EffectsChain.WahWah], 
+        ["Moog Filter", EffectsChain.Moog], 
+        ["Cabinet Emulator", EffectsChain.Cabinet]]);
 }

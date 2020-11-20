@@ -1,6 +1,6 @@
 import * as PIXI from "pixi.js";
 import * as React from "react";
-import {render, unmountComponentAtNode} from "react-dom";
+import { render, unmountComponentAtNode } from "react-dom";
 import { SongTimeline } from "./SongTimeline";
 import { TrackList } from "./TrackList.js";
 import { NoteUITrack, SoundFileUITrack, UITrack } from "../Shared/UITrack.js";
@@ -14,17 +14,17 @@ import { editType } from "../Settings/EditType";
 
 export class TimelineView extends VerticalScrollView {
 
-    public trackList : TrackList;
-    public timeline : SongTimeline;
+    public trackList: TrackList;
+    public timeline: SongTimeline;
 
-    protected _sidebarPosition : number = UIPositioning.timelineSidebarWidth;
+    protected _sidebarPosition: number = UIPositioning.timelineSidebarWidth;
 
-    private _newTrackDropdownContainer : HTMLDivElement;
+    private _newTrackDropdownContainer: HTMLDivElement;
 
-    private _songManager : SongManager;
-    private _tracks : UITrack[];
+    private _songManager: SongManager;
+    private _tracks: UITrack[];
 
-    constructor(width: number, height: number, tracks : UITrack[], songManager : SongManager) {
+    constructor(width: number, height: number, tracks: UITrack[], songManager: SongManager) {
         super(width, height);
         this._songManager = songManager;
         this._tracks = tracks;
@@ -35,7 +35,7 @@ export class TimelineView extends VerticalScrollView {
         this.removedHandler = this.removedHandler.bind(this);
         this._trackEdited = this._trackEdited.bind(this);
         this._trackRemoved = this._trackRemoved.bind(this);
-        
+
         this.on("added", this.addedHandler);
         this.on("removed", this.removedHandler);
 
@@ -79,7 +79,7 @@ export class TimelineView extends VerticalScrollView {
         super.destroy();
     }
 
-    public showSequencer(track : NoteUITrack) {
+    public showSequencer(track: NoteUITrack) {
         navigationView.show(new SequencerView(this.endX, this.endY, track, this._songManager));
     }
 
@@ -99,7 +99,7 @@ export class TimelineView extends VerticalScrollView {
     public addOscillatorTrack() {
         let track = this._songManager.addOscillatorTrack();
         let startY = this.contentHeight != 0 ? this.contentHeight : UIPositioning.timelineHeaderHeight;
-        this._tracks.push(new NoteUITrack("Track " + (this._tracks.length+1).toString(), startY, 250, track));
+        this._tracks.push(new NoteUITrack("Track " + (this._tracks.length + 1).toString(), startY, 250, track));
         this.trackList.drawTracks();
         // Force a resize event to edit bar heights
         this.timeline.resize(this.endX, this.endY);
@@ -108,34 +108,46 @@ export class TimelineView extends VerticalScrollView {
     public async addSoundFileTrack() {
         let track = await this._songManager.addSoundFileTrack();
         let startY = this.contentHeight != 0 ? this.contentHeight : UIPositioning.timelineHeaderHeight;
-        this._tracks.push(new SoundFileUITrack("Track " + (this._tracks.length+1).toString(), startY, 250, track));
+        this._tracks.push(new SoundFileUITrack("Track " + (this._tracks.length + 1).toString(), startY, 250, track));
         this.trackList.drawTracks();
         this.timeline.resize(this.endX, this.endY);
     }
 
-    protected updateVerticalScroll(value : number) {
+    protected updateVerticalScroll(value: number) {
         value = Math.min(0, value);
         this.timeline.updateVerticalScroll(value);
         this.trackList.updateVerticalScroll(value);
     }
 
-    private _trackEdited(index : number) {
+    private _trackEdited(index: number) {
         this.timeline.reinitialiseTrack(this._tracks[index]);
     }
 
     private _trackRemoved() {
         this.timeline.regenerateTracks();
+
+        // Also check vertical scroll is still correct
+        if (this._tracks.length > 0) {
+            let lastTrack = this._tracks[this._tracks.length - 1];
+            let endHeight = lastTrack.startY + lastTrack.height + this.verticalScrollPosition;
+            if (endHeight < this.endY) {
+                this.verticalScrollPosition += (this.endY - endHeight);
+            }
+        }
+        else {
+            this.verticalScrollPosition = 0;
+        }
     }
 
     private _renderNewTrackObject() {
         render(<Dropdown title={"+"} optionTitles={["New Oscillator Track", "New Sound File Track"]} buttonClassName={"addTrackButton"} optionsDivClassName={"addTrackOptionsDiv"} optionClassName={"addTrackItem"}
-        optionClickCallback={async (index) => {
-            if(index == 0) {
-                this.addOscillatorTrack();
-            }
-            else if (index == 1) {
-                await this.addSoundFileTrack();
-            }
-        }}/>, this._newTrackDropdownContainer);
+            optionClickCallback={async (index) => {
+                if (index == 0) {
+                    this.addOscillatorTrack();
+                }
+                else if (index == 1) {
+                    await this.addSoundFileTrack();
+                }
+            }} />, this._newTrackDropdownContainer);
     }
 }

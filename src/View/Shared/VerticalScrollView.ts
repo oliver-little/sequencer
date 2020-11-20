@@ -58,6 +58,7 @@ export abstract class VerticalScrollView extends MouseTypeContainer implements I
     set verticalScrollPosition(value : number) {
         // Include a small offset so content at the very bottom is still visible
         this._verticalScrollPosition = Math.min(0, Math.max(-this.contentHeight + this.endY - 2, value));
+        this.updateVerticalScroll(this._verticalScrollPosition);
     }
 
     public resizeInteractiveArea(width: number, height: number) {
@@ -82,7 +83,6 @@ export abstract class VerticalScrollView extends MouseTypeContainer implements I
     public pointerMoveHandler(event : PIXI.InteractionEvent) {
         if (this._mouseClickType == MouseClickType.LeftClick && this.scrollingEnabled) {
             this.verticalScrollPosition = event.data.getLocalPosition(this).y - this._startPointerPosition.y + this._startVerticalScrollPosition;
-            this.updateVerticalScroll(this.verticalScrollPosition);
         }
     }
 
@@ -95,7 +95,6 @@ export abstract class VerticalScrollView extends MouseTypeContainer implements I
     public pointerUpDragHandler(event : PIXI.InteractionEvent) {
         if (this._mouseClickType == MouseClickType.LeftClick && this.scrollingEnabled) {
             this.verticalScrollPosition = event.data.getLocalPosition(this).y - this._startPointerPosition.y + this._startVerticalScrollPosition;
-            this.updateVerticalScroll(this.verticalScrollPosition);
         }
     }
 

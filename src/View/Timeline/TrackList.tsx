@@ -70,6 +70,9 @@ export class TrackList extends PIXI.Container {
 
         // Setup container for settings boxes
         this._trackSettingsContainer = document.createElement("div");
+        this._trackSettingsContainer.style.position = "absolute";
+        this._trackSettingsContainer.style.width = this._sidebarWidth.toString() + "px";
+        this._trackSettingsContainer.style.overflow = "hidden";
         document.getElementById("applicationContainer").appendChild(this._trackSettingsContainer);
 
         this.resize(width, height);
@@ -120,13 +123,8 @@ export class TrackList extends PIXI.Container {
             // Set mask so lines disappear once they go above the header
             this._trackLineGraphics.mask = new PIXI.Graphics().beginFill(0xFFFFFF).drawRect(0, UIPositioning.timelineHeaderHeight, this.endX, this.endY).endFill();
 
-            Object.assign(this._trackSettingsContainer.style, {
-                position: "absolute",
-                top: this.tracks[0].startY.toString(),
-                width: this._sidebarWidth.toString(),
-                height: (this.endY - this.tracks[0].startY).toString(),
-                overflow: "hidden"
-            });
+            this._trackSettingsContainer.style.top = this.tracks[0].startY.toString() + "px";
+            this._trackSettingsContainer.style.height = (this.endY - this.tracks[0].startY).toString() + "px";
 
             this._rerenderList();
         }
@@ -231,7 +229,7 @@ class TrackSettingsList extends React.Component<TrackSettingsListProps> {
     render() {
         if (this.props.tracks.length > 0) {
             let possibleConnections = this.props.tracks[0].track.possibleConnections;
-            return (<div style={{ position: "absolute", top: this.props.verticalScroll }}>
+            return (<div style={{ position: "absolute", top: this.props.verticalScroll.toString()  + "px"}}>
                 {this.props.tracks.map((track, index) => {
                     let soundFileProps = undefined;
                     if (track instanceof SoundFileUITrack) {

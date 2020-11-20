@@ -69,6 +69,7 @@ interface IEffectListProperty<T> extends IEffectProperty {
 }
 
 interface IEffect {
+    "id" : string,
     "effectType" : string,
     "properties" : IEffectProperty[],
 }
