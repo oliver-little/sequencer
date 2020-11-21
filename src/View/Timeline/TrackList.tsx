@@ -86,7 +86,7 @@ export class TrackList extends PIXI.Container {
             .endFill();
         this._trackListGraphics.beginFill(UIColors.fgColor)
             .drawRect(this._sidebarWidth - 2, 0, 3, this.endY)
-            .drawRect(0, UIPositioning.timelineHeaderHeight - 2, this.endX, 2)
+            .drawRect(0, UIPositioning.timelineHeaderHeight, this._sidebarWidth, 2)
             .endFill();
 
         this.drawTracks();

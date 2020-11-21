@@ -6,12 +6,12 @@ interface SliderProps {
     max: string,
     step: string,
     onChange: Function
-    value : string
+    value: string
 }
 
 export class Slider extends React.PureComponent<SliderProps> {
 
-    private _sliderRef : HTMLInputElement;
+    private _sliderRef: HTMLInputElement;
 
     componentDidMount() {
         this._sliderRef.value = this.props.value;
@@ -22,7 +22,7 @@ export class Slider extends React.PureComponent<SliderProps> {
     }
 
     render() {
-        return <input className={this.props.className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => {this._sliderRef = ref}} onChange={(event) => { this.props.onChange(event.target.value) }} />
+        return <input className={this.props.className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => { this._sliderRef = ref }} onChange={(event) => { this.props.onChange(event.target.value) }} />
     }
 }
 
@@ -204,7 +204,7 @@ interface BoxSelectOverlayProps {
 
 interface BoxSelectOverlayState {
     selectedOffsetTop: number
-    overlayWidthDifference : number
+    overlayWidthDifference: number
     anim: string
 }
 

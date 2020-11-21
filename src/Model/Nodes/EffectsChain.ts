@@ -356,7 +356,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
             properties: [
                 { type: "number", displayName: "Output Gain", propertyName: "outputGain", value: 0, editable: true, step: 1, min: -42, max: 0 } as IEffectNumberRange,
                 { type: "number", propertyName: "drive", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-                { type: "number", displayName: "Curve Amount", propertyName: "curveAmount", value: 0.725, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", displayName: "Curve Amount", propertyName: "curveAmount", value: 0.725, editable: true, step: 0.01, min: 0, max: 0.99 } as IEffectNumberRange,
                 { type: "number", displayName: "Algorithm Index", propertyName: "algorithmIndex", value: 0, editable: true, step: 1, min: 0, max: 5 } as IEffectNumberRange,
                 { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
             ]
@@ -404,7 +404,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
                 { type: "number", propertyName: "frequency", value: 22050, editable: true, step: 1, min: 20, max: 22050 } as IEffectNumberRange,
                 { type: "number", propertyName: "Q", value: 1, editable: true, step: 0.001, min: 0.001, max: 100 } as IEffectNumberRange,
                 { type: "number", propertyName: "gain", value: 0, editable: true, step: 1, min: -40, max: 40 } as IEffectNumberRange,
-                { type: "list", displayName: "Filter Type", propertyName: "filterType", value: 0, editable: true, options: ["lowpass", "highpass", "bandpass", "lowshelf", "highshelf", "peaking", "notch", "allpass"] } as IEffectListProperty<string>,
+                { type: "list", displayName: "Filter Type", propertyName: "filterType", value: "lowpass", editable: true, options: ["lowpass", "highpass", "bandpass", "lowshelf", "highshelf", "peaking", "notch", "allpass"] } as IEffectListProperty,
                 { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
             ]
         }

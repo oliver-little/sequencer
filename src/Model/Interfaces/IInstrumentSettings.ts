@@ -62,10 +62,10 @@ interface IEffectStringProperty extends IEffectProperty {
     "value" : string,
 }
 
-interface IEffectListProperty<T> extends IEffectProperty {
+interface IEffectListProperty extends IEffectProperty {
     type : "list"
-    "value" : number,
-    "options" : T[]
+    "value" : string,
+    "options" : string[]
 }
 
 interface IEffect {

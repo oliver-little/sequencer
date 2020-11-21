@@ -11,14 +11,14 @@ import { EffectsChainPanel } from "./EffectsChainPanel";
 // Global songManager
 
 interface SequencerAppState {
-    songManager : SongManager;
+    songManager: SongManager;
 }
 
 export class SequencerApp extends React.Component<{}, SequencerAppState> {
     constructor(props) {
         super(props);
         this.state = {
-            songManager : new SongManager(),
+            songManager: new SongManager(),
         }
     }
 
@@ -28,14 +28,16 @@ export class SequencerApp extends React.Component<{}, SequencerAppState> {
 
     render() {
         return <div className="fullScreen">
-            <div className="sequencerAppTopBar">
-                <PlaybackPanel songManager={this.state.songManager} />
-                <EditPanel />
-            </div>
-            <div className="sequencerAppMainPanel">
-                <PIXITimeline className="sequencerAppMainPanelLeft" songManager={this.state.songManager} />
-                <div className="sequencerAppMainPanelRight">
-                    <EffectsChainPanel connectionManager={this.state.songManager.connectionManager} />
+            <div style={{ position: "relative", width: "100%", height: "100%"}}>
+                <div className="sequencerAppTopBar">
+                    <PlaybackPanel songManager={this.state.songManager} />
+                    <EditPanel />
+                </div>
+                <div className="sequencerAppMainPanel">
+                    <PIXITimeline className="sequencerAppMainPanelLeft" songManager={this.state.songManager} />
+                    <div className="sequencerAppMainPanelRight">
+                        <EffectsChainPanel connectionManager={this.state.songManager.connectionManager} />
+                    </div>
                 </div>
             </div>
         </div>
@@ -44,7 +46,7 @@ export class SequencerApp extends React.Component<{}, SequencerAppState> {
 
 interface PIXITimelineProps {
     className?: string,
-    songManager : SongManager
+    songManager: SongManager
 }
 
 interface PIXITimelineState {
@@ -53,17 +55,17 @@ interface PIXITimelineState {
 
 export class PIXITimeline extends React.Component<PIXITimelineProps, PIXITimelineState> {
 
-    public state : PIXITimelineState;
+    public state: PIXITimelineState;
 
-    protected _pixiContainer : React.RefObject<HTMLDivElement>;
+    protected _pixiContainer: React.RefObject<HTMLDivElement>;
 
     constructor(props) {
         super(props);
 
         this.state = {
-            pixiApp : null,
+            pixiApp: null,
         }
-        
+
         PIXI.settings.ROUND_PIXELS = true;
         this._pixiContainer = React.createRef();
 
@@ -82,7 +84,7 @@ export class PIXITimeline extends React.Component<PIXITimelineProps, PIXITimelin
 
         // Setup operations
         app.view.setAttribute("oncontextmenu", "return false;");
-        app.view.addEventListener("mousedown", function(e) {e.preventDefault();});
+        app.view.addEventListener("mousedown", function (e) { e.preventDefault(); });
         app.renderer.backgroundColor = UIColors.bgColor;
 
         // Add to DOM
@@ -97,16 +99,16 @@ export class PIXITimeline extends React.Component<PIXITimelineProps, PIXITimelin
 
         // Need to figure out a solution for passing mouseWheelEvents to current 
         app.view.addEventListener("wheel", event => navigationView.passWheelEvent(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));
-    
+
         navigationView.setStageRenderer(app.stage, app.renderer);
         navigationView.show(timeline);
-        this.setState({pixiApp: app}, this._resizePIXIApp);
+        this.setState({ pixiApp: app }, this._resizePIXIApp);
 
     }
 
     componentWillUnmount() {
         window.removeEventListener("resize", this._resizePIXIApp);
-        if(this.state.pixiApp != undefined) {
+        if (this.state.pixiApp != undefined) {
             this.state.pixiApp.destroy(true);
         }
     }

@@ -30,6 +30,7 @@ button:focus {
 }
 
 .sequencerAppMainPanel {
+    position: relative;
     width: 100%;
     height: 80%;
 }
@@ -37,7 +38,7 @@ button:focus {
 .sequencerAppMainPanelLeft {
     position: relative;
     float: left;
-    width: 80%;
+    width: 100%;
     height: 100%;
 }
 
@@ -45,12 +46,6 @@ button:focus {
     position: absolute;
     top: 0px;
     width: 100%;
-    height: 100%;
-}
-
-.sequencerAppMainPanelRight {
-    float: left;
-    width: 20%;
     height: 100%;
 }
 
@@ -102,6 +97,97 @@ button:focus {
 
 .selectionButton.selected:enabled {
     outline: 2px solid blue;
+}
+
+/* Effects Chain Panel */
+
+.effectsChainPanel {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    float: right;
+    width: 400px;
+    height: 100%;
+    
+    transform: none;
+    transition: transform 0.5s ease-in-out;
+}
+
+.effectsChainPanel.hidden {
+    transform: translateX(100%);
+}
+
+.effectsChainPanel > .effectsChainHideShowButton {
+    transform: none;
+    top: 7px;
+    left: 5px;
+    transition: transform 0.3s ease-in-out, left 0.3s ease;
+}
+
+.effectsChainPanel.hidden > .effectsChainHideShowButton { 
+    transform: translateX(-100%);
+    left: 0px;
+}
+
+.effectsChainHideShowButton {
+    background-color: var(--timeline-highlight2-color);
+    width: 25px;
+    height: 25px;
+    border-radius: 2px;
+    border: 1px solid var(--timeline-fg-color);
+    position: absolute;
+}
+
+.effectsChainContent {
+    border-left: 2px solid var(--timeline-fg-color);
+    height: 100%;
+    background-color: white;
+    overflow: hidden;
+}
+
+.effectsChainPanelTitle {
+    display: flex;
+    justify-content: center;
+    padding-top: 10px;
+    padding-bottom : 10px;
+}
+
+.effectsList {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.effectsList > *:last-child {
+    margin-bottom: 60px;
+}
+
+.chainEffect {
+    display: flex;
+    flex-direction: column;
+}
+
+.effectProperty {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.effectProperty > *:first-child {
+    margin-left: 20px;   
+}
+
+.effectProperty > *:last-child {
+    margin-right: 20px;
+}
+
+.effectProperty > p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.effectsChainDropdownButton {
+    display: block;
+    margin: 0 auto;
 }
 
 /* Dropdown box */

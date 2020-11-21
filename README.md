@@ -12,6 +12,8 @@ A web-based DAW and sequencer, built in TypeScript, using the Web Audio API.
     - npm install react
 - react-dom
     - npm install react-dom
+- react-beautiful-dnd
+    - npm install react-beautiful-dnd
 
 
 ### Credits
