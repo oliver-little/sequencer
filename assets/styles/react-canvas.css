@@ -166,6 +166,25 @@ button:focus {
     flex-direction: column;
 }
 
+.chainEffectTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chainEffectTitle > *:first-child {
+    margin-left: 10px;
+}
+
+.chainEffectTitle > *:last-child {
+    margin-right: 10px;
+}
+
+.chainEffectDelete {
+    width: 25px;
+    height: 25px;
+}
+
 .effectProperty {
     display: flex;
     flex-direction: row;

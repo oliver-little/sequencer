@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid";
 import { EffectsChain } from "../../Model/Nodes/EffectsChain";
 import { ConnectionManager } from "../../Model/SongManagement/ConnectionManager";
 import { IEffect, IEffectBooleanProperty, IEffectListProperty, IEffectNumberProperty, IEffectNumberRange, IEffectProperty, IEffectStringProperty } from "../../Model/Interfaces/IInstrumentSettings";
-import { BoxSelect, Dropdown, Slider } from "../SharedReact/BasicElements";
+import { BoxSelect, Dropdown, FAButton, Slider } from "../SharedReact/BasicElements";
 
 interface EffectsChainPanelProps {
     connectionManager: ConnectionManager
@@ -21,6 +21,7 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         super(props);
 
         this._effectChanged = this._effectChanged.bind(this);
+        this._effectRemoved = this._effectRemoved.bind(this);
         this._newEffect = this._newEffect.bind(this);
         this._moveEffect = this._moveEffect.bind(this);
 
@@ -39,6 +40,11 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         return this.props.connectionManager.chains.concat([this.props.connectionManager.bus]);
     }
 
+    private _newEffect(newEffectIndex: number) {
+        this.currentChain.addEffect(this.currentChain.effects.length, EffectsChain.possibleEffects.get(EffectsChainInfo.effectTitles[newEffectIndex])());
+        this.setState({ currentChainNumber: this.state.currentChainNumber });
+    }
+
     // Curried function to prevent passing down of index
     private _effectChanged(index: number) {
         return (propertyIndex: number) => {
@@ -52,8 +58,8 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         }
     }
 
-    private _newEffect(newEffectIndex: number) {
-        this.currentChain.addEffect(this.currentChain.effects.length, EffectsChain.possibleEffects.get(EffectsChainInfo.effectTitles[newEffectIndex])());
+    private _effectRemoved(index: number) {
+        this.currentChain.removeEffect(index);
         this.setState({ currentChainNumber: this.state.currentChainNumber });
     }
 
@@ -66,15 +72,15 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         this.setState({ hidden: !this.state.hidden })
     }
 
+    // TODO: UI for switching effects chain, and UI for adding new effects chains.
     render() {
-
         return <div className={"effectsChainPanel" + (this.state.hidden ? " hidden" : "")}>
-            <button className="effectsChainHideShowButton" onClick={() => { this._hidePanel() }}>{this.state.hidden ? "<" : ">"}</button>
+            <FAButton className="effectsChainHideShowButton" iconName={this.state.hidden ? "fa fa-chevron-left" : "fa fa-chevron-right"}onClick={() => { this._hidePanel() }} />
             <div className={"effectsChainContent"} >
                 <div className={"effectsChainPanelTitle"}>
                     {this.currentChain.chainName}
                 </div>
-                <EffectsChainInfo effectsChain={this.currentChain.effects} moveEffect={this._moveEffect} effectPropertyChanged={this._effectChanged} newEffect={this._newEffect} />
+                <EffectsChainInfo effectsChain={this.currentChain.effects} moveEffect={this._moveEffect} effectPropertyChanged={this._effectChanged} newEffect={this._newEffect} effectRemoved={this._effectRemoved} />
             </div>
         </div>
     }
@@ -85,6 +91,7 @@ interface EffectsChainInfoProps {
     moveEffect: Function
     effectPropertyChanged: Function,
     newEffect: Function
+    effectRemoved: Function
     /*preGainValue : number,
     preGainValueChanged : Function,
     postGainValue : number,
@@ -114,7 +121,7 @@ class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
     render() {
 
         let effects = this.props.effectsChain.map((effect, index) => {
-            return <ChainEffect key={effect.id} effectIndex={index} {...effect} onPropertyChange={this.props.effectPropertyChanged(index)} />
+            return <ChainEffect key={effect.id} effectIndex={index} {...effect} onPropertyChange={this.props.effectPropertyChanged(index)} onDelete={this.props.effectRemoved} />
         });
         return <div className={"effectsList"}>
             <DragDropContext onDragEnd={this._onDragEnd}>
@@ -135,6 +142,7 @@ class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
 interface ChainEffectProps extends IEffect {
     effectIndex: number
     onPropertyChange: Function
+    onDelete: Function
 }
 
 class ChainEffect extends React.PureComponent<ChainEffectProps> {
@@ -144,26 +152,31 @@ class ChainEffect extends React.PureComponent<ChainEffectProps> {
             {(provided) => (
                 <div className="chainEffect" ref={provided.innerRef} {...provided.draggableProps}>
                     <div {...provided.dragHandleProps}>
-                        <p>{this.props.effectType}</p>
+                        <div className={"chainEffectTitle"}>
+                            <p style={{marginRight: "5px"}}>{this.props.effectType}</p>
+                            <FAButton className={"chainEffectDelete"} iconName={"fa fa-times"} onClick={() => {this.props.onDelete(this.props.effectIndex)}} />
+                        </div>
                     </div>
                     {this.props.properties.map((property, index) => {
-                        switch (property.type) {
-                            case "number":
-                                if (property.hasOwnProperty("min")) {
-                                    return <RangeEffectProperty key={index} {...property as IEffectNumberRange} onChange={this.props.onPropertyChange(index)} />;
-                                }
-                                else {
-                                    return <NumberEffectProperty key={index} {...property as IEffectNumberProperty} onChange={this.props.onPropertyChange(index)} />;
-                                }
-                            case "string":
-                                return <StringEffectProperty key={index} {...property as IEffectStringProperty} onChange={this.props.onPropertyChange(index)} />;
-                            case "boolean":
-                                return <BooleanEffectProperty key={index} {...property as IEffectBooleanProperty} onChange={this.props.onPropertyChange(index)} />;
-                            case "list":
-                                return <ListEffectProperty key={index} {...property as IEffectListProperty} onChange={this.props.onPropertyChange(index)} />;
-                            default:
-                                console.log("Unknown property type: " + property.type);
-                                return null;
+                        if (property.editable) {
+                            switch (property.type) {
+                                case "number":
+                                    if (property.hasOwnProperty("min")) {
+                                        return <RangeEffectProperty key={index} {...property as IEffectNumberRange} onChange={this.props.onPropertyChange(index)} />;
+                                    }
+                                    else {
+                                        return <NumberEffectProperty key={index} {...property as IEffectNumberProperty} onChange={this.props.onPropertyChange(index)} />;
+                                    }
+                                case "string":
+                                    return <StringEffectProperty key={index} {...property as IEffectStringProperty} onChange={this.props.onPropertyChange(index)} />;
+                                case "boolean":
+                                    return <BooleanEffectProperty key={index} {...property as IEffectBooleanProperty} onChange={this.props.onPropertyChange(index)} />;
+                                case "list":
+                                    return <ListEffectProperty key={index} {...property as IEffectListProperty} onChange={this.props.onPropertyChange(index)} />;
+                                default:
+                                    console.log("Unknown property type: " + property.type);
+                                    return null;
+                            }
                         }
                     })}
                 </div>)

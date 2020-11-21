@@ -137,7 +137,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
      * @memberof EffectsChain
      */
     public removeEffect(index: number) {
-        if (index > 0 && index < this._chainNodes.length) {
+        if (index >= 0 && index < this._chainNodes.length) {
             this._disconnectEffect(index);
 
             this._settings.effects.splice(index, 1);
