@@ -24,6 +24,7 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         this._effectRemoved = this._effectRemoved.bind(this);
         this._newEffect = this._newEffect.bind(this);
         this._moveEffect = this._moveEffect.bind(this);
+        this._selectedChainChanged = this._selectedChainChanged.bind(this);
 
 
         this.state = {
@@ -33,11 +34,14 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
     }
 
     get currentChain() {
+        if (this.state.currentChainNumber > this.props.connectionManager.chains.length) {
+            return this.props.connectionManager.bus;
+        }
         return this.chainsAndBus[this.state.currentChainNumber];
     }
 
     get chainsAndBus() {
-        return this.props.connectionManager.chains.concat([this.props.connectionManager.bus]);
+        return [this.props.connectionManager.bus].concat(this.props.connectionManager.chains);
     }
 
     private _newEffect(newEffectIndex: number) {
@@ -72,13 +76,23 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         this.setState({ hidden: !this.state.hidden })
     }
 
+    private _selectedChainChanged(index: number) {
+        if (index > this.props.connectionManager.chains.length) {
+            this.props.connectionManager.addChain();
+        }
+        this.setState({currentChainNumber: index});
+    }
+
     // TODO: UI for switching effects chain, and UI for adding new effects chains.
     render() {
+        let options = this.chainsAndBus.map(value =>{return value.chainName});
+        options.push("New Chain...");
+
         return <div className={"effectsChainPanel" + (this.state.hidden ? " hidden" : "")}>
-            <FAButton className="effectsChainHideShowButton" iconName={this.state.hidden ? "fa fa-chevron-left" : "fa fa-chevron-right"}onClick={() => { this._hidePanel() }} />
+            <FAButton title={this.state.hidden ? "Show Effects" : "Hide Effects"} className="effectsChainHideShowButton" iconName={this.state.hidden ? "fa fa-caret-left" : "fa fa-caret-right"} onClick={() => { this._hidePanel() }} />
             <div className={"effectsChainContent"} >
                 <div className={"effectsChainPanelTitle"}>
-                    {this.currentChain.chainName}
+                    <BoxSelect mainButtonClassName={"effectsChainTitleButton"} selectButtonClassName={"effectsChainSelectButton"} selected={this.state.currentChainNumber} options={options} selectedCallback={this._selectedChainChanged} />
                 </div>
                 <EffectsChainInfo effectsChain={this.currentChain.effects} moveEffect={this._moveEffect} effectPropertyChanged={this._effectChanged} newEffect={this._newEffect} effectRemoved={this._effectRemoved} />
             </div>
@@ -126,15 +140,15 @@ class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
         return <div className={"effectsList"}>
             <DragDropContext onDragEnd={this._onDragEnd}>
                 <Droppable droppableId={"effectsList"}>
-                    {(provided) => (
-                        <div ref={provided.innerRef} {...provided.droppableProps}>
+                    {(provided, snapshot) => (
+                        <div className={"effectsListDroppable" + (snapshot.isDraggingOver ? " dragging" : "")} ref={provided.innerRef} {...provided.droppableProps}>
                             {effects}
                             {provided.placeholder}
                         </div>
                     )}
                 </Droppable>
             </DragDropContext>
-            <Dropdown buttonClassName={"effectsChainDropdownButton"} title={"+"} optionTitles={EffectsChainInfo.effectTitles} optionClickCallback={this.props.newEffect} />
+            <BoxSelect mainButtonClassName={"effectsChainDropdownButton"} title={"+"} options={EffectsChainInfo.effectTitles} selectedCallback={this.props.newEffect} />
         </div >;
     }
 }
@@ -149,9 +163,9 @@ class ChainEffect extends React.PureComponent<ChainEffectProps> {
 
     render() {
         return <Draggable draggableId={this.props.id} index={this.props.effectIndex}>
-            {(provided) => (
-                <div className="chainEffect" ref={provided.innerRef} {...provided.draggableProps}>
-                    <div {...provided.dragHandleProps}>
+            {(provided, snapshot) => (
+                <div className={"chainEffect" + (snapshot.isDragging ? " dragging" : "")} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                    <div>
                         <div className={"chainEffectTitle"}>
                             <p style={{marginRight: "5px"}}>{this.props.effectType}</p>
                             <FAButton className={"chainEffectDelete"} iconName={"fa fa-times"} onClick={() => {this.props.onDelete(this.props.effectIndex)}} />

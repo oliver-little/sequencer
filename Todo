@@ -3,11 +3,13 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
+- Saving and loading
+- Delete button for chains
+- Oscillator type in track list
 - Add selected effect to TrackTimelineEvents
 - Scrollbars, both vertical and horizontal
 - Ability to move all notes in a note group in the sequencer view.
 - Loading spinners, for async operations like loading in a new file: https://chevtek.io/how-to-create-versatile-loading-spinner-management-in-react/
-- Connections for tracks with chains and global bus - https://github.com/lukasoppermann/html5sortable
 - Update TrackTimelineEvent width on drag, not only on mouse release
 
 Other:

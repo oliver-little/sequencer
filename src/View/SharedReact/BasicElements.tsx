@@ -76,13 +76,14 @@ export class LabelledCheckbox extends React.Component<LabelledCheckboxProps> {
 
 interface FAButtonProps {
     className?: string,
+    title?: string,
     iconName: string,
     onClick: Function
 }
 
 export class FAButton extends React.PureComponent<FAButtonProps> {
     render() {
-        return <button className={this.props.className} onClick={() => { this.props.onClick() }}><i className={this.props.iconName}></i></button>
+        return <button title={this.props.title} className={this.props.className} onClick={() => { this.props.onClick() }}><i className={this.props.iconName}></i></button>
     }
 }
 
@@ -148,11 +149,14 @@ export class DropdownItem extends React.Component<DropdownItemProps> {
     }
 }
 
+// EITHER SELECTED OR TITLE IS REQUIRED
 interface BoxSelectProps {
     overlayClassName?: string,
+    mainButtonClassName?: string,
     selectButtonClassName?: string,
+    tooltip?: string,
+    selected?: number,
     title?: string,
-    selected: number,
     options: string[],
     selectedCallback: Function,
 }
@@ -170,12 +174,11 @@ export class BoxSelect extends React.Component<BoxSelectProps, BoxSelectState> {
 
         this._selectOptionClicked = this._selectOptionClicked.bind(this);
 
-        this._selectButton = React.createRef();
-
-
         this.state = {
             selectVisible: false,
         }
+
+        this._selectButton = React.createRef();
     }
 
     private _selectOptionClicked(index: number) {
@@ -186,9 +189,11 @@ export class BoxSelect extends React.Component<BoxSelectProps, BoxSelectState> {
     render() {
         const buttonClassName = "boxSelectButton" + (this.props.selectButtonClassName ? " " + this.props.selectButtonClassName : "");
 
-        return <div>
-            <button className={buttonClassName} onClick={() => { this.setState({ selectVisible: !this.state.selectVisible }) }} ref={this._selectButton}>{this.props.options[this.props.selected]}</button>
-            {this.state.selectVisible && <BoxSelectOverlay buttonClassName={buttonClassName} selected={this.props.selected} options={this.props.options} positioningButton={this._selectButton} selectOptionClickedCallback={this._selectOptionClicked} />}
+        return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
+            <div>
+                <button className={this.props.mainButtonClassName} ref={this._selectButton} onClick={() => { this.setState({ selectVisible: !this.state.selectVisible }) }} >{this.props.selected !== undefined ? this.props.options[this.props.selected] : this.props.title}</button>
+            </div>
+            {this.state.selectVisible && <BoxSelectOverlay buttonClassName={buttonClassName} selectButton={this._selectButton} options={this.props.options} selectOptionClickedCallback={this._selectOptionClicked} />}
         </div>
     }
 }
@@ -196,43 +201,54 @@ export class BoxSelect extends React.Component<BoxSelectProps, BoxSelectState> {
 interface BoxSelectOverlayProps {
     className?: string,
     buttonClassName?: string,
-    selected: number,
     options: string[],
-    positioningButton: React.RefObject<HTMLButtonElement>,
     selectOptionClickedCallback: Function
+    selectButton: React.RefObject<HTMLButtonElement>
 }
 
 interface BoxSelectOverlayState {
-    selectedOffsetTop: number
-    overlayWidthDifference: number
-    anim: string
+    renderAbove: boolean,
 }
 
 class BoxSelectOverlay extends React.Component<BoxSelectOverlayProps, BoxSelectOverlayState> {
 
-    private _currentSelectedButton: HTMLButtonElement;
-    private _overlayDiv: HTMLDivElement;
+    private _overlayContainer: React.RefObject<HTMLDivElement>;
 
     constructor(props) {
         super(props);
 
         this.state = {
-            selectedOffsetTop: 0,
-            overlayWidthDifference: 0,
-            anim: ""
+            renderAbove: false,
         }
+
+        this._overlayContainer = React.createRef();
     }
 
     componentDidMount() {
-        this.setState({ selectedOffsetTop: this._currentSelectedButton.offsetTop, overlayWidthDifference: (this._overlayDiv.offsetWidth - this.props.positioningButton.current.offsetWidth) / 2 });
-        setTimeout(() => { this.setState({ anim: " animVisible" }) }, 10);
+        let bottom = this._overlayContainer.current.getBoundingClientRect().bottom;
+        if (bottom > window.innerHeight) {
+            this.setState({ renderAbove: true });
+        }
     }
 
     render() {
         const overlayClassName = "boxSelectOverlay" + (this.props.className ? " " + this.props.className : "");
         let options = this.props.options.map((value, index) => {
-            return <button className={this.props.buttonClassName} key={index} onClick={() => { this.props.selectOptionClickedCallback(index) }} ref={(ref) => { this.props.selected === index ? this._currentSelectedButton = ref : null }}>{value}</button>
+            return <button className={this.props.buttonClassName} key={index} onClick={() => { this.props.selectOptionClickedCallback(index) }} >{value}</button>
         });
-        return <div className={overlayClassName + this.state.anim} ref={(ref) => { this._overlayDiv = ref }} style={{ position: "absolute", top: (this.props.positioningButton.current.offsetTop - this.state.selectedOffsetTop), left: this.props.positioningButton.current.offsetLeft - this.state.overlayWidthDifference }}>{options}</div>
+        let currentButton = this.props.selectButton.current;
+        console.log(currentButton.parentElement.scrollTop);
+        if (!this.state.renderAbove) {
+            return <div className={"boxSelectOverlayContainer"} ref={this._overlayContainer} style={{ top: currentButton.offsetHeight + 1 }}>
+                <div className={"boxSelectOverlayArrow top"}></div>
+                <div className={overlayClassName} >{options}</div>
+            </div>
+        }
+        else {
+            return <div className={"boxSelectOverlayContainer"} ref={this._overlayContainer} style={{ top: -this._overlayContainer.current.offsetHeight - 1 }}>
+                <div className={overlayClassName} >{options}</div>
+                <div className={"boxSelectOverlayArrow bottom"}></div>
+            </div>
+        }
     }
 }
