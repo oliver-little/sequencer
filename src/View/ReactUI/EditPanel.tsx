@@ -1,5 +1,6 @@
 import * as React from "react";
 import { editType } from "../Settings/EditType";
+import { SelectionGroup } from "../SharedReact/BasicElements";
 
 interface EditPanelState {
     selectedSnapButton : number,
@@ -60,45 +61,5 @@ interface FractionProps {
 class Fraction extends React.PureComponent<FractionProps> {
     render() {
         return <p><sup>{this.props.n}</sup>&#x2044;<sub>{this.props.d}</sub></p>
-    }
-}
-
-interface SelectionGroupProps {
-    className? : string,
-    buttonClassName? : string,
-    disabled : boolean,
-    selectedButton : number,
-    buttonContents : any[]
-    onButtonClick : Function,
-}
-
-class SelectionGroup extends React.Component<SelectionGroupProps> {
-    render() {
-        return <div className={this.props.className}>
-            {this.props.buttonContents.map((value, index) => {
-                let selected = false;
-                if (index === this.props.selectedButton) {
-                    selected = true;
-                }
-
-                return <SelectionButton key={index} className={this.props.buttonClassName} disabled={this.props.disabled} selected={selected} content={value} onClick={() => {this.props.onButtonClick(index)}}/>
-            })}
-        </div>;
-    }
-}
-
-interface SelectionButtonProps {
-    className? : string,
-    disabled : boolean
-    selected : boolean,
-    content : any,
-    onClick : Function
-}
-
-class SelectionButton extends React.Component<SelectionButtonProps> {
-    render() {
-        const classes = "selectionButton" + (this.props.selected ? " selected" : "") + (this.props.className != null ? " " + this.props.className : "");
-
-        return <button className={classes} onClick={() => {this.props.onClick()}} disabled={this.props.disabled}>{this.props.content}</button>
     }
 }

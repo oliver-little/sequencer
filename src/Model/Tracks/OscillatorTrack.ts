@@ -11,7 +11,7 @@ export class OscillatorTrack extends BaseTrack {
     public audioSource: OscillatorInstrument;
 
     // Stores note string names, and the number of times that note string appears.
-    private _pitchStrings : {[noteName : string] : number};
+    private _pitchStrings: { [noteName: string]: number };
 
     /**
      * Creates an instance of OscillatorTrack.
@@ -21,12 +21,23 @@ export class OscillatorTrack extends BaseTrack {
      * @param {IOscillatorSettings} settings An object that fulfills the IOscillatorSettings interface
      * @memberof OscillatorTrack
      */
-    constructor(metadata: SongMetadata, context: AudioContext | OfflineAudioContext, scheduleEvent: SimpleEvent, connectionManager : ConnectionManager, settings?: IOscillatorTrackSettings) {
+    constructor(metadata: SongMetadata, context: AudioContext | OfflineAudioContext, scheduleEvent: SimpleEvent, connectionManager: ConnectionManager, settings?: IOscillatorTrackSettings) {
         let instrument = new OscillatorInstrument(context, settings ? settings.source : undefined);
 
-        super(metadata, context, scheduleEvent, instrument, connectionManager);
+        super(metadata, context, scheduleEvent, instrument, connectionManager, settings);
 
         this._pitchStrings = {};
+
+        if (settings) {
+            settings.events.forEach(event => {
+                if (event.pitchString in this._pitchStrings) {
+                    this._pitchStrings[event.pitchString] += 1
+                }
+                else {
+                    this._pitchStrings[event.pitchString] = 1
+                }
+            });
+        }
     }
 
     /**
@@ -70,7 +81,7 @@ export class OscillatorTrack extends BaseTrack {
      * @returns {NoteEvent} The NoteEvent that was added to the timeline
      * @memberof OscillatorTrack
      */
-    public addNote(startPosition: number, pitch: string, duration: string | number) : NoteEvent {
+    public addNote(startPosition: number, pitch: string, duration: string | number): NoteEvent {
         let event = new NoteEvent(startPosition, pitch, duration);
         this._timeline.addEvent(event);
 

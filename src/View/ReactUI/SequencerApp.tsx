@@ -7,14 +7,14 @@ import { TimelineView } from "../Timeline/TimelineView";
 import { EditPanel } from "./EditPanel";
 import { PlaybackPanel } from "./PlaybackPanel";
 import { EffectsChainPanel } from "./EffectsChainPanel";
-
-// Global songManager
+import { SerialisePanel } from "./SerialisePanel";
 
 interface SequencerAppState {
     songManager: SongManager;
 }
 
 export class SequencerApp extends React.Component<{}, SequencerAppState> {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -28,10 +28,11 @@ export class SequencerApp extends React.Component<{}, SequencerAppState> {
 
     render() {
         return <div className="fullScreen">
-            <div style={{ position: "relative", width: "100%", height: "100%"}}>
+            <div style={{ position: "relative", width: "100%", height: "100%" }}>
                 <div className="sequencerAppTopBar">
                     <PlaybackPanel songManager={this.state.songManager} />
                     <EditPanel />
+                    <SerialisePanel songManager={this.state.songManager} />
                 </div>
                 <div className="sequencerAppMainPanel">
                     <PIXITimeline className="sequencerAppMainPanelLeft" songManager={this.state.songManager} />
@@ -53,7 +54,7 @@ interface PIXITimelineState {
     pixiApp: PIXI.Application
 }
 
-export class PIXITimeline extends React.Component<PIXITimelineProps, PIXITimelineState> {
+export class PIXITimeline extends React.PureComponent<PIXITimelineProps, PIXITimelineState> {
 
     public state: PIXITimelineState;
 
@@ -95,19 +96,18 @@ export class PIXITimeline extends React.Component<PIXITimelineProps, PIXITimelin
         app.renderer.resize(parent.clientWidth, parent.clientHeight);
 
         // Create timeline and show on pixi app
-        let timeline = new TimelineView(app.renderer.width, app.renderer.height, [], this.props.songManager);
+        let timeline = new TimelineView(app.renderer.width, app.renderer.height, this.props.songManager);
 
-        // Need to figure out a solution for passing mouseWheelEvents to current 
         app.view.addEventListener("wheel", event => navigationView.passWheelEvent(event, app.renderer.view.getBoundingClientRect().left, app.renderer.view.getBoundingClientRect().top));
 
         navigationView.setStageRenderer(app.stage, app.renderer);
         navigationView.show(timeline);
         this.setState({ pixiApp: app }, this._resizePIXIApp);
-
     }
 
     componentWillUnmount() {
         window.removeEventListener("resize", this._resizePIXIApp);
+
         if (this.state.pixiApp != undefined) {
             this.state.pixiApp.destroy(true);
         }

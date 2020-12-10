@@ -208,7 +208,7 @@ export class EventTimeline {
                     this._events.push(new BaseEvent(songEvents[i].startPosition, songEvents[i].duration));
                     break;
                 case "NoteEvent":
-                    this._events.push(new NoteEvent(songEvents[i].startPosition, songEvents[i].pitch, songEvents[i].duration));
+                    this._events.push(new NoteEvent(songEvents[i].startPosition, songEvents[i].pitchString, songEvents[i].duration));
                     break;
                 case "SecondsBaseEvent":
                     this._events.push(new SecondsBaseEvent(songEvents[i].startPosition, metadata, songEvents[i].duration));

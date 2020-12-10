@@ -237,7 +237,6 @@ class BoxSelectOverlay extends React.Component<BoxSelectOverlayProps, BoxSelectO
             return <button className={this.props.buttonClassName} key={index} onClick={() => { this.props.selectOptionClickedCallback(index) }} >{value}</button>
         });
         let currentButton = this.props.selectButton.current;
-        console.log(currentButton.parentElement.scrollTop);
         if (!this.state.renderAbove) {
             return <div className={"boxSelectOverlayContainer"} ref={this._overlayContainer} style={{ top: currentButton.offsetHeight + 1 }}>
                 <div className={"boxSelectOverlayArrow top"}></div>
@@ -250,5 +249,45 @@ class BoxSelectOverlay extends React.Component<BoxSelectOverlayProps, BoxSelectO
                 <div className={"boxSelectOverlayArrow bottom"}></div>
             </div>
         }
+    }
+}
+
+interface SelectionGroupProps {
+    className? : string,
+    buttonClassName? : string,
+    disabled : boolean,
+    selectedButton : number,
+    buttonContents : any[]
+    onButtonClick : Function,
+}
+
+export class SelectionGroup extends React.Component<SelectionGroupProps> {
+    render() {
+        return <div className={this.props.className}>
+            {this.props.buttonContents.map((value, index) => {
+                let selected = false;
+                if (index === this.props.selectedButton) {
+                    selected = true;
+                }
+
+                return <SelectionButton key={index} className={this.props.buttonClassName} disabled={this.props.disabled} selected={selected} content={value} onClick={() => {this.props.onButtonClick(index)}}/>
+            })}
+        </div>;
+    }
+}
+
+interface SelectionButtonProps {
+    className? : string,
+    disabled : boolean
+    selected : boolean,
+    content : any,
+    onClick : Function
+}
+
+class SelectionButton extends React.Component<SelectionButtonProps> {
+    render() {
+        const classes = "selectionButton" + (this.props.selected ? " selected" : "") + (this.props.className != null ? " " + this.props.className : "");
+
+        return <button className={classes} onClick={() => {this.props.onClick()}} disabled={this.props.disabled}>{this.props.content}</button>
     }
 }

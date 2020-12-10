@@ -1,12 +1,11 @@
 import SongMetadata from "./SongMetadata.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
-import { IOscillatorSettings, ISoundFileSettings, IChainSettings } from "../Interfaces/IInstrumentSettings.js";
+import { IChainSettings } from "../Interfaces/IInstrumentSettings.js";
 import { BaseTrack, IOscillatorTrackSettings, ISoundFileTrackSettings, ITrackSettings } from "../Tracks/BaseTrack.js";
 import { OscillatorTrack } from "../Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "../Tracks/SoundFileTrack.js";
 import { ConnectionManager } from "./ConnectionManager.js";
 import { ISongEvent } from "../Notation/SongEvents.js";
-import { AccessibilityManager } from "pixi.js";
 
 export class SongManager {
 
@@ -185,6 +184,7 @@ export class SongManager {
         });
         let serialisedChains = this.connectionManager.serialiseChains();
         return {
+            "fileType" : "SequencerSongSettings",
             "version" : SongManager.saveFileVersion,
             "metadataEvents" : this.metadata.serialise(),
             "tracks" : serialisedTracks,
@@ -202,6 +202,11 @@ export class SongManager {
         if (settings.version != SongManager.saveFileVersion) {
             console.log("WARNING: Save file is an old version, loading may not function correctly.");
         }
+
+        // Clear existing tracks
+        this._tracks.forEach(track => {track.destroy()});
+        this._tracks = [];
+
         this.connectionManager.deserialiseChains(settings.chains);
         this.metadata.deserialise(settings.metadataEvents);
         for (let i = 0; i < settings.tracks.length; i++) {
@@ -387,6 +392,7 @@ function getWavHeader(options) {
 }
 
 export interface ISongSettings {
+    "fileType" : "SequencerSongSettings"
     "version" : string,
     "metadataEvents" : Array<ISongEvent>,
     "tracks" : Array<ITrackSettings>,

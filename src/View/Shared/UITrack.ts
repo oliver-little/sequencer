@@ -3,6 +3,7 @@ import { NoteEvent } from "../../Model/Notation/SongEvents.js";
 import { BaseTrack } from "../../Model/Tracks/BaseTrack.js";
 import { OscillatorTrack } from "../../Model/Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
+import { IUIOscillatorTrackSettings, IUISoundFileTrackSettings, IUITrackSettings } from "../Interfaces/UIInterfaces.js";
 
 export class UITrack {
     public name: string;
@@ -18,6 +19,16 @@ export class UITrack {
 
     public destroy() {
         this.track.destroy();
+    }
+
+    public serialise() : IUITrackSettings {
+        return {
+            type : "base",
+            name : this.name,
+            startY : this.startY,
+            height: this.height,
+            modelTrackID: this.track.id
+        }
     }
 }
 
@@ -35,10 +46,10 @@ export class NoteUITrack extends UITrack {
 
     private _noteGroups: number[][];
 
-    constructor(name: string, startY : number, height: number, baseTrack: OscillatorTrack, noteGroups?: number[][]) {
-        super(name, startY, height, baseTrack);
-        if (noteGroups != undefined) {
-            this._noteGroups = noteGroups;
+    constructor(settings : IUIOscillatorTrackSettings, baseTrack: OscillatorTrack) {
+        super(settings.name, settings.startY, settings.height, baseTrack);
+        if (settings.noteGroups != undefined) {
+            this._noteGroups = settings.noteGroups;
         }
         else {
             this._noteGroups = [];
@@ -48,6 +59,15 @@ export class NoteUITrack extends UITrack {
 
     get noteGroups() {
         return this._noteGroups;
+    }
+
+    public serialise() : IUIOscillatorTrackSettings {
+        let base = super.serialise();
+        return {
+            ...base,
+            type: "oscillator",
+            noteGroups: this._noteGroups
+        }
     }
 
     /**
@@ -337,10 +357,11 @@ export class NoteUITrack extends UITrack {
 export class SoundFileUITrack extends UITrack {
 
     public track : SoundFileTrack;
-    public displayActualWidth : Boolean = true;
+    public displayActualWidth : boolean = true;
 
-    constructor(name : string, startY : number, height : number, track : SoundFileTrack) {
-        super(name, startY, height, track);
+    constructor(settings: IUISoundFileTrackSettings, track : SoundFileTrack) {
+        super(settings.name, settings.startY, settings.height, track);
+        this.displayActualWidth = settings.displayActualWidth
     }
 
     /**
@@ -351,6 +372,15 @@ export class SoundFileUITrack extends UITrack {
      */
     get eventDuration() {
         return this.track.soundFileDuration;
+    }
+
+    public serialise() : IUISoundFileTrackSettings {
+        let base = super.serialise();
+        return { 
+            ...base,
+            type: "soundFile",
+            displayActualWidth: this.displayActualWidth
+        }
     }
 
     public getOneShotsBetweenTime(startTime : number, endTime : number) {

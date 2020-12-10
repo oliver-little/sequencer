@@ -1,10 +1,9 @@
 import * as React from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
-import { v4 as uuid } from "uuid";
 import { EffectsChain } from "../../Model/Nodes/EffectsChain";
 import { ConnectionManager } from "../../Model/SongManagement/ConnectionManager";
-import { IEffect, IEffectBooleanProperty, IEffectListProperty, IEffectNumberProperty, IEffectNumberRange, IEffectProperty, IEffectStringProperty } from "../../Model/Interfaces/IInstrumentSettings";
-import { BoxSelect, Dropdown, FAButton, Slider } from "../SharedReact/BasicElements";
+import { IEffect, IEffectBooleanProperty, IEffectListProperty, IEffectNumberProperty, IEffectNumberRange, IEffectStringProperty } from "../../Model/Interfaces/IInstrumentSettings";
+import { BoxSelect, FAButton, Slider } from "../SharedReact/BasicElements";
 
 interface EffectsChainPanelProps {
     connectionManager: ConnectionManager
@@ -83,7 +82,6 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         this.setState({currentChainNumber: index});
     }
 
-    // TODO: UI for switching effects chain, and UI for adding new effects chains.
     render() {
         let options = this.chainsAndBus.map(value =>{return value.chainName});
         options.push("New Chain...");

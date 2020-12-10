@@ -26,6 +26,7 @@ export interface IOscillatorTrackSettings extends ITrackSettings {
 
 export interface ISoundFileTrackSettings extends ITrackSettings {
     "source" : ISoundFileSettings
+    "allowOverlaps" : boolean
 }
 
 /**
@@ -67,12 +68,9 @@ export abstract class BaseTrack {
         this._scheduleEventFunc = function(quarterNotePosition : number) {this.scheduleSongEvents(quarterNotePosition)}.bind(this)
         this._scheduleEvent.addListener(this._scheduleEventFunc);
         this.audioSource = audioSource;
-
         if (settings != undefined) {
             this.id = settings.id;
-            settings.events.forEach(event => {
-                this._timeline.deserialise(settings.events, this._metadata);
-            })
+            this._timeline.deserialise(settings.events, this._metadata);
             this._connectionManager.createConnections(this.audioSource, settings.connections);
         }
         else {

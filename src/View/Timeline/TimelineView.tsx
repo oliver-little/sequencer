@@ -10,7 +10,9 @@ import { UIPositioning } from "../Settings/UITheme";
 import { navigationView } from "../Shared/NavigationView";
 import { SequencerView } from "../Sequencer/SequencerView";
 import { Dropdown } from "../SharedReact/BasicElements";
-import { editType } from "../Settings/EditType";
+import { IUIOscillatorTrackSettings, IUISoundFileTrackSettings } from "../Interfaces/UIInterfaces";
+import { SimpleEvent } from "../../HelperModules/SimpleEvent";
+import { UITrackStore } from "../ReactUI/UITrackStore";
 
 export class TimelineView extends VerticalScrollView {
 
@@ -22,27 +24,25 @@ export class TimelineView extends VerticalScrollView {
     private _newTrackDropdownContainer: HTMLDivElement;
 
     private _songManager: SongManager;
-    private _tracks: UITrack[];
+    private _cleanupListener : Function;
 
-    constructor(width: number, height: number, tracks: UITrack[], songManager: SongManager) {
+    constructor(width: number, height: number, songManager: SongManager) {
         super(width, height);
         this._songManager = songManager;
-        this._tracks = tracks;
         this.interactive = true;
 
         this.showSequencer = this.showSequencer.bind(this);
         this.addedHandler = this.addedHandler.bind(this);
         this.removedHandler = this.removedHandler.bind(this);
         this._trackEdited = this._trackEdited.bind(this);
-        this._trackRemoved = this._trackRemoved.bind(this);
+        this._UITrackUpdateHandler = this._UITrackUpdateHandler.bind(this);
 
         this.on("added", this.addedHandler);
         this.on("removed", this.removedHandler);
 
-        this.timeline = new SongTimeline(this._sidebarPosition, width, height, songManager, tracks, this.showSequencer);
+        this.timeline = new SongTimeline(this._sidebarPosition, width, height, songManager, this.showSequencer);
         this.addChild(this.timeline);
-        this.trackList = new TrackList(this._sidebarPosition, width, height, songManager, tracks);
-        this.trackList.trackRemoved.addListener(this._trackRemoved);
+        this.trackList = new TrackList(this._sidebarPosition, width, height, songManager);
         this.trackList.trackEdited.addListener(this._trackEdited);
         this.addChild(this.trackList);
 
@@ -55,14 +55,17 @@ export class TimelineView extends VerticalScrollView {
         });
 
         this._renderNewTrackObject();
+
+        this._cleanupListener = UITrackStore.subscribe(this._UITrackUpdateHandler);
     }
 
     get contentHeight() {
-        if (this._tracks.length == 0) {
+        let tracks = UITrackStore.getState().tracks;
+        if (tracks.length == 0) {
             return 0;
         }
         else {
-            return this._tracks[this._tracks.length - 1].startY + this._tracks[this._tracks.length - 1].height;
+            return tracks[tracks.length - 1].startY + tracks[tracks.length - 1].height;
         }
     }
 
@@ -74,8 +77,8 @@ export class TimelineView extends VerticalScrollView {
     public destroy() {
         unmountComponentAtNode(this._newTrackDropdownContainer);
         document.getElementById("applicationContainer").removeChild(this._newTrackDropdownContainer);
-        this.trackList.trackRemoved.removeListener(this._trackRemoved);
         this.removeAllListeners();
+        this._cleanupListener();
         super.destroy();
     }
 
@@ -97,20 +100,27 @@ export class TimelineView extends VerticalScrollView {
     }
 
     public addOscillatorTrack() {
+        let tracks = UITrackStore.getState().tracks;
         let track = this._songManager.addOscillatorTrack();
         let startY = this.contentHeight != 0 ? this.contentHeight : UIPositioning.timelineHeaderHeight;
-        this._tracks.push(new NoteUITrack("Track " + (this._tracks.length + 1).toString(), startY, 250, track));
+        let settings = {name: "Track " + (tracks.length + 1).toString(), startY: startY, height: 250, modelTrackID: track.id, noteGroups: []} as IUIOscillatorTrackSettings;
+        
+        UITrackStore.dispatch({type: "ADD_TRACK", track: new NoteUITrack(settings, track)});
+
+
+        /*this.UITracksChanged.emit(this._tracks);
         this.trackList.drawTracks();
         // Force a resize event to edit bar heights
-        this.timeline.resize(this.endX, this.endY);
+        this.timeline.resize(this.endX, this.endY);*/
     }
 
     public async addSoundFileTrack() {
+        let tracks = UITrackStore.getState().tracks;
         let track = await this._songManager.addSoundFileTrack();
         let startY = this.contentHeight != 0 ? this.contentHeight : UIPositioning.timelineHeaderHeight;
-        this._tracks.push(new SoundFileUITrack("Track " + (this._tracks.length + 1).toString(), startY, 250, track));
-        this.trackList.drawTracks();
-        this.timeline.resize(this.endX, this.endY);
+        let settings = {type: "soundFile", name: ("Track " + (tracks.length + 1).toString()), startY: startY, height: 250, displayActualWidth: true, modelTrackID: track.id} as IUISoundFileTrackSettings;
+        
+        UITrackStore.dispatch({type: "ADD_TRACK", track: new SoundFileUITrack(settings, track)});
     }
 
     protected updateVerticalScroll(value: number) {
@@ -120,15 +130,15 @@ export class TimelineView extends VerticalScrollView {
     }
 
     private _trackEdited(index: number) {
-        this.timeline.reinitialiseTrack(this._tracks[index]);
+        let tracks = UITrackStore.getState().tracks;
+        this.timeline.reinitialiseTrack(tracks[index]);
     }
 
-    private _trackRemoved() {
-        this.timeline.regenerateTracks();
-
+    private _UITrackUpdateHandler() {
+        let tracks = UITrackStore.getState().tracks;
         // Also check vertical scroll is still correct
-        if (this._tracks.length > 0) {
-            let lastTrack = this._tracks[this._tracks.length - 1];
+        if (tracks.length > 0) {
+            let lastTrack = tracks[tracks.length - 1];
             let endHeight = lastTrack.startY + lastTrack.height + this.verticalScrollPosition;
             if (endHeight < this.endY) {
                 this.verticalScrollPosition += (this.endY - endHeight);

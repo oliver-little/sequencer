@@ -1,12 +1,14 @@
 import * as PIXI from "pixi.js";
 import { UITrack, NoteUITrack, SoundFileUITrack } from "../Shared/UITrack.js";
 import { NoteGroupTimelineEvent, OneShotTimelineEvent, TrackTimelineEvent } from "../Shared/TrackTimelineEvent.js";
-import { UIColors, UIPositioning } from "../Settings/UITheme.js";
-import { BaseEvent, SecondsBaseEvent } from "../../Model/Notation/SongEvents.js";
+import { UIColors } from "../Settings/UITheme.js";
+import { SecondsBaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
 import { TimelineMode, MouseClickType } from "../Settings/Enums.js";
 import { editType } from "../Settings/EditType.js";
+import { UITrackStore } from "../ReactUI/UITrackStore.js";
+import { ScrollableBar } from "../Shared/ScrollableBar.js";
 
 interface INewEventData {
     track: UITrack,
@@ -22,8 +24,6 @@ interface INewEventData {
  */
 export class SongTimeline extends ScrollableTimeline {
 
-    public tracks: UITrack[];
-
     private _noteGroupTimelineEvents: NoteGroupTimelineEvent[];
 
     // Event creation variables
@@ -31,6 +31,8 @@ export class SongTimeline extends ScrollableTimeline {
     private _newEventData: INewEventData;
 
     private _showSequencerCallback: Function;
+
+    private _cleanupListener : Function;
 
     /**
      *Creates an instance of SongTimeline.
@@ -41,10 +43,9 @@ export class SongTimeline extends ScrollableTimeline {
      * @param {UITrack[]} tracks The tracks this timeline should display
      * @memberof SongTimeline
      */
-    constructor(startX: number, endX: number, endY: number, songManager: SongManager, tracks: UITrack[], showSequencerCallback: Function) {
+    constructor(startX: number, endX: number, endY: number, songManager: SongManager, showSequencerCallback: Function) {
         super(startX, endX, 0, endY, songManager);
         this.songManager = songManager;
-        this.tracks = tracks;
         this._noteGroupTimelineEvents = [];
         this._showSequencerCallback = showSequencerCallback;
 
@@ -52,18 +53,30 @@ export class SongTimeline extends ScrollableTimeline {
         this.addChild(this._newEventGraphics);
 
         this._regenerateTimeline(0);
+
+        this._UITrackUpdateHandler = this._UITrackUpdateHandler.bind(this);
+
+        this._cleanupListener = UITrackStore.subscribe(this._UITrackUpdateHandler);
     }
 
     get contentHeight() {
-        if (this.tracks.length == 0) {
+        let tracks = UITrackStore.getState().tracks;
+        if (tracks.length == 0) {
             return 0;
         }
         else {
-            return this.tracks[this.tracks.length - 1].startY + this.tracks[this.tracks.length - 1].height;
+            return tracks[tracks.length - 1].startY + tracks[tracks.length - 1].height;
         }
     }
 
+    public destroy() {
+        this._cleanupListener();
+        super.destroy();
+    }
+
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
+        let tracks = UITrackStore.getState().tracks;
+
         this._newEventGraphics.visible = false;
         super.pointerMoveHandler(event);
         if (this.timelineMode == TimelineMode.Edit && this._mouseClickType == MouseClickType.None) {
@@ -71,9 +84,9 @@ export class SongTimeline extends ScrollableTimeline {
             // Display new event outline (set width for note events, same length as soundfile for soundfile)
             let mousePos = event.data.getLocalPosition(this.parent);
             mousePos.y -= this._newEventGraphics.y;
-            for (let i = 0; i < this.tracks.length; i++) {
-                if (this.tracks[i].startY + this._verticalScrollPosition < mousePos.y && this.tracks[i].startY + this.tracks[i].height + this._verticalScrollPosition > mousePos.y) {
-                    let track = this.tracks[i];
+            for (let i = 0; i < tracks.length; i++) {
+                if (tracks[i].startY + this._verticalScrollPosition < mousePos.y && tracks[i].startY + tracks[i].height + this._verticalScrollPosition > mousePos.y) {
+                    let track = tracks[i];
 
                     if (mousePos.x < this.startX || mousePos.x > this.endX) {
                         return;
@@ -199,7 +212,7 @@ export class SongTimeline extends ScrollableTimeline {
 
         this._noteGroupTimelineEvents = [];
 
-        this.tracks.forEach(track => {
+        UITrackStore.getState().tracks.forEach(track => {
             if (track instanceof NoteUITrack) {
                 track.noteGroups.forEach(noteGroup => {
                     this._initialiseNoteGroup(noteGroup, track);
@@ -215,8 +228,10 @@ export class SongTimeline extends ScrollableTimeline {
     }
 
     protected _initialiseTrackTimelineEvents() {
-        for (let i = 0; i < this.tracks.length; i++) {
-            let track = this.tracks[i];
+        let tracks = UITrackStore.getState().tracks;
+
+        for (let i = 0; i < tracks.length; i++) {
+            let track = tracks[i];
             if (track instanceof NoteUITrack) {
                 // Get all note groups that should be generated in the current bar range
                 track.noteGroups.forEach(group => {
@@ -252,5 +267,14 @@ export class SongTimeline extends ScrollableTimeline {
         let timelineEvent = new OneShotTimelineEvent(this, track, event);
         this._eventContainer.addChild(timelineEvent);
         return timelineEvent;
+    }
+
+    private _UITrackUpdateHandler() {
+        let barHeight = Math.max(this.contentHeight, this.endY);
+        for(let i = 0; i < this._barContainer.children.length; i++) {
+            let bar = this._barContainer.children[i] as ScrollableBar;
+            bar.resize(barHeight);
+        }
+        this.regenerateTracks();
     }
 }

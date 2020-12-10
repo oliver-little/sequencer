@@ -7,7 +7,7 @@ import { ConnectionManager } from "../SongManagement/ConnectionManager.js";
 
 export class SoundFileTrack extends BaseTrack {
     public audioSource : SoundFileInstrument;
-    public allowOverlaps : Boolean = false;
+    public allowOverlaps : boolean = false;
 
     /**
      * Creates and initialises a SoundFileTrack
@@ -44,7 +44,7 @@ export class SoundFileTrack extends BaseTrack {
      * @memberof SoundFileTrack
      */
     constructor(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, connectionManager : ConnectionManager, settings? : ISoundFileTrackSettings) {
-        super(metadata, context, scheduleEvent, new SoundFileInstrument(context, settings ? settings.source : undefined), connectionManager);
+        super(metadata, context, scheduleEvent, new SoundFileInstrument(context, settings ? settings.source : undefined), connectionManager, settings);
     }
 
     public async initialise() {
@@ -107,6 +107,16 @@ export class SoundFileTrack extends BaseTrack {
         this._timeline.updatePlaybackTime();
 
 
+    }
+
+    public serialise() : ISoundFileTrackSettings {
+        return {
+            "id" : this.id,
+            "source" : this.audioSource.serialise(),
+            "events" : this.timeline.serialise(),
+            "connections" : this._connectionManager.getConnections(this.audioSource),
+            "allowOverlaps" : this.allowOverlaps
+        }
     }
 
     protected songEventHandler(event : BaseEvent) {

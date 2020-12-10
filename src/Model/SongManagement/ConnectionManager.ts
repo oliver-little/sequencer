@@ -4,20 +4,20 @@ import { IChainSettings } from "../Interfaces/IInstrumentSettings.js";
 
 export class ConnectionManager {
 
-    private _context : AudioContext|OfflineAudioContext;
-    private _bus : EffectsChain;
-    private _chains : EffectsChain[];
-    private _possibleConnections: {[connectionName : string] : AudioNode|ICustomInputAudioNode};
+    private _context: AudioContext | OfflineAudioContext;
+    private _bus: EffectsChain;
+    private _chains: EffectsChain[];
+    private _possibleConnections: { [connectionName: string]: AudioNode | ICustomInputAudioNode };
 
-    private _currentConnections : {[uuid : string]: string[]}
+    private _currentConnections: { [uuid: string]: string[] }
 
-    constructor (context : AudioContext|OfflineAudioContext) {
+    constructor(context: AudioContext | OfflineAudioContext) {
         this._context = context;
         this._bus = new EffectsChain(context);
         this._bus.chainName = "Bus";
         this._bus.connect(context.destination);
 
-        this._possibleConnections = {"Context" : this._context.destination, "Bus" : this._bus};
+        this._possibleConnections = { "Context": this._context.destination, "Bus": this._bus };
         this._currentConnections = {};
         this._chains = [];
     }
@@ -26,11 +26,11 @@ export class ConnectionManager {
         return this._possibleConnections;
     }
 
-    get bus() : EffectsChain {
+    get bus(): EffectsChain {
         return this._bus;
     }
 
-    get chains() : EffectsChain[] {
+    get chains(): EffectsChain[] {
         return this._chains;
     }
 
@@ -40,7 +40,7 @@ export class ConnectionManager {
      * @param {ICustomOutputAudioNode} object
      * @memberof ConnectionManager
      */
-    public getConnections(object : ICustomOutputAudioNode) {
+    public getConnections(object: ICustomOutputAudioNode) {
         if (object.id in this._currentConnections) {
             return this._currentConnections[object.id];
         }
@@ -56,12 +56,12 @@ export class ConnectionManager {
      * @param {string[]} connections
      * @memberof ConnectionManager
      */
-    public createConnections(object : ICustomOutputAudioNode, connections : string[]) {
+    public createConnections(object: ICustomOutputAudioNode, connections: string[]) {
         if (object.id in this._currentConnections) { // Remove all existing connections
             object.disconnectAll();
         }
         for (let i = 0; i < connections.length; i++) {
-            if (connections[i] in this._possibleConnections){
+            if (connections[i] in this._possibleConnections) {
                 object.connect(this._possibleConnections[connections[i]]);
             }
             else {
@@ -79,9 +79,9 @@ export class ConnectionManager {
      * @returns
      * @memberof ConnectionManager
      */
-    public addConnection(object : ICustomOutputAudioNode, connection : string) {
-        if(connection in this._possibleConnections) { // Check connection is valid
-            if (object.id in this._currentConnections){ // Check if the object already has connections
+    public addConnection(object: ICustomOutputAudioNode, connection: string) {
+        if (connection in this._possibleConnections) { // Check connection is valid
+            if (object.id in this._currentConnections) { // Check if the object already has connections
                 if (this._currentConnections[object.id].indexOf(connection) == -1) { // Check if this connection has not already been made.
                     this._currentConnections[object.id].push(connection);
                 }
@@ -106,7 +106,7 @@ export class ConnectionManager {
      * @param {string} connection
      * @memberof ConnectionManager
      */
-    public removeConnection(object : ICustomOutputAudioNode, connection : string) {
+    public removeConnection(object: ICustomOutputAudioNode, connection: string) {
         if (object.id in this._currentConnections) {
             let index = this._currentConnections[object.id].indexOf(connection);
             if (index != -1) {
@@ -128,7 +128,7 @@ export class ConnectionManager {
      * @param {ICustomOutputAudioNode} object
      * @memberof ConnectionManager
      */
-    public removeAllConnections(object : ICustomOutputAudioNode) {
+    public removeAllConnections(object: ICustomOutputAudioNode) {
         object.disconnectAll();
         delete this._currentConnections[object.id];
     }
@@ -139,7 +139,7 @@ export class ConnectionManager {
      * @returns The connection name given to this effects chain 
      * @memberof ConnectionManager
      */
-    public addChain(settings? : IChainSettings) : EffectsChain {
+    public addChain(settings?: IChainSettings): EffectsChain {
         let object = new EffectsChain(this._context, settings);
         if (settings === undefined) {
             let chainNo = 0;
@@ -167,7 +167,7 @@ export class ConnectionManager {
      * @param {string} name The name of the EffectsChain in the list of possible connections
      * @memberof ConnectionManager
      */
-    public removeChain(name : string) {
+    public removeChain(name: string) {
         if (name.startsWith("Chain ") && name in this._possibleConnections) {
             let index = this._chains.indexOf(this._possibleConnections[name] as EffectsChain);
             this._chains.splice(index, 1);
@@ -178,12 +178,12 @@ export class ConnectionManager {
         }
     }
 
-    public getChain(name : string) : EffectsChain {
+    public getChain(name: string): EffectsChain {
         if (name == "Bus") {
             return this._bus;
         }
         else {
-            let chain = this._chains.find((value) => {value.chainName === name});
+            let chain = this._chains.find((value) => { value.chainName === name });
             if (chain !== undefined) {
                 return chain;
             }
@@ -193,17 +193,22 @@ export class ConnectionManager {
         }
     }
 
-    public serialiseChains() : Array<IChainSettings> {
+    public serialiseChains(): Array<IChainSettings> {
         let serialisedChains = []
         this.chains.concat(this.bus).forEach(chain => {
             let chainSettings = chain.serialise();
-            chainSettings.connections = this._currentConnections[chain.chainName];
+            if (chain.chainName in this._currentConnections) {
+                chainSettings.connections = this._currentConnections[chain.chainName];
+            }
+            else {
+                chainSettings.connections = []
+            }
             serialisedChains.push(chainSettings);
         });
         return serialisedChains;
     }
 
-    public deserialiseChains(newChains : Array<IChainSettings>) {
+    public deserialiseChains(newChains: Array<IChainSettings>) {
         newChains.forEach(chain => {
             if (chain.chainName === "Bus") {
                 this._bus = new EffectsChain(this._context, chain);

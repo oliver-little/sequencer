@@ -154,15 +154,11 @@ export class NoteEvent extends BaseEvent {
      * @param {string} duration The duration of the note (1-64 n*(ote)* / t*(riplet)* /. *(dotted)* or a number of quarter notes)
      * @memberof NoteEvent
      */
-    constructor (startPosition: number, pitch : number|string, duration: number|string) {
+    constructor (startPosition: number, pitch : string, duration: number|string) {
         super(startPosition);
     
-        if (typeof(pitch) ==="string") {
-            this.pitchString = pitch;
-        }
-        else {
-            this.pitch = pitch;
-        }
+        this.pitchString = pitch;
+        
         if(typeof(duration) === "string") {
             this.duration = this._parseQuarterNoteLength(duration)
         }
@@ -225,6 +221,7 @@ export class NoteEvent extends BaseEvent {
         let obj = super.serialise();
         obj.eventType = "NoteEvent";
         obj["pitch"] = this.pitch;
+        obj["pitchString"] = this.pitchString;
         return obj;
     }
 

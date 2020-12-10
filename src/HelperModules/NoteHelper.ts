@@ -61,7 +61,7 @@ export default class NoteHelper {
             return parseInt(note.charAt(2));
         }
         else {
-            throw new RangeError("String is invalid (incorrect length)");
+            throw new RangeError("String is invalid (incorrect length): " + note);
         }
     }
 

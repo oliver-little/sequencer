@@ -7,6 +7,7 @@ import { BoxSelect, FileInput, IconFileInput, LabelledCheckbox, Slider } from ".
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
+import { UITrackStore } from "../ReactUI/UITrackStore.js";
 
 /**
  * Container for a the settings of a list of tracks.
@@ -18,12 +19,10 @@ import { SongManager } from "../../Model/SongManagement/SongManager.js";
 export class TrackList extends PIXI.Container {
 
     public songManager: SongManager;
-    public tracks: UITrack[];
 
     public endX: number;
     public endY: number;
 
-    public trackRemoved: SimpleEvent;
     public trackEdited: SimpleEvent;
 
     private _sidebarWidth: number;
@@ -35,6 +34,8 @@ export class TrackList extends PIXI.Container {
 
     private _verticalScroll: number = 0;
 
+    private _cleanupListener : Function;
+
     /**
      * Creates an instance of TrackList.
      * @param {number} sidebarWidth The width of the trackList (pixels)
@@ -43,12 +44,10 @@ export class TrackList extends PIXI.Container {
      * @param {UITrack[]} tracks A list of UITracks representing the tracks to display.
      * @memberof TrackList
      */
-    constructor(sidebarWidth: number, width: number, height: number, songManager: SongManager, tracks: UITrack[]) {
+    constructor(sidebarWidth: number, width: number, height: number, songManager: SongManager,) {
         super();
-        this.tracks = tracks;
         this.songManager = songManager;
         this._sidebarWidth = sidebarWidth;
-        this.trackRemoved = new SimpleEvent();
         this.trackEdited = new SimpleEvent();
 
         this._gainChanged = this._gainChanged.bind(this);
@@ -59,6 +58,7 @@ export class TrackList extends PIXI.Container {
         this._updateSoundFile = this._updateSoundFile.bind(this);
         this._deleteTrack = this._deleteTrack.bind(this);
         this._connectionChanged = this._connectionChanged.bind(this);
+        this.drawTracks = this.drawTracks.bind(this);
 
         // Draw lines and background colour.
 
@@ -76,6 +76,7 @@ export class TrackList extends PIXI.Container {
         document.getElementById("applicationContainer").appendChild(this._trackSettingsContainer);
 
         this.resize(width, height);
+        this._cleanupListener = UITrackStore.subscribe(this.drawTracks);
     }
 
     public resize(width: number, height: number) {
@@ -100,6 +101,7 @@ export class TrackList extends PIXI.Container {
 
     public destroy() {
         unmountComponentAtNode(this._trackSettingsContainer);
+        this._cleanupListener();
         super.destroy({ children: true });
     }
 
@@ -112,10 +114,11 @@ export class TrackList extends PIXI.Container {
     }
 
     public drawTracks() {
+        let tracks = UITrackStore.getState().tracks;
         this._trackLineGraphics.clear();
-        if (this.tracks.length > 0) {
+        if (tracks.length > 0) {
             this._trackLineGraphics.beginFill(UIColors.fgColor);
-            this.tracks.forEach(track => {
+            tracks.forEach(track => {
                 this._trackLineGraphics.drawRect(0, track.startY + track.height, this.endX, 2);
             });
 
@@ -123,8 +126,8 @@ export class TrackList extends PIXI.Container {
             // Set mask so lines disappear once they go above the header
             this._trackLineGraphics.mask = new PIXI.Graphics().beginFill(0xFFFFFF).drawRect(0, UIPositioning.timelineHeaderHeight, this.endX, this.endY).endFill();
 
-            this._trackSettingsContainer.style.top = this.tracks[0].startY.toString() + "px";
-            this._trackSettingsContainer.style.height = (this.endY - this.tracks[0].startY).toString() + "px";
+            this._trackSettingsContainer.style.top = tracks[0].startY.toString() + "px";
+            this._trackSettingsContainer.style.height = (this.endY - tracks[0].startY).toString() + "px";
 
             this._rerenderList();
         }
@@ -133,13 +136,16 @@ export class TrackList extends PIXI.Container {
         }
     }
 
+    // All the below functions do not use the Redux store properly but it would require massive rewrites all of the UITrack and Track code to implement correctly
     private _nameChanged(index: number, value: string) {
-        this.tracks[index].name = value;
+        let tracks = UITrackStore.getState().tracks;
+        tracks[index].name = value;
         this._rerenderList();
     }
 
     private _gainChanged(index: number, value: number) {
-        this.tracks[index].track.audioSource.masterGain = value;
+        let tracks = UITrackStore.getState().tracks;
+        tracks[index].track.audioSource.masterGain = value;
     }
 
     private _soundFileChanged(index: number, files: FileList) {
@@ -161,45 +167,41 @@ export class TrackList extends PIXI.Container {
     }
 
     private async _updateSoundFile(index: number, blob: Blob) {
-        let soundFileTrack = this.tracks[index].track as SoundFileTrack;
+        let tracks = UITrackStore.getState().tracks;
+        let soundFileTrack = tracks[index].track as SoundFileTrack;
         await soundFileTrack.setSoundFile(blob);
         this.trackEdited.emit(index);
     }
 
     private _allowOverlapChanged(index: number, value: boolean) {
-        let soundFileTrack = this.tracks[index].track as SoundFileTrack;
+        let tracks = UITrackStore.getState().tracks;
+        let soundFileTrack = tracks[index].track as SoundFileTrack;
         soundFileTrack.allowOverlaps = value;
         this._rerenderList();
     }
 
     private _displayActualWidthChanged(index: number, value: boolean) {
-        let soundFileTrack = this.tracks[index] as SoundFileUITrack;
+        let tracks = UITrackStore.getState().tracks;
+        let soundFileTrack = tracks[index] as SoundFileUITrack;
         soundFileTrack.displayActualWidth = value;
         this.trackEdited.emit(index);
         this._rerenderList();
     }
 
     private _connectionChanged(index: number, connectionIndex: number) {
-        this.tracks[index].track.connectTo(this.tracks[index].track.possibleConnections[connectionIndex]);
+        let tracks = UITrackStore.getState().tracks;
+        tracks[index].track.connectTo(tracks[index].track.possibleConnections[connectionIndex]);
         this._rerenderList();
     }
 
     private _deleteTrack(index: number) {
-        let removedTrack = this.tracks[index];
-        this.tracks.splice(index, 1);
-        if (this.tracks.length > 0) {
-            this.tracks[0].startY = UIPositioning.timelineHeaderHeight;
-            for (let i = 1; i < this.tracks.length; i++) {
-                this.tracks[i].startY = this.tracks[i - 1].startY + this.tracks[i - 1].height;
-            }
-        }
-        this.drawTracks();
-        this.trackRemoved.emit();
-        this.songManager.removeTrack(removedTrack.track);
+        let tracks = UITrackStore.getState().tracks;
+        this.songManager.removeTrack(tracks[index].track);
+        UITrackStore.dispatch({type: "REMOVE_TRACK", index: index});
     }
 
     private _rerenderList() {
-        render(<TrackSettingsList tracks={this.tracks}
+        render(<TrackSettingsList tracks={UITrackStore.getState().tracks}
             onNameChange={this._nameChanged}
             onGainChange={this._gainChanged}
             onSoundFileUpdate={this._soundFileChanged}
@@ -225,7 +227,7 @@ interface TrackSettingsListProps {
     verticalScroll: number;
 }
 
-class TrackSettingsList extends React.Component<TrackSettingsListProps> {
+class TrackSettingsList extends React.PureComponent<TrackSettingsListProps> {
     render() {
         if (this.props.tracks.length > 0) {
             let possibleConnections = this.props.tracks[0].track.possibleConnections;

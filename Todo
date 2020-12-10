@@ -3,13 +3,15 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
-- Saving and loading
 - Delete button for chains
-- Oscillator type in track list
+- Pregain, postgain and connections for chains
+- Oscillator type and envelope in track list
+- Scroll to clicked timelineevent when moving between timeline and sequencer
+- Loading spinners, for async operations like loading in a new file: https://chevtek.io/how-to-create-versatile-loading-spinner-management-in-react/
+
 - Add selected effect to TrackTimelineEvents
 - Scrollbars, both vertical and horizontal
 - Ability to move all notes in a note group in the sequencer view.
-- Loading spinners, for async operations like loading in a new file: https://chevtek.io/how-to-create-versatile-loading-spinner-management-in-react/
 - Update TrackTimelineEvent width on drag, not only on mouse release
 
 Other:
@@ -17,6 +19,11 @@ Other:
 - Look at licenses for dependencies before deploying, need to figure out the best way to include them.
 
 BUG FIXES:
+- Update TrackList when a new chain is added
+- Update EffectsChain List on load
+- Turn context into a single output gain node which is muted and unmuted on start/stop to prevent long delays from continuing to play after stop
+- Slider efficiency needs improving (create a flag to either update on every scroll change, or only on mouse up)
+
 - Rare bug where long SoundFileTracks will be provided with a negative start time
 - Look at code for notes in SequencerTimeline and SequencerNotes, the implementation is confusing
 - Implementation of contentHeight is also more complex than it might need to be
