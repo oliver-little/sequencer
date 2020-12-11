@@ -49,16 +49,12 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
     }
 
     // Curried function to prevent passing down of index
-    private _effectChanged(index: number) {
-        return (propertyIndex: number) => {
-            return (value: any) => {
-                let property = this.currentChain.effects[index].properties[propertyIndex];
-                property.value = value;
-                this.currentChain.effectNodes[index][property.propertyName] = value;
+    private _effectChanged(effectIndex: number, propertyIndex: number, value: any) {
+        let property = this.currentChain.effects[effectIndex].properties[propertyIndex];
+        property.value = value;
+        this.currentChain.effectNodes[effectIndex][property.propertyName] = value;
 
-                this.setState({ currentChainNumber: this.state.currentChainNumber });
-            }
-        }
+        this.setState({ currentChainNumber: this.state.currentChainNumber });
     }
 
     private _effectRemoved(index: number) {
@@ -79,11 +75,11 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         if (index > this.props.connectionManager.chains.length) {
             this.props.connectionManager.addChain();
         }
-        this.setState({currentChainNumber: index});
+        this.setState({ currentChainNumber: index });
     }
 
     render() {
-        let options = this.chainsAndBus.map(value =>{return value.chainName});
+        let options = this.chainsAndBus.map(value => { return value.chainName });
         options.push("New Chain...");
 
         return <div className={"effectsChainPanel" + (this.state.hidden ? " hidden" : "")}>
@@ -133,7 +129,7 @@ class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
     render() {
 
         let effects = this.props.effectsChain.map((effect, index) => {
-            return <ChainEffect key={effect.id} effectIndex={index} {...effect} onPropertyChange={this.props.effectPropertyChanged(index)} onDelete={this.props.effectRemoved} />
+            return <ChainEffect key={effect.id} effectIndex={index} {...effect} onPropertyChange={this.props.effectPropertyChanged} onDelete={this.props.effectRemoved} />
         });
         return <div className={"effectsList"}>
             <DragDropContext onDragEnd={this._onDragEnd}>
@@ -165,8 +161,8 @@ class ChainEffect extends React.PureComponent<ChainEffectProps> {
                 <div className={"chainEffect" + (snapshot.isDragging ? " dragging" : "")} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
                     <div>
                         <div className={"chainEffectTitle"}>
-                            <p style={{marginRight: "5px"}}>{this.props.effectType}</p>
-                            <FAButton className={"chainEffectDelete"} iconName={"fa fa-times"} onClick={() => {this.props.onDelete(this.props.effectIndex)}} />
+                            <p style={{ marginRight: "5px" }}>{this.props.effectType}</p>
+                            <FAButton className={"chainEffectDelete"} iconName={"fa fa-times"} onClick={() => { this.props.onDelete(this.props.effectIndex) }} />
                         </div>
                     </div>
                     {this.props.properties.map((property, index) => {
@@ -174,17 +170,17 @@ class ChainEffect extends React.PureComponent<ChainEffectProps> {
                             switch (property.type) {
                                 case "number":
                                     if (property.hasOwnProperty("min")) {
-                                        return <RangeEffectProperty key={index} {...property as IEffectNumberRange} onChange={this.props.onPropertyChange(index)} />;
+                                        return <RangeEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectNumberRange} onChange={this.props.onPropertyChange} />;
                                     }
                                     else {
-                                        return <NumberEffectProperty key={index} {...property as IEffectNumberProperty} onChange={this.props.onPropertyChange(index)} />;
+                                        return <NumberEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectNumberProperty} onChange={this.props.onPropertyChange} />;
                                     }
                                 case "string":
-                                    return <StringEffectProperty key={index} {...property as IEffectStringProperty} onChange={this.props.onPropertyChange(index)} />;
+                                    return <StringEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectStringProperty} onChange={this.props.onPropertyChange} />;
                                 case "boolean":
-                                    return <BooleanEffectProperty key={index} {...property as IEffectBooleanProperty} onChange={this.props.onPropertyChange(index)} />;
+                                    return <BooleanEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectBooleanProperty} onChange={this.props.onPropertyChange} />;
                                 case "list":
-                                    return <ListEffectProperty key={index} {...property as IEffectListProperty} onChange={this.props.onPropertyChange(index)} />;
+                                    return <ListEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectListProperty} onChange={this.props.onPropertyChange} />;
                                 default:
                                     console.log("Unknown property type: " + property.type);
                                     return null;
@@ -198,22 +194,32 @@ class ChainEffect extends React.PureComponent<ChainEffectProps> {
 }
 
 interface RangeEffectPropertyProps extends IEffectNumberRange {
+    effectIndex : number,
+    propertyIndex : number,
     onChange: Function
 }
 
 interface BooleanEffectPropertyProps extends IEffectBooleanProperty {
+    effectIndex : number,
+    propertyIndex : number,
     onChange: Function
 }
 
 interface NumberEffectPropertyProps extends IEffectNumberProperty {
+    effectIndex : number,
+    propertyIndex : number,
     onChange: Function
 }
 
 interface StringEffectPropertyProps extends IEffectStringProperty {
+    effectIndex : number,
+    propertyIndex : number,
     onChange: Function
 }
 
 interface ListEffectPropertyProps extends IEffectListProperty {
+    effectIndex : number,
+    propertyIndex : number,
     onChange: Function
 }
 
@@ -221,57 +227,57 @@ function capitalise(s: string) {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-class NumberEffectProperty extends React.Component<NumberEffectPropertyProps> {
+class NumberEffectProperty extends React.PureComponent<NumberEffectPropertyProps> {
     render() {
         let nameToUse = capitalise(this.props.displayName ? this.props.displayName : this.props.propertyName) + ":";
 
         return <div className={"effectProperty number"}>
             <p>{nameToUse}</p>
-            <input type="number" name={nameToUse} value={this.props.value} step={this.props.step} onChange={(event) => { this.props.onChange(event.target.value) }} />
+            <input type="number" name={nameToUse} value={this.props.value} step={this.props.step} onChange={(event) => { this.props.onChange(this.props.effectIndex, this.props.propertyIndex, event.target.value) }} />
         </div>
     }
 }
 
-class RangeEffectProperty extends React.Component<RangeEffectPropertyProps> {
+class RangeEffectProperty extends React.PureComponent<RangeEffectPropertyProps> {
     render() {
         let nameToUse = capitalise(this.props.displayName ? this.props.displayName : this.props.propertyName) + ":";
 
         return <div className={"effectProperty range"}>
             <p>{nameToUse}</p>
-            <Slider min={this.props.min.toString()} max={this.props.max.toString()} step={this.props.step.toString()} value={this.props.value.toString()} onChange={this.props.onChange} />
+            <Slider onRelease={true} min={this.props.min.toString()} max={this.props.max.toString()} step={this.props.step.toString()} value={this.props.value.toString()} onChange={(value) => {this.props.onChange(this.props.effectIndex, this.props.propertyIndex, value)}} />
         </div>
     }
 }
 
-class StringEffectProperty extends React.Component<StringEffectPropertyProps> {
+class StringEffectProperty extends React.PureComponent<StringEffectPropertyProps> {
     render() {
         let nameToUse = capitalise(this.props.displayName ? this.props.displayName : this.props.propertyName) + ":";
 
         return <div className={"effectProperty string"}>
             <p>{nameToUse}</p>
-            <input type="text" name={nameToUse} value={this.props.value} onChange={(event) => { this.props.onChange(event.target.value) }} />
+            <input type="text" name={nameToUse} value={this.props.value} onChange={(event) => { this.props.onChange(this.props.effectIndex, this.props.propertyIndex, event.target.value) }} />
         </div>
     }
 }
 
-class BooleanEffectProperty extends React.Component<BooleanEffectPropertyProps> {
+class BooleanEffectProperty extends React.PureComponent<BooleanEffectPropertyProps> {
     render() {
         let nameToUse = capitalise(this.props.displayName ? this.props.displayName : this.props.propertyName) + ":";
 
         return <div className={"effectProperty boolean"}>
             <p>{nameToUse}</p>
-            <input type="checkbox" name={nameToUse} checked={this.props.value} onChange={(event) => { this.props.onChange(event.target.checked) }} />
+            <input type="checkbox" name={nameToUse} checked={this.props.value} onChange={(event) => { this.props.onChange(this.props.effectIndex, this.props.propertyIndex, event.target.checked) }} />
         </div>
     }
 }
 
-class ListEffectProperty extends React.Component<ListEffectPropertyProps> {
+class ListEffectProperty extends React.PureComponent<ListEffectPropertyProps> {
     render() {
         let nameToUse = capitalise(this.props.displayName ? this.props.displayName : this.props.propertyName) + ":";
 
         return <div className={"effectProperty list"}>
             <p>{nameToUse}</p>
-            <BoxSelect selected={this.props.options.indexOf(this.props.value)} options={this.props.options} selectedCallback={(newIndex) => { this.props.onChange(this.props.options[newIndex]) }} />
+            <BoxSelect selected={this.props.options.indexOf(this.props.value)} options={this.props.options} selectedCallback={(newIndex) => { this.props.onChange(this.props.effectIndex, this.props.propertyIndex, this.props.options[newIndex]) }} />
         </div>
     }
 }

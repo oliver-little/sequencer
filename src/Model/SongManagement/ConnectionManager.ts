@@ -8,6 +8,7 @@ export class ConnectionManager {
     private _bus: EffectsChain;
     private _chains: EffectsChain[];
     private _possibleConnections: { [connectionName: string]: AudioNode | ICustomInputAudioNode };
+    private _possibleConnectionStrings : string[];
 
     private _currentConnections: { [uuid: string]: string[] }
 
@@ -18,12 +19,17 @@ export class ConnectionManager {
         this._bus.connect(context.destination);
 
         this._possibleConnections = { "Context": this._context.destination, "Bus": this._bus };
+        this._possibleConnectionStrings = ["Context", "Bus"];
         this._currentConnections = {};
         this._chains = [];
     }
 
     get possibleConnections() {
         return this._possibleConnections;
+    }
+
+    get possibleConnectionStrings() {
+        return this._possibleConnectionStrings;
     }
 
     get bus(): EffectsChain {
@@ -148,6 +154,7 @@ export class ConnectionManager {
             };
             let name = "Chain " + chainNo.toString();
             this._possibleConnections[name] = object;
+            this._possibleConnectionStrings.push(name);
 
             object.chainName = name;
             this.createConnections(object, EffectsChain.createDefaults().connections);
@@ -172,6 +179,7 @@ export class ConnectionManager {
             let index = this._chains.indexOf(this._possibleConnections[name] as EffectsChain);
             this._chains.splice(index, 1);
             delete this._possibleConnections[name];
+            this._possibleConnectionStrings.splice(this._possibleConnectionStrings.indexOf(name), 1);
         }
         else {
             throw new Error("Object not in ConnectionManager");

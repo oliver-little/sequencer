@@ -1,6 +1,7 @@
 import * as React from "react";
 
 interface SliderProps {
+    onRelease? : boolean
     className?: string,
     min: string,
     max: string,
@@ -22,7 +23,12 @@ export class Slider extends React.PureComponent<SliderProps> {
     }
 
     render() {
-        return <input className={this.props.className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => { this._sliderRef = ref }} onChange={(event) => { this.props.onChange(event.target.value) }} />
+        if (this.props.onRelease) {
+            return <input className={this.props.className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => { this._sliderRef = ref }} onPointerUp={() => {this.props.onChange(this._sliderRef.value)}} />
+        }
+        else {
+            return <input className={this.props.className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => { this._sliderRef = ref }} onChange={(event) => {this.props.onChange(event.target.value)}} />
+        }
     }
 }
 
@@ -65,7 +71,7 @@ interface LabelledCheckboxProps {
     onChange: Function
 }
 
-export class LabelledCheckbox extends React.Component<LabelledCheckboxProps> {
+export class LabelledCheckbox extends React.PureComponent<LabelledCheckboxProps> {
     render() {
         return <div className={this.props.className}>
             <input type="checkbox" name={this.props.label} checked={this.props.state} onChange={(event) => { this.props.onChange(event.target.checked) }} />
@@ -108,7 +114,7 @@ interface DropdownState {
  * @class Dropdown
  * @extends {React.Component<DropdownProps, DropdownState>}
  */
-export class Dropdown extends React.Component<DropdownProps, DropdownState> {
+export class Dropdown extends React.PureComponent<DropdownProps, DropdownState> {
 
     constructor(props) {
         super(props);
@@ -165,7 +171,7 @@ interface BoxSelectState {
     selectVisible: boolean
 }
 
-export class BoxSelect extends React.Component<BoxSelectProps, BoxSelectState> {
+export class BoxSelect extends React.PureComponent<BoxSelectProps, BoxSelectState> {
 
     private _selectButton: React.RefObject<HTMLButtonElement>;
 

@@ -45,6 +45,10 @@ export class SoundFileTrack extends BaseTrack {
      */
     constructor(metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, connectionManager : ConnectionManager, settings? : ISoundFileTrackSettings) {
         super(metadata, context, scheduleEvent, new SoundFileInstrument(context, settings ? settings.source : undefined), connectionManager, settings);
+
+        if (settings) {
+            this.allowOverlaps = settings.allowOverlaps;
+        }
     }
 
     public async initialise() {

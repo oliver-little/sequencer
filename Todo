@@ -19,7 +19,6 @@ Other:
 - Look at licenses for dependencies before deploying, need to figure out the best way to include them.
 
 BUG FIXES:
-- Update TrackList when a new chain is added
 - Update EffectsChain List on load
 - Turn context into a single output gain node which is muted and unmuted on start/stop to prevent long delays from continuing to play after stop
 - Slider efficiency needs improving (create a flag to either update on every scroll change, or only on mouse up)

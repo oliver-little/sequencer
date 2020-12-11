@@ -34,7 +34,7 @@ export class TrackList extends PIXI.Container {
 
     private _verticalScroll: number = 0;
 
-    private _cleanupListener : Function;
+    private _cleanupListener: Function;
 
     /**
      * Creates an instance of TrackList.
@@ -197,25 +197,30 @@ export class TrackList extends PIXI.Container {
     private _deleteTrack(index: number) {
         let tracks = UITrackStore.getState().tracks;
         this.songManager.removeTrack(tracks[index].track);
-        UITrackStore.dispatch({type: "REMOVE_TRACK", index: index});
+        UITrackStore.dispatch({ type: "REMOVE_TRACK", index: index });
     }
 
     private _rerenderList() {
-        render(<TrackSettingsList tracks={UITrackStore.getState().tracks}
-            onNameChange={this._nameChanged}
-            onGainChange={this._gainChanged}
-            onSoundFileUpdate={this._soundFileChanged}
-            onAllowOverlapChange={this._allowOverlapChanged}
-            onDisplayActualWidthChange={this._displayActualWidthChanged}
-            onDeleteTrack={this._deleteTrack}
-            onConnectionChanged={this._connectionChanged}
-            width={this._sidebarWidth}
-            verticalScroll={this._verticalScroll} />, this._trackSettingsContainer);
+        let tracks = UITrackStore.getState().tracks;
+        if (tracks.length > 0) {
+            render(<TrackSettingsList tracks={tracks}
+                possibleConnections={this.songManager.connectionManager.possibleConnectionStrings}
+                onNameChange={this._nameChanged}
+                onGainChange={this._gainChanged}
+                onSoundFileUpdate={this._soundFileChanged}
+                onAllowOverlapChange={this._allowOverlapChanged}
+                onDisplayActualWidthChange={this._displayActualWidthChanged}
+                onDeleteTrack={this._deleteTrack}
+                onConnectionChanged={this._connectionChanged}
+                width={this._sidebarWidth}
+                verticalScroll={this._verticalScroll} />, this._trackSettingsContainer);
+        }
     }
 }
 
 interface TrackSettingsListProps {
     tracks: UITrack[],
+    possibleConnections : string[],
     onNameChange: Function,
     onGainChange: Function,
     onSoundFileUpdate: Function,
@@ -227,38 +232,32 @@ interface TrackSettingsListProps {
     verticalScroll: number;
 }
 
-class TrackSettingsList extends React.PureComponent<TrackSettingsListProps> {
+class TrackSettingsList extends React.Component<TrackSettingsListProps> {
     render() {
-        if (this.props.tracks.length > 0) {
-            let possibleConnections = this.props.tracks[0].track.possibleConnections;
-            return (<div style={{ position: "absolute", top: this.props.verticalScroll.toString()  + "px"}}>
-                {this.props.tracks.map((track, index) => {
-                    let soundFileProps = undefined;
-                    if (track instanceof SoundFileUITrack) {
-                        soundFileProps = {
-                            soundFileChange: this.props.onSoundFileUpdate,
-                            displayActualWidth: track.displayActualWidth,
-                            displayActualWidthChange: this.props.onDisplayActualWidthChange,
-                            allowOverlap: track.track.allowOverlaps,
-                            allowOverlapChange: this.props.onAllowOverlapChange,
-                        }
+        return (<div style={{ position: "absolute", top: this.props.verticalScroll.toString() + "px" }}>
+            {this.props.tracks.map((track, index) => {
+                let soundFileProps = undefined;
+                if (track instanceof SoundFileUITrack) {
+                    soundFileProps = {
+                        soundFileChange: this.props.onSoundFileUpdate,
+                        displayActualWidth: track.displayActualWidth,
+                        displayActualWidthChange: this.props.onDisplayActualWidthChange,
+                        allowOverlap: track.track.allowOverlaps,
+                        allowOverlapChange: this.props.onAllowOverlapChange,
                     }
+                }
 
-                    return <TrackSettingsBox key={index} index={index}
-                        name={track.name} onNameChange={this.props.onNameChange}
-                        gain={track.track.audioSource.masterGain} onGainChange={this.props.onGainChange}
-                        deleteTrack={this.props.onDeleteTrack}
-                        width={this.props.width} height={track.height}
-                        soundFileProps={soundFileProps}
-                        connection={possibleConnections.indexOf(track.track.connection)}
-                        connectionOptions={possibleConnections}
-                        connectionChanged={this.props.onConnectionChanged} />;
-                })}
-            </div>);
-        }
-        else {
-            return null;
-        }
+                return <TrackSettingsBox key={index} index={index}
+                    name={track.name} onNameChange={this.props.onNameChange}
+                    gain={track.track.audioSource.masterGain} onGainChange={this.props.onGainChange}
+                    deleteTrack={this.props.onDeleteTrack}
+                    width={this.props.width} height={track.height}
+                    {...soundFileProps}
+                    connection={track.track.connection}
+                    connectionOptions={this.props.possibleConnections}
+                    connectionChanged={this.props.onConnectionChanged} />;
+            })}
+        </div>);
     }
 }
 
@@ -271,10 +270,14 @@ interface TrackSettingsProps {
     deleteTrack: Function,
     width: number,
     height: number,
-    soundFileProps?: TrackSettingsSoundFileProps,
-    connection: number,
+    connection: string,
     connectionOptions: string[]
     connectionChanged: Function,
+    soundFileChange? : Function,
+    displayActualWidth? : boolean,
+    displayActualWidthChange?: Function,
+    allowOverlap? : boolean,
+    allowOverlapChange? : Function
 }
 
 interface TrackSettingsSoundFileProps {
@@ -285,7 +288,7 @@ interface TrackSettingsSoundFileProps {
     allowOverlapChange?: Function
 }
 
-class TrackSettingsBox extends React.Component<TrackSettingsProps> {
+class TrackSettingsBox extends React.PureComponent<TrackSettingsProps> {
     constructor(props) {
         super(props);
         this.handleNameChange = this.handleNameChange.bind(this);
@@ -309,11 +312,11 @@ class TrackSettingsBox extends React.Component<TrackSettingsProps> {
 
         let soundFileInfo = null;
 
-        if (this.props.soundFileProps != undefined) {
+        if (this.props.soundFileChange != undefined) {
             soundFileInfo = <>
-                <IconFileInput className={"trackSettingsIconInput"} iconName={"fa fa-music"} onChange={(files: FileList) => { this.props.soundFileProps.soundFileChange(this.props.index, files) }} accept="audio/*" />
-                <LabelledCheckbox className={"trackSettingsCheckbox"} label={"Display Actual Width"} state={this.props.soundFileProps.displayActualWidth} onChange={(value) => { this.props.soundFileProps.displayActualWidthChange(this.props.index, value) }} />
-                <LabelledCheckbox className={"trackSettingsCheckbox"} label={"Allow Overlaps"} state={this.props.soundFileProps.allowOverlap} onChange={(value) => { this.props.soundFileProps.allowOverlapChange(this.props.index, value) }} />
+                <IconFileInput className={"trackSettingsIconInput"} iconName={"fa fa-music"} onChange={(files: FileList) => { this.props.soundFileChange(this.props.index, files) }} accept="audio/*" />
+                <LabelledCheckbox className={"trackSettingsCheckbox"} label={"Display Actual Width"} state={this.props.displayActualWidth} onChange={(value) => { this.props.displayActualWidthChange(this.props.index, value) }} />
+                <LabelledCheckbox className={"trackSettingsCheckbox"} label={"Allow Overlaps"} state={this.props.allowOverlap} onChange={(value) => { this.props.allowOverlapChange(this.props.index, value) }} />
             </>
         }
 
@@ -323,7 +326,7 @@ class TrackSettingsBox extends React.Component<TrackSettingsProps> {
                 <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
                 <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" value={this.props.gain.toString()} onChange={this.handleGainChange} />
                 {soundFileInfo}
-                <BoxSelect mainButtonClassName={"trackSettingsBoxSelectButton"} selected={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
+                <BoxSelect mainButtonClassName={"trackSettingsBoxSelectButton"} title={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
             </div>
         </div>
     }
