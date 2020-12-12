@@ -20,8 +20,6 @@ Other:
 
 BUG FIXES:
 - Update EffectsChain List on load
-- Turn context into a single output gain node which is muted and unmuted on start/stop to prevent long delays from continuing to play after stop
-- Slider efficiency needs improving (create a flag to either update on every scroll change, or only on mouse up)
 
 - Rare bug where long SoundFileTracks will be provided with a negative start time
 - Look at code for notes in SequencerTimeline and SequencerNotes, the implementation is confusing

@@ -120,7 +120,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
      */
     public addEffect(index: number, effect: IEffect) {
         if (index < 0 || index > this._chainNodes.length) {
-            throw new RangeError("Index out of range");
+            throw new RangeError(("Index out of range:" + index.toString()));
         }
         let effectObject = this.IEffectToEffectObject(effect);
 
@@ -238,7 +238,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
 
     /**
      * Completes the process of connecting a new effect to the chain
-     * *without* updating chainNodes or settings
+     * *without* updating settings
      *
      * @private
      * @param {number} index

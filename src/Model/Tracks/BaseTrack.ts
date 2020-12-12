@@ -90,7 +90,7 @@ export abstract class BaseTrack {
     }
 
     get possibleConnections() {
-        return Object.keys(this._connectionManager.possibleConnections);
+        return this._connectionManager.possibleConnectionStrings;
     }
 
     /**

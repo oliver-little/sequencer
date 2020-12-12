@@ -5,6 +5,7 @@ import { IChainSettings } from "../Interfaces/IInstrumentSettings.js";
 export class ConnectionManager {
 
     private _context: AudioContext | OfflineAudioContext;
+    private _outputGain : GainNode;
     private _bus: EffectsChain;
     private _chains: EffectsChain[];
     private _possibleConnections: { [connectionName: string]: AudioNode | ICustomInputAudioNode };
@@ -14,14 +15,18 @@ export class ConnectionManager {
 
     constructor(context: AudioContext | OfflineAudioContext) {
         this._context = context;
+        this._outputGain = this._context.createGain();
+        this._outputGain.connect(context.destination);
         this._bus = new EffectsChain(context);
         this._bus.chainName = "Bus";
-        this._bus.connect(context.destination);
 
-        this._possibleConnections = { "Context": this._context.destination, "Bus": this._bus };
+        this._possibleConnections = { "Context": this._outputGain, "Bus": this._bus };
         this._possibleConnectionStrings = ["Context", "Bus"];
         this._currentConnections = {};
         this._chains = [];
+
+        this.createConnections(this._bus, ["Context"]);
+
     }
 
     get possibleConnections() {
@@ -30,6 +35,10 @@ export class ConnectionManager {
 
     get possibleConnectionStrings() {
         return this._possibleConnectionStrings;
+    }
+
+    get outputGain() : GainNode {
+        return this._outputGain;
     }
 
     get bus(): EffectsChain {
@@ -153,17 +162,15 @@ export class ConnectionManager {
                 chainNo++;
             };
             let name = "Chain " + chainNo.toString();
-            this._possibleConnections[name] = object;
-            this._possibleConnectionStrings.push(name);
 
             object.chainName = name;
             this.createConnections(object, EffectsChain.createDefaults().connections);
         }
         else {
-            this._possibleConnections[settings.chainName] = object;
             this.createConnections(object, settings.connections);
         }
-
+        this._possibleConnectionStrings.push(object.chainName);
+        this._possibleConnections[object.chainName] = object;
         this._chains.push(object)
         return object;
     }
@@ -205,11 +212,11 @@ export class ConnectionManager {
         let serialisedChains = []
         this.chains.concat(this.bus).forEach(chain => {
             let chainSettings = chain.serialise();
-            if (chain.chainName in this._currentConnections) {
-                chainSettings.connections = this._currentConnections[chain.chainName];
+            if (chain.id in this._currentConnections) {
+                chainSettings.connections = this._currentConnections[chain.id];
             }
             else {
-                chainSettings.connections = []
+                chainSettings.connections = ["Context"];
             }
             serialisedChains.push(chainSettings);
         });
@@ -217,9 +224,13 @@ export class ConnectionManager {
     }
 
     public deserialiseChains(newChains: Array<IChainSettings>) {
+        this._possibleConnectionStrings = ["Context"];
+        this._possibleConnections = {"Context": this._outputGain};
         newChains.forEach(chain => {
             if (chain.chainName === "Bus") {
                 this._bus = new EffectsChain(this._context, chain);
+                this._possibleConnectionStrings.push("Bus");
+                this._possibleConnections[chain.chainName] = this._bus;
                 this.createConnections(this._bus, chain.connections);
             }
             else {

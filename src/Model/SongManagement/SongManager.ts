@@ -137,6 +137,9 @@ export class SongManager {
         else {
             this._startTime = this.context.currentTime - this.metadata.positionQuarterNoteToSeconds(startPosition);
         }
+
+        this.connectionManager.outputGain.gain.exponentialRampToValueAtTime(1, this.context.currentTime+0.1);
+
         // Schedule notes separately from quarter note update
         this.playingIntervalIDs = setInterval(() => {this.scheduleNotes()}, 50);
         // Schedule quarter note update function until playing stops using animation frame (to keep animations smooth)
@@ -154,6 +157,9 @@ export class SongManager {
     public stop() {
         this._playing = false;
         this.playingChangedEvent.emit(this._playing);
+
+        this.connectionManager.outputGain.gain.linearRampToValueAtTime(0, this.context.currentTime+0.1);
+
         clearInterval(this.playingIntervalIDs);
         this._tracks.forEach(element => {
             element.stop();
