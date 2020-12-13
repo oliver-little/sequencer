@@ -74,6 +74,11 @@ button:focus {
     margin-left: 5px;
     margin-right: 5px;
     background-color: var(--timeline-highlight2-color);
+    transition: background-color 0.2s ease;
+}
+
+.panelButton:disabled {
+    background-color: var(--timeline-fg-color);
 }
 
 /* Edit Panel*/
@@ -102,7 +107,8 @@ button:focus {
 }
 
 .selectionButton.selected:enabled {
-    outline: 2px solid blue;
+    transition: box-shadow 0.1s ease;
+    box-shadow: 0 0 0 2px blue;
 }
 
 /* Effects Chain Panel */
@@ -164,7 +170,8 @@ button:focus {
 .effectsChainPanelTitle {
     display: flex;
     justify-content: center;
-    padding-top: 4px;
+    align-items: center;
+    padding-top: 3px;
     padding-bottom: 4px;
 }
 
@@ -174,16 +181,44 @@ button:focus {
     font-size: 17px;
     border-radius: 5px;
     transition: border 0.15s ease;
-    border: 2px solid transparent;
-    padding: 4px 10px;
+    border: 2px solid var(--timeline-fg-color);
+    padding: 5px 10px 4px 10px;
 }
 
 .effectsChainTitleButton:hover {
-    border-color: var(--timeline-highlight-color);
+    border-color: var(--timeline-highlight2-color);
 }
 
 .effectsChainTitleButton:active {
     background-color: var(--timeline-fg-color);
+}
+
+.effectsChainDeleteButton {
+    width: 25px;
+    height: 25px;
+
+    background-color: var(--timeline-highlight2-color);
+    border-radius: 2px;
+    color: var(--timeline-bg-color);
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.effectsChainDeleteButton.title {
+    position: absolute;
+    right: 0px;
+    margin-right: 22px;
+}
+
+.effectsChainDeleteButton:disabled {
+    background-color: var(--timeline-fg-color);
+}
+
+.effectsChainDeleteButton:hover:enabled {
+    box-shadow: 0 0 0 2px var(--timeline-highlight-color);
+}
+
+.effectsChainDeleteButton:active:enabled {
+    background-color: var(--timeline-highlight-color);
 }
 
 .effectsList {
@@ -238,6 +273,7 @@ button:focus {
 
 .chainEffectTitle {
     display: flex;
+    padding: 4px 5px 4px 5px;
     justify-content: space-between;
     align-items: center;
 }
@@ -252,11 +288,6 @@ button:focus {
 
 .chainEffectTitle > *:last-child {
     margin-right: 10px;
-}
-
-.chainEffectDelete {
-    width: 25px;
-    height: 25px;
 }
 
 .effectProperty {

@@ -26,7 +26,7 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         this._newEffect = this._newEffect.bind(this);
         this._moveEffect = this._moveEffect.bind(this);
         this._selectedChainChanged = this._selectedChainChanged.bind(this);
-
+        this._deleteCurrentChain = this._deleteCurrentChain.bind(this);
 
         this.state = {
             currentChainNumber: 0,
@@ -35,10 +35,10 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
     }
 
     get currentChain() {
-        if (this.state.currentChainNumber > this.props.connectionManager.chains.length) {
+        if (this.state.currentChainNumber === 0) {
             return this.props.connectionManager.bus;
         }
-        return this.chainsAndBus[this.state.currentChainNumber];
+        return this.props.connectionManager.chains[this.state.currentChainNumber-1];
     }
 
     get chainsAndBus() {
@@ -80,6 +80,11 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         this.setState({ currentChainNumber: index });
     }
 
+    private _deleteCurrentChain() {
+        this.props.connectionManager.removeChain(this.currentChain.chainName);
+        this.setState({ currentChainNumber: 0 });
+    }
+
     componentDidMount() {
         this.props.connectionManager.effectsDeserialised.addListener(this._deserialiseFunction);
     }
@@ -92,13 +97,16 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         let options = this.chainsAndBus.map(value => { return value.chainName });
         options.push("New Chain...");
 
+        let curChain = this.currentChain;
+
         return <div className={"effectsChainPanel" + (this.state.hidden ? " hidden" : "")}>
             <FAButton title={this.state.hidden ? "Show Effects" : "Hide Effects"} className="effectsChainHideShowButton" iconName={this.state.hidden ? "fa fa-caret-left" : "fa fa-caret-right"} onClick={() => { this._hidePanel() }} />
             <div className={"effectsChainContent"} >
                 <div className={"effectsChainPanelTitle"}>
                     <BoxSelect mainButtonClassName={"effectsChainTitleButton"} selectButtonClassName={"effectsChainSelectButton"} selected={this.state.currentChainNumber} options={options} selectedCallback={this._selectedChainChanged} />
+                    <FAButton className="effectsChainDeleteButton title" iconName="fa fa-close" onClick={this._deleteCurrentChain} disabled={curChain.chainName === "Bus"} />
                 </div>
-                <EffectsChainInfo effectsChain={this.currentChain.effects} moveEffect={this._moveEffect} effectPropertyChanged={this._effectChanged} newEffect={this._newEffect} effectRemoved={this._effectRemoved} />
+                <EffectsChainInfo effectsChain={curChain.effects} moveEffect={this._moveEffect} effectPropertyChanged={this._effectChanged} newEffect={this._newEffect} effectRemoved={this._effectRemoved} />
             </div>
         </div>
     }
@@ -172,7 +180,7 @@ class ChainEffect extends React.PureComponent<ChainEffectProps> {
                     <div>
                         <div className={"chainEffectTitle"}>
                             <p style={{ marginRight: "5px" }}>{this.props.effectType}</p>
-                            <FAButton className={"chainEffectDelete"} iconName={"fa fa-times"} onClick={() => { this.props.onDelete(this.props.effectIndex) }} />
+                            <FAButton className="effectsChainDeleteButton" iconName={"fa fa-close"} onClick={() => { this.props.onDelete(this.props.effectIndex) }} />
                         </div>
                     </div>
                     {this.props.properties.map((property, index) => {

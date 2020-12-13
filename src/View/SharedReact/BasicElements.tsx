@@ -83,13 +83,14 @@ export class LabelledCheckbox extends React.PureComponent<LabelledCheckboxProps>
 interface FAButtonProps {
     className?: string,
     title?: string,
+    disabled?: boolean,
     iconName: string,
     onClick: Function
 }
 
 export class FAButton extends React.PureComponent<FAButtonProps> {
     render() {
-        return <button title={this.props.title} className={this.props.className} onClick={() => { this.props.onClick() }}><i className={this.props.iconName}></i></button>
+        return <button title={this.props.title} className={this.props.className} onClick={() => { this.props.onClick() }} disabled={this.props.disabled}><i className={this.props.iconName}></i></button>
     }
 }
 
