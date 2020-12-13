@@ -4,6 +4,7 @@ import { EffectsChain } from "../../Model/Nodes/EffectsChain";
 import { ConnectionManager } from "../../Model/SongManagement/ConnectionManager";
 import { IEffect, IEffectBooleanProperty, IEffectListProperty, IEffectNumberProperty, IEffectNumberRange, IEffectStringProperty } from "../../Model/Interfaces/IInstrumentSettings";
 import { BoxSelect, FAButton, Slider } from "../SharedReact/BasicElements";
+import { TilingSprite } from "pixi.js";
 
 interface EffectsChainPanelProps {
     connectionManager: ConnectionManager
@@ -16,7 +17,7 @@ interface EffectsChainPanelState {
 
 export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, EffectsChainPanelState> {
 
-    private _deserialiseFunction = () => {this.forceUpdate()};
+    private _deserialiseFunction = () => { this.forceUpdate() };
 
     constructor(props) {
         super(props);
@@ -27,6 +28,9 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         this._moveEffect = this._moveEffect.bind(this);
         this._selectedChainChanged = this._selectedChainChanged.bind(this);
         this._deleteCurrentChain = this._deleteCurrentChain.bind(this);
+        this._preGainChanged = this._preGainChanged.bind(this);
+        this._postGainChanged = this._postGainChanged.bind(this);
+        this._connectionChanged = this._connectionChanged.bind(this);
 
         this.state = {
             currentChainNumber: 0,
@@ -38,7 +42,7 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         if (this.state.currentChainNumber === 0) {
             return this.props.connectionManager.bus;
         }
-        return this.props.connectionManager.chains[this.state.currentChainNumber-1];
+        return this.props.connectionManager.chains[this.state.currentChainNumber - 1];
     }
 
     get chainsAndBus() {
@@ -85,6 +89,24 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         this.setState({ currentChainNumber: 0 });
     }
 
+    private _preGainChanged(value: number) {
+        this.currentChain.preGain = value;
+    }
+
+    private _postGainChanged(value: number) {
+        this.currentChain.postGain = value;
+    }
+
+    private _connectionChanged(index : number, value : string) {
+        let curChain = this.currentChain;
+        if (curChain !== this.props.connectionManager.bus && this.props.connectionManager.getConnections(curChain)[0] != value) {
+            console.log(this.props.connectionManager.getConnections(curChain)[0]);
+            this.props.connectionManager.removeAllConnections(curChain);
+            this.props.connectionManager.addConnection(curChain, value);
+            this.setState({ currentChainNumber: this.state.currentChainNumber });
+        }
+    }
+
     componentDidMount() {
         this.props.connectionManager.effectsDeserialised.addListener(this._deserialiseFunction);
     }
@@ -104,9 +126,22 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
             <div className={"effectsChainContent"} >
                 <div className={"effectsChainPanelTitle"}>
                     <BoxSelect mainButtonClassName={"effectsChainTitleButton"} selectButtonClassName={"effectsChainSelectButton"} selected={this.state.currentChainNumber} options={options} selectedCallback={this._selectedChainChanged} />
-                    <FAButton className="effectsChainDeleteButton title" iconName="fa fa-close" onClick={this._deleteCurrentChain} disabled={curChain.chainName === "Bus"} />
+                    <FAButton className="effectsChainButton delete title" iconName="fa fa-close" onClick={this._deleteCurrentChain} disabled={curChain.chainName === "Bus"} />
                 </div>
-                <EffectsChainInfo effectsChain={curChain.effects} moveEffect={this._moveEffect} effectPropertyChanged={this._effectChanged} newEffect={this._newEffect} effectRemoved={this._effectRemoved} />
+                <EffectsChainInfo
+                    effectsChain={curChain.effects}
+                    moveEffect={this._moveEffect}
+                    effectPropertyChanged={this._effectChanged}
+                    newEffect={this._newEffect}
+                    effectRemoved={this._effectRemoved}
+                    preGainValue={curChain.preGain}
+                    preGainValueChanged={this._preGainChanged}
+                    postGainValue={curChain.postGain}
+                    postGainValueChanged={this._postGainChanged}
+                    connection={this.props.connectionManager.getConnections(curChain)[0]}
+                    connectionOptions={(curChain === this.props.connectionManager.bus ? ["Context"] : ["Context", "Bus"])}
+                    connectionChangedCallback={this._connectionChanged}
+                />
             </div>
         </div>
     }
@@ -118,11 +153,13 @@ interface EffectsChainInfoProps {
     effectPropertyChanged: Function,
     newEffect: Function
     effectRemoved: Function
-    /*preGainValue : number,
-    preGainValueChanged : Function,
-    postGainValue : number,
-    postGainValueChanged : Function,*/
-
+    preGainValue: number,
+    preGainValueChanged: Function,
+    postGainValue: number,
+    postGainValueChanged: Function,
+    connection: string,
+    connectionOptions: string[],
+    connectionChangedCallback: Function
 }
 
 class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
@@ -150,17 +187,34 @@ class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
             return <ChainEffect key={effect.id} effectIndex={index} {...effect} onPropertyChange={this.props.effectPropertyChanged} onDelete={this.props.effectRemoved} />
         });
         return <div className={"effectsList"}>
+            <div className={"effectsListDivider"} style={{ marginTop: "0px" }} />
+            <div className="effectProperty">
+                <p className={"effectTitleText"}>Input Gain:</p>
+                <Slider value={this.props.preGainValue.toString()} min={"0"} max={"1"} step={"0.01"} onRelease={true} onChange={this.props.preGainValueChanged} />
+            </div>
+            <div className="effectProperty">
+                <p className={"effectTitleText"}>Output Gain:</p>
+                <Slider value={this.props.postGainValue.toString()} min={"0"} max={"1"} step={"0.01"} onRelease={true} onChange={this.props.postGainValueChanged} />
+            </div>
+            <div className="effectProperty">
+                <p className={"effectTitleText"}>Output:</p>
+                <BoxSelect mainButtonClassName="" title={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.props.connectionChangedCallback} />
+            </div>
+            <div className={"effectsListDivider"} />
+            <p className={"effectListTitleText"}>Effects:</p>
             <DragDropContext onDragEnd={this._onDragEnd}>
                 <Droppable droppableId={"effectsList"}>
                     {(provided, snapshot) => (
-                        <div className={"effectsListDroppable" + (snapshot.isDraggingOver ? " dragging" : "")} ref={provided.innerRef} {...provided.droppableProps}>
+                        <div className={"effectsListDroppable effectsListElement" + (snapshot.isDraggingOver ? " dragging" : "")} ref={provided.innerRef} {...provided.droppableProps}>
                             {effects}
                             {provided.placeholder}
                         </div>
                     )}
                 </Droppable>
             </DragDropContext>
-            <BoxSelect mainButtonClassName={"effectsChainDropdownButton"} title={"+"} options={EffectsChainInfo.effectTitles} selectedCallback={this.props.newEffect} />
+            <BoxSelect mainButtonClassName={"effectsChainButton dropdownButton"} title="" options={EffectsChainInfo.effectTitles} selectedCallback={this.props.newEffect}>
+                <i className={"fa fa-plus"} />
+            </BoxSelect>
         </div >;
     }
 }
@@ -179,8 +233,8 @@ class ChainEffect extends React.PureComponent<ChainEffectProps> {
                 <div className={"chainEffect" + (snapshot.isDragging ? " dragging" : "")} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
                     <div>
                         <div className={"chainEffectTitle"}>
-                            <p style={{ marginRight: "5px" }}>{this.props.effectType}</p>
-                            <FAButton className="effectsChainDeleteButton" iconName={"fa fa-close"} onClick={() => { this.props.onDelete(this.props.effectIndex) }} />
+                            <p className={"effectTitleText"} style={{ marginRight: "5px" }}>{this.props.effectType}</p>
+                            <FAButton className="effectsChainButton delete" iconName={"fa fa-close"} onClick={() => { this.props.onDelete(this.props.effectIndex) }} />
                         </div>
                     </div>
                     {this.props.properties.map((property, index) => {
@@ -212,32 +266,32 @@ class ChainEffect extends React.PureComponent<ChainEffectProps> {
 }
 
 interface RangeEffectPropertyProps extends IEffectNumberRange {
-    effectIndex : number,
-    propertyIndex : number,
+    effectIndex: number,
+    propertyIndex: number,
     onChange: Function
 }
 
 interface BooleanEffectPropertyProps extends IEffectBooleanProperty {
-    effectIndex : number,
-    propertyIndex : number,
+    effectIndex: number,
+    propertyIndex: number,
     onChange: Function
 }
 
 interface NumberEffectPropertyProps extends IEffectNumberProperty {
-    effectIndex : number,
-    propertyIndex : number,
+    effectIndex: number,
+    propertyIndex: number,
     onChange: Function
 }
 
 interface StringEffectPropertyProps extends IEffectStringProperty {
-    effectIndex : number,
-    propertyIndex : number,
+    effectIndex: number,
+    propertyIndex: number,
     onChange: Function
 }
 
 interface ListEffectPropertyProps extends IEffectListProperty {
-    effectIndex : number,
-    propertyIndex : number,
+    effectIndex: number,
+    propertyIndex: number,
     onChange: Function
 }
 
@@ -262,7 +316,7 @@ class RangeEffectProperty extends React.PureComponent<RangeEffectPropertyProps> 
 
         return <div className={"effectProperty range"}>
             <p>{nameToUse}</p>
-            <Slider onRelease={true} min={this.props.min.toString()} max={this.props.max.toString()} step={this.props.step.toString()} value={this.props.value.toString()} onChange={(value) => {this.props.onChange(this.props.effectIndex, this.props.propertyIndex, value)}} />
+            <Slider onRelease={true} min={this.props.min.toString()} max={this.props.max.toString()} step={this.props.step.toString()} value={this.props.value.toString()} onChange={(value) => { this.props.onChange(this.props.effectIndex, this.props.propertyIndex, value) }} />
         </div>
     }
 }

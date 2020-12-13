@@ -23,11 +23,12 @@ export class Slider extends React.PureComponent<SliderProps> {
     }
 
     render() {
+        let className = "slider" + (this.props.className ? this.props.className : "");
         if (this.props.onRelease) {
-            return <input className={this.props.className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => { this._sliderRef = ref }} onPointerUp={() => {this.props.onChange(this._sliderRef.value)}} />
+            return <input className={className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => { this._sliderRef = ref }} onPointerUp={() => {this.props.onChange(this._sliderRef.value)}} />
         }
         else {
-            return <input className={this.props.className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => { this._sliderRef = ref }} onChange={(event) => {this.props.onChange(event.target.value)}} />
+            return <input className={className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => { this._sliderRef = ref }} onChange={(event) => {this.props.onChange(event.target.value)}} />
         }
     }
 }
@@ -162,8 +163,8 @@ interface BoxSelectProps {
     mainButtonClassName?: string,
     selectButtonClassName?: string,
     tooltip?: string,
-    selected?: number,
-    title?: string,
+    selected?: number, // Selected by index
+    title?: string, // Just show a string
     options: string[],
     selectedCallback: Function,
 }
@@ -189,7 +190,7 @@ export class BoxSelect extends React.PureComponent<BoxSelectProps, BoxSelectStat
     }
 
     private _selectOptionClicked(index: number) {
-        this.props.selectedCallback(index);
+        this.props.selectedCallback(index, this.props.options[index]);
         this.setState({ selectVisible: false });
     }
 
@@ -198,7 +199,7 @@ export class BoxSelect extends React.PureComponent<BoxSelectProps, BoxSelectStat
 
         return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
             <div>
-                <button className={this.props.mainButtonClassName} ref={this._selectButton} onClick={() => { this.setState({ selectVisible: !this.state.selectVisible }) }} >{this.props.selected !== undefined ? this.props.options[this.props.selected] : this.props.title}</button>
+                <button className={(this.props.mainButtonClassName ? this.props.mainButtonClassName : "mainBoxSelectButton")} title={this.props.tooltip} ref={this._selectButton} onClick={() => {this.setState({ selectVisible: !this.state.selectVisible }) }} >{this.props.selected !== undefined ? this.props.options[this.props.selected] : (this.props.title ? this.props.title : this.props.children)}</button>
             </div>
             {this.state.selectVisible && <BoxSelectOverlay buttonClassName={buttonClassName} selectButton={this._selectButton} options={this.props.options} selectOptionClickedCallback={this._selectOptionClicked} />}
         </div>
