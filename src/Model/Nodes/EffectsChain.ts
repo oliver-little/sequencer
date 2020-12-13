@@ -88,6 +88,14 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
         this._postGain.gain.setValueAtTime(this._context.currentTime, value);
     }
 
+    public destroy() {
+        this._preGain.disconnect();
+        for(let i = 0; i < this._chainNodes.length; i++) {
+            this._chainNodes[i].disconnect();
+        }
+        this._postGain.disconnect();
+    }
+
     public connect(node: AudioNode | ICustomInputAudioNode) {
         if (node instanceof AudioNode) {
             this._postGain.connect(node);

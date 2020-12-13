@@ -3,6 +3,7 @@ import { SongManager } from "../../Model/SongManagement/SongManager";
 import { OscillatorTrack } from "../../Model/Tracks/OscillatorTrack";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack";
 import { IUIOscillatorTrackSettings, IUISongSettings, IUISoundFileTrackSettings } from "../Interfaces/UIInterfaces";
+import { navigationView } from "../Shared/NavigationView";
 import { NoteUITrack, SoundFileUITrack } from "../Shared/UITrack";
 import { FAButton } from "../SharedReact/BasicElements";
 import { UITrackStore } from "./UITrackStore";
@@ -85,6 +86,11 @@ export class SerialisePanel extends React.Component<SerialisePanelProps> {
                     }
                 }
                 UITrackStore.dispatch({ type: "SET_TRACKS", tracks: UITracks });
+                
+                // Go back to timeline screen if needed
+                while(navigationView.viewDepth > 1) {
+                    navigationView.back();
+                }
             }
             reader.readAsText(file);
         }

@@ -299,6 +299,8 @@ export default class SongMetadata {
      * @memberof SongMetadata
      */
     public deserialise(metaEvents : Array<ISongEvent>) {
+        this._metaEvents = new SortedArray<MetadataEvent>();
+        this.addMetadataEvent(0, 60, [4,4]);
         metaEvents.forEach(metaEvent => {
             if (metaEvent.eventType === "MetadataEvent") {
                 this.addMetadataEvent(metaEvent.startPosition, metaEvent.bpm, metaEvent.timeSignature);

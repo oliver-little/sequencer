@@ -1,8 +1,11 @@
 import { ICustomOutputAudioNode, ICustomInputAudioNode } from "../Interfaces/ICustomAudioNode.js";
 import { EffectsChain } from "../Nodes/EffectsChain.js";
 import { IChainSettings } from "../Interfaces/IInstrumentSettings.js";
+import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 
 export class ConnectionManager {
+
+    public effectsDeserialised : SimpleEvent;
 
     private _context: AudioContext | OfflineAudioContext;
     private _outputGain : GainNode;
@@ -14,6 +17,8 @@ export class ConnectionManager {
     private _currentConnections: { [uuid: string]: string[] }
 
     constructor(context: AudioContext | OfflineAudioContext) {
+        this.effectsDeserialised = new SimpleEvent();
+
         this._context = context;
         this._outputGain = this._context.createGain();
         this._outputGain.connect(context.destination);
@@ -226,6 +231,15 @@ export class ConnectionManager {
     public deserialiseChains(newChains: Array<IChainSettings>) {
         this._possibleConnectionStrings = ["Context"];
         this._possibleConnections = {"Context": this._outputGain};
+
+        for (let i = 0; i < this._chains.length; i++) {
+            delete this._possibleConnections[this._chains[i].chainName];
+            this._possibleConnectionStrings.splice(this._possibleConnectionStrings.indexOf(this._chains[i].chainName), 1);
+            this._chains[i].destroy();
+        }
+
+        this._chains = [];
+
         newChains.forEach(chain => {
             if (chain.chainName === "Bus") {
                 this._bus = new EffectsChain(this._context, chain);
@@ -237,5 +251,7 @@ export class ConnectionManager {
                 this.addChain(chain);
             }
         });
+
+        this.effectsDeserialised.emit();
     }
 }

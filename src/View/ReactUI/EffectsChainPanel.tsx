@@ -16,6 +16,8 @@ interface EffectsChainPanelState {
 
 export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, EffectsChainPanelState> {
 
+    private _deserialiseFunction = () => {this.forceUpdate()};
+
     constructor(props) {
         super(props);
 
@@ -76,6 +78,14 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
             this.props.connectionManager.addChain();
         }
         this.setState({ currentChainNumber: index });
+    }
+
+    componentDidMount() {
+        this.props.connectionManager.effectsDeserialised.addListener(this._deserialiseFunction);
+    }
+
+    componentWillUnmount() {
+        this.props.connectionManager.effectsDeserialised.removeListener(this._deserialiseFunction);
     }
 
     render() {

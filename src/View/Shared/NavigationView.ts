@@ -11,6 +11,10 @@ export class NavigationView {
         this._viewStack = [];
     }
 
+    get viewDepth() {
+        return this._viewStack.length;
+    }
+
     get currentElement() : IFullScreenView {
         return this._viewStack[this._viewStack.length - 1];
     }
