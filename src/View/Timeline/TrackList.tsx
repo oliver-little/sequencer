@@ -1,9 +1,9 @@
 import * as PIXI from "pixi.js";
 import * as React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
-import { SoundFileUITrack, UITrack } from "../Shared/UITrack.js";
+import { NoteUITrack, SoundFileUITrack, UITrack } from "../Shared/UITrack.js";
 import { UIColors, UIPositioning } from "../Settings/UITheme.js";
-import { BoxSelect, FileInput, IconFileInput, LabelledCheckbox, Slider } from "../SharedReact/BasicElements.js";
+import { BoxSelect, IconFileInput, LabelledCheckbox, Slider } from "../SharedReact/BasicElements.js";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
@@ -59,6 +59,9 @@ export class TrackList extends PIXI.Container {
         this._deleteTrack = this._deleteTrack.bind(this);
         this._connectionChanged = this._connectionChanged.bind(this);
         this.drawTracks = this.drawTracks.bind(this);
+        this._envelopeEnabledChanged = this._envelopeEnabledChanged.bind(this);
+        this._envelopeAttackChanged = this._envelopeAttackChanged.bind(this);
+        this._envelopeReleaseChanged = this._envelopeReleaseChanged.bind(this);
 
         // Draw lines and background colour.
 
@@ -72,7 +75,6 @@ export class TrackList extends PIXI.Container {
         this._trackSettingsContainer = document.createElement("div");
         this._trackSettingsContainer.style.position = "absolute";
         this._trackSettingsContainer.style.width = this._sidebarWidth.toString() + "px";
-        this._trackSettingsContainer.style.overflow = "hidden";
         document.getElementById("applicationContainer").appendChild(this._trackSettingsContainer);
 
         this.resize(width, height);
@@ -200,6 +202,33 @@ export class TrackList extends PIXI.Container {
         UITrackStore.dispatch({ type: "REMOVE_TRACK", index: index });
     }
 
+    private _envelopeEnabledChanged(index : number, value : boolean) {
+        let track = UITrackStore.getState().tracks[index];
+        if (track instanceof NoteUITrack) {
+            track.track.audioSource.envelopeEnabled = value;
+            this._rerenderList();
+        }
+    }
+
+
+    private _envelopeAttackChanged(index : number, value : number) {
+        let track = UITrackStore.getState().tracks[index];
+        if (track instanceof NoteUITrack) {
+            value = Math.max(0, Math.min(4, value));
+            track.track.audioSource.envelope.attack = value;
+            this._rerenderList();
+        }
+    }
+
+    private _envelopeReleaseChanged(index : number, value : number) {
+        let track = UITrackStore.getState().tracks[index];
+        if (track instanceof NoteUITrack) {
+            value = Math.max(0, Math.min(4, value));
+            track.track.audioSource.envelope.release = value;
+            this._rerenderList();
+        }
+    }
+
     private _rerenderList() {
         let tracks = UITrackStore.getState().tracks;
         if (tracks.length > 0) {
@@ -213,14 +242,17 @@ export class TrackList extends PIXI.Container {
                 onDeleteTrack={this._deleteTrack}
                 onConnectionChanged={this._connectionChanged}
                 width={this._sidebarWidth}
-                verticalScroll={this._verticalScroll} />, this._trackSettingsContainer);
+                verticalScroll={this._verticalScroll} 
+                onEnvelopeEnabledChanged={this._envelopeEnabledChanged}
+                onEnvelopeAttackChanged={this._envelopeAttackChanged}
+                onEnvelopeReleaseChanged={this._envelopeReleaseChanged} />, this._trackSettingsContainer);
         }
     }
 }
 
 interface TrackSettingsListProps {
     tracks: UITrack[],
-    possibleConnections : string[],
+    possibleConnections: string[],
     onNameChange: Function,
     onGainChange: Function,
     onSoundFileUpdate: Function,
@@ -228,6 +260,9 @@ interface TrackSettingsListProps {
     onAllowOverlapChange: Function,
     onDeleteTrack: Function,
     onConnectionChanged: Function,
+    onEnvelopeEnabledChanged: Function,
+    onEnvelopeAttackChanged: Function,
+    onEnvelopeReleaseChanged: Function
     width: number,
     verticalScroll: number;
 }
@@ -236,26 +271,35 @@ class TrackSettingsList extends React.Component<TrackSettingsListProps> {
     render() {
         return (<div style={{ position: "absolute", top: this.props.verticalScroll.toString() + "px" }}>
             {this.props.tracks.map((track, index) => {
-                let soundFileProps = undefined;
                 if (track instanceof SoundFileUITrack) {
-                    soundFileProps = {
-                        soundFileChange: this.props.onSoundFileUpdate,
-                        displayActualWidth: track.displayActualWidth,
-                        displayActualWidthChange: this.props.onDisplayActualWidthChange,
-                        allowOverlap: track.track.allowOverlaps,
-                        allowOverlapChange: this.props.onAllowOverlapChange,
-                    }
+                    return <SoundFileTrackSettingsBox key={index} index={index}
+                        name={track.name} onNameChange={this.props.onNameChange}
+                        gain={track.track.audioSource.masterGain} onGainChange={this.props.onGainChange}
+                        deleteTrack={this.props.onDeleteTrack}
+                        width={this.props.width} height={track.height}
+                        soundFileChange={this.props.onSoundFileUpdate}
+                        displayActualWidth={track.displayActualWidth} displayActualWidthChange={this.props.onDisplayActualWidthChange}
+                        allowOverlap={track.track.allowOverlaps} allowOverlapChange={this.props.onAllowOverlapChange}
+                        connection={track.track.connection} connectionOptions={this.props.possibleConnections} connectionChanged={this.props.onConnectionChanged} />;
                 }
-
-                return <TrackSettingsBox key={index} index={index}
-                    name={track.name} onNameChange={this.props.onNameChange}
-                    gain={track.track.audioSource.masterGain} onGainChange={this.props.onGainChange}
-                    deleteTrack={this.props.onDeleteTrack}
-                    width={this.props.width} height={track.height}
-                    {...soundFileProps}
-                    connection={track.track.connection}
-                    connectionOptions={this.props.possibleConnections}
-                    connectionChanged={this.props.onConnectionChanged} />;
+                else if (track instanceof NoteUITrack) {
+                    let instrument = track.track.audioSource;
+                    let oscillatorProps = {
+                        enabled: instrument.envelopeEnabled,
+                        enabledChanged: this.props.onEnvelopeEnabledChanged,
+                        attack: instrument.envelope.attack,
+                        attackChanged: this.props.onEnvelopeAttackChanged,
+                        release: instrument.envelope.release,
+                        releaseChanged: this.props.onEnvelopeReleaseChanged
+                    }
+                    return <OscillatorTrackSettingsBox key={index} index={index}
+                        name={track.name} onNameChange={this.props.onNameChange}
+                        gain={track.track.audioSource.masterGain} onGainChange={this.props.onGainChange}
+                        deleteTrack={this.props.onDeleteTrack}
+                        width={this.props.width} height={track.height}
+                        envelopeSettings={oscillatorProps}
+                        connection={track.track.connection} connectionOptions={this.props.possibleConnections} connectionChanged={this.props.onConnectionChanged} />
+                }
             })}
         </div>);
     }
@@ -273,22 +317,17 @@ interface TrackSettingsProps {
     connection: string,
     connectionOptions: string[]
     connectionChanged: Function,
-    soundFileChange? : Function,
-    displayActualWidth? : boolean,
-    displayActualWidthChange?: Function,
-    allowOverlap? : boolean,
-    allowOverlapChange? : Function
 }
 
-interface TrackSettingsSoundFileProps {
-    soundFileChange: Function
+interface SoundFileTrackSettingsProps extends TrackSettingsProps {
+    soundFileChange: Function,
     displayActualWidth: boolean,
-    displayActualWidthChange?: Function,
+    displayActualWidthChange: Function,
     allowOverlap: boolean,
-    allowOverlapChange?: Function
+    allowOverlapChange: Function
 }
 
-class TrackSettingsBox extends React.PureComponent<TrackSettingsProps> {
+class SoundFileTrackSettingsBox extends React.PureComponent<SoundFileTrackSettingsProps> {
     constructor(props) {
         super(props);
         this.handleNameChange = this.handleNameChange.bind(this);
@@ -309,24 +348,133 @@ class TrackSettingsBox extends React.PureComponent<TrackSettingsProps> {
     }
 
     render() {
-
-        let soundFileInfo = null;
-
-        if (this.props.soundFileChange != undefined) {
-            soundFileInfo = <>
+        return <div style={{ position: "relative" }}>
+            <button className="trackSettingsDeleteButton" onClick={() => { this.props.deleteTrack(this.props.index) }}>X</button>
+            <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
+                <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
+                <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" value={this.props.gain.toString()} onChange={this.handleGainChange} />
                 <IconFileInput className={"trackSettingsIconInput"} iconName={"fa fa-music"} onChange={(files: FileList) => { this.props.soundFileChange(this.props.index, files) }} accept="audio/*" />
                 <LabelledCheckbox className={"trackSettingsCheckbox"} label={"Display Actual Width"} state={this.props.displayActualWidth} onChange={(value) => { this.props.displayActualWidthChange(this.props.index, value) }} />
                 <LabelledCheckbox className={"trackSettingsCheckbox"} label={"Allow Overlaps"} state={this.props.allowOverlap} onChange={(value) => { this.props.allowOverlapChange(this.props.index, value) }} />
-            </>
-        }
+                <BoxSelect title={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
+            </div>
+        </div>
+    }
+}
+
+interface OscillatorTrackSettingsProps extends TrackSettingsProps {
+    envelopeSettings: OscillatorEnvelopeProps
+}
+
+class OscillatorTrackSettingsBox extends React.PureComponent<OscillatorTrackSettingsProps> {
+    constructor(props) {
+        super(props);
+        this.handleNameChange = this.handleNameChange.bind(this);
+        this.handleGainChange = this.handleGainChange.bind(this);
+        this.handleConnectionChanged = this.handleConnectionChanged.bind(this);
+    }
+
+    handleNameChange(value: string) {
+        this.props.onNameChange(this.props.index, value);
+    }
+
+    handleGainChange(value: string) {
+        this.props.onGainChange(this.props.index, parseFloat(value));
+    }
+
+    handleConnectionChanged(index: number) {
+        this.props.connectionChanged(this.props.index, index);
+    }
+
+    render() {
+        let es = this.props.envelopeSettings;
 
         return <div style={{ position: "relative" }}>
             <button className="trackSettingsDeleteButton" onClick={() => { this.props.deleteTrack(this.props.index) }}>X</button>
             <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
                 <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
                 <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" value={this.props.gain.toString()} onChange={this.handleGainChange} />
-                {soundFileInfo}
+                <OscillatorEnvelope enabled={es.enabled} enabledChanged={(value) => {es.enabledChanged(this.props.index, value)}}
+                                    attack={es.attack} attackChanged={(value) => {es.attackChanged(this.props.index, value)}}
+                                    release={es.release} releaseChanged={(value) => {es.releaseChanged(this.props.index, value)}} />
                 <BoxSelect title={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
+            </div>
+        </div>
+    }
+}
+
+interface OscillatorEnvelopeProps {
+    enabled: boolean
+    enabledChanged: Function,
+    attack: number,
+    attackChanged: Function,
+    release: number,
+    releaseChanged: Function
+}
+
+interface OscillatorEnvelopeState {
+    detailsVisible: boolean
+}
+
+class OscillatorEnvelope extends React.Component<OscillatorEnvelopeProps, OscillatorEnvelopeState> {
+
+    private _openCloseButton: React.RefObject<HTMLButtonElement>;
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            detailsVisible: false
+        }
+
+        this._openCloseButton = React.createRef();
+    }
+
+    render() {
+        return <div className="oscillatorEnvelopeContainer">
+            <button className="mainBoxSelectButton" ref={this._openCloseButton} onClick={() => { this.setState({ detailsVisible: !this.state.detailsVisible }) }}>Envelope</button>
+            {this.state.detailsVisible && <OscillatorEnvelopeDetails {...this.props} mainButton={this._openCloseButton} />}
+        </div>
+    }
+}
+
+interface OscillatorDetailsProps extends OscillatorEnvelopeProps {
+    mainButton: React.RefObject<HTMLButtonElement>;
+}
+
+interface OscillatorDetailsState {
+    lastAttackValue : string,
+    lastReleaseValue : string
+}
+
+class OscillatorEnvelopeDetails extends React.Component<OscillatorDetailsProps, OscillatorDetailsState> {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            lastAttackValue: "",
+            lastReleaseValue: ""
+        }
+    }
+
+    render() {
+        let disabled = !this.props.enabled;
+
+        return <div className="envelopeOverlayContainer" style={{ left: this.props.mainButton.current.offsetWidth + 2}}>
+            <div className="boxSelectOverlayArrow left" />
+            <div className="boxSelectOverlay envelopeOverlayContent">
+                <div className={"effectProperty"}>
+                    <p>Enabled:</p>
+                    <input type="checkbox" checked={this.props.enabled} onChange={(event) => { this.props.enabledChanged(event.target.checked) }} />
+                </div>
+                <div className={"effectProperty"}>
+                    <p>Attack:</p>
+                    <input type="number" step="0.01" value={(parseFloat(this.state.lastAttackValue) === this.props.attack? this.state.lastAttackValue : this.props.attack.toString())} onChange={(event) => {this.setState({lastAttackValue: event.target.value}); this.props.attackChanged(event.target.value) }} disabled={disabled} />
+                </div>
+                <div className={"effectProperty"}>
+                    <p>Release:</p>
+                    <input type="number" step="0.01" value={(parseFloat(this.state.lastReleaseValue) === this.props.release? this.state.lastReleaseValue : this.props.release.toString())} onChange={(event) => {this.setState({lastReleaseValue: event.target.value}); this.props.releaseChanged(event.target.value) }} disabled={disabled} />
+                </div>
             </div>
         </div>
     }

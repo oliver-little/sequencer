@@ -95,7 +95,7 @@ export abstract class MouseTypeContainer extends InteractiveContainer {
             return;
         }
         else {
-            if (PointHelper.distanceSquared(event.data.getLocalPosition(this.parent), this._startPointerPosition) < 100) {
+            if (PointHelper.distanceSquared(event.data.getLocalPosition(this.parent), this._startPointerPosition) < 10) {
                 this.pointerUpClickHandler(event);
             }
             else {

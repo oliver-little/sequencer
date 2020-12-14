@@ -138,7 +138,7 @@ export class SongManager {
             this._startTime = this.context.currentTime - this.metadata.positionQuarterNoteToSeconds(startPosition);
         }
 
-        this.connectionManager.outputGain.gain.exponentialRampToValueAtTime(1, this.context.currentTime+0.1);
+        this.connectionManager.outputGain.gain.setTargetAtTime(0.9999, this.context.currentTime, 0.03);
 
         // Schedule notes separately from quarter note update
         this.playingIntervalIDs = setInterval(() => {this.scheduleNotes()}, 50);
@@ -158,7 +158,7 @@ export class SongManager {
         this._playing = false;
         this.playingChangedEvent.emit(this._playing);
 
-        this.connectionManager.outputGain.gain.linearRampToValueAtTime(0, this.context.currentTime+0.1);
+        this.connectionManager.outputGain.gain.setTargetAtTime(0.0001, this.context.currentTime, 0.03);
 
         clearInterval(this.playingIntervalIDs);
         this._tracks.forEach(element => {

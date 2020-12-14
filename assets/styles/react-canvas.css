@@ -19,6 +19,10 @@ button:hover:enabled {
     cursor: pointer;
 }
 
+input[type=number] {
+    width: 50px;
+}
+
 /* Main App */
 
 .fullScreen {
@@ -148,6 +152,7 @@ button:hover:enabled {
     height: 100%;
     transform: none;
     transition: transform 0.5s ease-in-out;
+    z-index: 1;
 }
 
 .effectsChainPanel.hidden {
@@ -323,8 +328,10 @@ button:hover:enabled {
 }
 
 .effectProperty {
+    width: 100%;
     display: flex;
     flex-direction: row;
+    align-items: center;
     justify-content: space-between;
 }
 
@@ -405,7 +412,7 @@ button:hover:enabled {
     flex-direction: column;
     align-items: center;
     overflow: visible;
-    z-index: 10;
+    z-index: 100;
 }
 
 @keyframes boxSelectOverlayAnim {
@@ -427,7 +434,6 @@ button:hover:enabled {
     animation: 0.2s ease-out 0s 1 boxSelectOverlayAnim;
 }
 
-
 .boxSelectOverlayArrow {
     width: 0px;
     height: 0px;
@@ -443,6 +449,12 @@ button:hover:enabled {
     border-left: 5px solid transparent;
     border-right: 5px solid transparent;
     border-top: 8px solid white;
+}
+
+.boxSelectOverlayArrow.left {
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 8px solid white;
 }
 
 .boxSelectButton {
@@ -479,6 +491,34 @@ button:hover:enabled {
 
 .slider {
     cursor: pointer;
+}
+
+/* Envelope Overlay */
+.envelopeOverlayContainer {
+    position: absolute;
+    flex-direction: row;
+    display: flex;
+    align-items: center;
+    overflow: visible;
+    z-index: 100;
+}
+
+.envelopeOverlayContent {
+    width: 175px;
+    padding: 10px 0;
+}
+
+.envelopeOverlayContent > div:not(:first-child):not(:last-child) {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+
+.oscillatorEnvelopeContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
 }
 
 /* Metadata Edit Box */
