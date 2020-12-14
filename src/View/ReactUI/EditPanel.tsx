@@ -47,8 +47,8 @@ export class EditPanel extends React.Component<{}, EditPanelState> {
 
     render() {
         return <div className={"editPanel"}>
-                <SelectionGroup className={"snapTypeGroup"} buttonClassName={"panelButton"} disabled={false} selectedButton={this.state.selectedSnapButton} buttonContents={["1", <Fraction n={1} d={2} />, <Fraction n={1} d={4} />, <Fraction n={1} d={8} />, <p>&#x2716;</p>]} onButtonClick={this._snapTypeChanged} />
-                <SelectionGroup className={"lengthTypeGroup"} buttonClassName={"panelButton noteButton"} disabled={this.state.lengthEnabled} selectedButton={this.state.selectedLengthButton} buttonContents={[<span>&#119133;</span>, <span>&#119134;</span>, <span>&#119135;</span>,  <span>&#119136;</span>, <span>&#119137;</span>, <span>&#119138;</span>]} onButtonClick={this._lengthTypeChanged} />
+                <SelectionGroup className={"snapTypeGroup"} buttonClassName={"panelButton buttonAnim"} disabled={false} selectedButton={this.state.selectedSnapButton} buttonContents={["1", <Fraction n={1} d={2} />, <Fraction n={1} d={4} />, <Fraction n={1} d={8} />, <p>&#x2716;</p>]} onButtonClick={this._snapTypeChanged} />
+                <SelectionGroup className={"lengthTypeGroup"} buttonClassName={"panelButton buttonAnim noteButton"} disabled={this.state.lengthEnabled} selectedButton={this.state.selectedLengthButton} buttonContents={[<span>&#119133;</span>, <span>&#119134;</span>, <span>&#119135;</span>,  <span>&#119136;</span>, <span>&#119137;</span>, <span>&#119138;</span>]} onButtonClick={this._lengthTypeChanged} />
             </div>;
     }
 }

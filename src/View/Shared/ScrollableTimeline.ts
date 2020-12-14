@@ -250,6 +250,10 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
             // Normal drag
             this._offsetChildren(-this.x);
             this.x = 0;
+
+            if (editType.markerCentered) {
+                editType.markerCentered = false;
+            }
         }
     }
 
@@ -593,21 +597,27 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     protected _playingStateChanged(value: boolean) {
         if (value == true && this._onScreen) {
             this.timelineMode = TimelineMode.Playback;
+            editType.markerCentered = true;
             requestAnimationFrame(this._timelineMarkerAnim);
 
         }
         else {
             this.timelineMode = TimelineMode.Edit;
+            editType.markerCentered = null;
             if (!this.songManager.quarterNotePositionChangedEvent.hasListener(this._repositionTimelineMarker)) {
                 this.songManager.quarterNotePositionChangedEvent.addListener(this._repositionTimelineMarker);
             }
         }
     }
 
-    protected _timelineMarkerAnim(timestamp: number) {
+    protected _timelineMarkerAnim() {
         this._repositionTimelineMarker(this.songManager.quarterNotePosition);
 
         if (this.songManager.playing == true) {
+            if (editType.markerCentered && (this._timelineMarker.x > this.endX || this._timelineMarker.x < this.startX)) {
+                let barPosition = this.metadata.positionQuarterNoteToBars(this.songManager.quarterNotePosition);
+                this._scrollToPosition(barPosition);
+            }
             requestAnimationFrame(this._timelineMarkerAnim);
         }
     }

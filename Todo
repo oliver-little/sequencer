@@ -3,8 +3,6 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
-- Delete button for chains
-- Pregain, postgain and connections for chains
 - Oscillator type and envelope in track list
 - Scroll to clicked timelineevent when moving between timeline and sequencer
 - Loading spinners, for async operations like loading in a new file: https://chevtek.io/how-to-create-versatile-loading-spinner-management-in-react/
