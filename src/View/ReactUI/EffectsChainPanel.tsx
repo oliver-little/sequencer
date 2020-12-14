@@ -4,10 +4,10 @@ import { EffectsChain } from "../../Model/Nodes/EffectsChain";
 import { ConnectionManager } from "../../Model/SongManagement/ConnectionManager";
 import { IEffect, IEffectBooleanProperty, IEffectListProperty, IEffectNumberProperty, IEffectNumberRange, IEffectStringProperty } from "../../Model/Interfaces/IInstrumentSettings";
 import { BoxSelect, FAButton, Slider } from "../SharedReact/BasicElements";
-import { TilingSprite } from "pixi.js";
 
 interface EffectsChainPanelProps {
-    connectionManager: ConnectionManager
+    connectionManager: ConnectionManager,
+    hideShowCallback: Function
 }
 
 interface EffectsChainPanelState {
@@ -74,7 +74,15 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
     }
 
     private _hidePanel() {
-        this.setState({ hidden: !this.state.hidden })
+        this.setState({ hidden: !this.state.hidden },
+            () => {
+                if (this.state.hidden) {
+                    this.props.hideShowCallback();
+                }
+                else {
+                    setTimeout(() => { this.props.hideShowCallback() }, 500);
+                }
+            });
     }
 
     private _selectedChainChanged(index: number) {
@@ -97,7 +105,7 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         this.currentChain.postGain = value;
     }
 
-    private _connectionChanged(index : number, value : string) {
+    private _connectionChanged(index: number, value: string) {
         let curChain = this.currentChain;
         if (curChain !== this.props.connectionManager.bus && this.props.connectionManager.getConnections(curChain)[0] != value) {
             console.log(this.props.connectionManager.getConnections(curChain)[0]);

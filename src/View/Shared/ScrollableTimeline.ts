@@ -126,8 +126,10 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
     public resize(width : number, height : number) {
         this.resizeInteractiveArea(width, height);
-        this.endX = width;
-        this.endY = height;
+        
+        // Ensure end position is at least after the start position
+        this.endX = Math.max(width, this.startX+1);
+        this.endY = Math.max(height, this.startY+1);
 
         let barHeight = Math.max(this.contentHeight, this.endY);
         for(let i = 0; i < this._barContainer.children.length; i++) {
@@ -145,7 +147,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
             // Recalculate where the right side is.
             rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
         }
-        while (rightSideOffset > 800) {
+        while (rightSideOffset > 800 && this._scrollObjects.length > 1) {
             let bar = this._scrollObjects.pop();
             this._returnScrollableBar(bar);
 
@@ -406,7 +408,9 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
         // Generate new timeline
         let currentXPosition = this.startX;
-        while (currentXPosition < this.endX) {
+        let generatedABar = false;
+        while (currentXPosition < this.endX && !generatedABar) {
+            generatedABar = true;
             let bar = this._initialiseScrollableBar(currentXPosition, currentBar, true);
             this._scrollObjects.push(bar);
             currentBar++;

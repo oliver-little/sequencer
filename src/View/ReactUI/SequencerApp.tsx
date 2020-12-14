@@ -15,11 +15,16 @@ interface SequencerAppState {
 
 export class SequencerApp extends React.Component<{}, SequencerAppState> {
 
+    private _timelineRef : React.RefObject<PIXITimeline>;
+    private _hideShowCallback = () => {this._timelineRef.current.resizePIXIApp()};
+
     constructor(props) {
         super(props);
         this.state = {
             songManager: new SongManager(),
         }
+
+        this._timelineRef = React.createRef();
     }
 
     componentWillUnmount() {
@@ -35,10 +40,8 @@ export class SequencerApp extends React.Component<{}, SequencerAppState> {
                     <SerialisePanel songManager={this.state.songManager} />
                 </div>
                 <div className="sequencerAppMainPanel">
-                    <PIXITimeline className="sequencerAppMainPanelLeft" songManager={this.state.songManager} />
-                    <div className="sequencerAppMainPanelRight">
-                        <EffectsChainPanel connectionManager={this.state.songManager.connectionManager} />
-                    </div>
+                    <PIXITimeline ref={this._timelineRef} className="sequencerAppMainPanelLeft" songManager={this.state.songManager} />
+                    <EffectsChainPanel connectionManager={this.state.songManager.connectionManager} hideShowCallback={this._hideShowCallback} />
                 </div>
             </div>
         </div>
@@ -70,10 +73,10 @@ export class PIXITimeline extends React.PureComponent<PIXITimelineProps, PIXITim
         PIXI.settings.ROUND_PIXELS = true;
         this._pixiContainer = React.createRef();
 
-        this._resizePIXIApp = this._resizePIXIApp.bind(this);
+        this.resizePIXIApp = this.resizePIXIApp.bind(this);
     }
 
-    protected _resizePIXIApp() {
+    public resizePIXIApp() {
         const parent = this.state.pixiApp.view.parentElement;
         this.state.pixiApp.renderer.resize(parent.clientWidth, parent.clientHeight);
         navigationView.currentElement.resize(parent.clientWidth, parent.clientHeight);
@@ -91,7 +94,7 @@ export class PIXITimeline extends React.PureComponent<PIXITimelineProps, PIXITim
         // Add to DOM
         this._pixiContainer.current.appendChild(app.view);
 
-        window.addEventListener("resize", this._resizePIXIApp);
+        window.addEventListener("resize", this.resizePIXIApp);
         const parent = app.view.parentElement;
         app.renderer.resize(parent.clientWidth, parent.clientHeight);
 
@@ -102,11 +105,11 @@ export class PIXITimeline extends React.PureComponent<PIXITimelineProps, PIXITim
 
         navigationView.setStageRenderer(app.stage, app.renderer);
         navigationView.show(timeline);
-        this.setState({ pixiApp: app }, this._resizePIXIApp);
+        this.setState({ pixiApp: app }, this.resizePIXIApp);
     }
 
     componentWillUnmount() {
-        window.removeEventListener("resize", this._resizePIXIApp);
+        window.removeEventListener("resize", this.resizePIXIApp);
 
         if (this.state.pixiApp != undefined) {
             this.state.pixiApp.destroy(true);
