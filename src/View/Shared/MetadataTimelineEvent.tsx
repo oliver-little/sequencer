@@ -23,9 +23,10 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
 
   private _graphics: PIXI.Graphics;
   private _editDiv: HTMLDivElement;
+  private _editDivMounted : boolean;
 
-  private _showingEditBox : boolean = false;
-  private _active : boolean;
+  private _showingEditBox: boolean = false;
+  private _active: boolean;
   private _timelineListenerActive = false;
 
   constructor(timeline: ScrollableTimeline) {
@@ -35,22 +36,21 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
     this._eventEdited = this._eventEdited.bind(this);
     this._hideEditMenu = this._hideEditMenu.bind(this);
 
-    this._editDiv = document.createElement("div");
-    this._editDiv.style.position = "absolute";
-    this._editDiv.style.top = this.getGlobalPosition().y.toString();
-
-    document.getElementById("applicationContainer").appendChild(this._editDiv);
-
     this._graphics = new PIXI.Graphics();
     this._graphics.beginFill(UIColors.metadataEventColor).drawRect(0, 0, 3, UIPositioning.timelineHeaderHeight).endFill();
     this.addChild(this._graphics);
+
+    this._editDiv = document.createElement("div");
+    this._editDiv.style.position = "absolute";
+    this._editDiv.style.top = UIPositioning.timelineHeaderHeight.toString() + "px";
+    this._editDivMounted = false;
   }
 
-  get active() : boolean {
+  get active(): boolean {
     return this._active;
   }
 
-  set active(value : boolean) {
+  set active(value: boolean) {
     this._active = value;
 
     if (value) {
@@ -61,25 +61,28 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
     }
   }
 
-  public initialise(quarterNotePosition : number, active : boolean) {
+  public initialise(quarterNotePosition: number, active: boolean) {
     this.active = active;
 
     let closestEvent = this.timeline.metadata.events[this.timeline.metadata.events.binarySearch(quarterNotePosition, true)];
     if (active) {
       this.event = closestEvent;
       this.alpha = 1;
-      
+
       if (!this._timelineListenerActive) {
         this.timeline.timelineViewChange.addListener(this._hideEditMenu);
         this._timelineListenerActive = true;
       }
+
+      this._mountEditDiv();
     }
     else {
+      this._unmountEditDiv();
       this.event = new MetadataEvent(quarterNotePosition, closestEvent.bpm, closestEvent.timeSignature);
     }
   }
 
-  public pointerOverHandler(event : PIXI.InteractionEvent) {
+  public pointerOverHandler(event: PIXI.InteractionEvent) {
     super.pointerOverHandler(event);
     if (!this.active) {
       this.alpha = 0.5;
@@ -100,8 +103,9 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
         this.event = this.timeline.metadata.addMetadataEvent(this.event.startPosition, this.event.bpm, this.event.timeSignature);
         this.timeline.timelineViewChange.addListener(this._hideEditMenu);
         this._timelineListenerActive = true;
+        this._mountEditDiv();
       }
-      this._editDiv.style.left = this.getGlobalPosition().x.toString();
+      this._editDiv.style.left = (this.getGlobalPosition().x + 1).toString() + "px";
       // Render the edit box at the position of the MetadataTimelineEvent
       render(<MetadataEditBox numerator={this.event.timeSignature[0]} denominator={this.event.timeSignature[1]} bpm={this.event.bpm} onSubmit={this._eventEdited} />, this._editDiv);
       this._showingEditBox = true;
@@ -123,7 +127,7 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
     }
   }
 
-  public setVisible(value : boolean) {
+  public setVisible(value: boolean) {
     this.visible = value;
 
     if (value && !this._timelineListenerActive) {
@@ -137,15 +141,31 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
   }
 
   public destroy() {
-    document.getElementById("applicationContainer").removeChild(this._editDiv);
+    this._hideEditMenu();
+    this._unmountEditDiv();
+    this._editDiv = null;
     super.destroy();
   }
 
-  private _eventEdited(timeSigNumerator : number, timeSigDenominator : number, bpm : number) {
+  private _eventEdited(timeSigNumerator: number, timeSigDenominator: number, bpm: number) {
     this.event = this.timeline.metadata.addMetadataEvent(this.event.startPosition, bpm, [timeSigNumerator, timeSigDenominator]);
     this.timeline.regenerateAroundPosition(this.timeline.metadata.positionQuarterNoteToBars(this.event.startPosition));
     // The event was edited, so regenerate the box at the same position (no difference in the user's view) to update it's props
     render(<MetadataEditBox numerator={this.event.timeSignature[0]} denominator={this.event.timeSignature[1]} bpm={this.event.bpm} onSubmit={this._eventEdited} />, this._editDiv);
+  }
+
+  private _mountEditDiv() {
+    if (!this._editDivMounted) {
+      document.getElementById("applicationContainer").appendChild(this._editDiv);
+      this._editDivMounted = true;
+    }
+  }
+
+  private _unmountEditDiv() {
+    if (this._editDivMounted) {
+      document.getElementById("applicationContainer").removeChild(this._editDiv);
+      this._editDivMounted = false;
+    }
   }
 
   /**

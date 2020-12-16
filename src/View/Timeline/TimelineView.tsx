@@ -93,9 +93,8 @@ export class TimelineView extends VerticalScrollView {
     }
 
     public removedHandler() {
-        super.addedHandler();
+        super.removedHandler();
         this.trackList.removedHandler();
-        this.timeline.removedHandler();
         unmountComponentAtNode(this._newTrackDropdownContainer);
     }
 

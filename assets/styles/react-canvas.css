@@ -530,28 +530,68 @@ input[type=checkbox] {
 
 /* Metadata Edit Box */
 
-.metadataEditDiv {
+.metadataDiv {
     position: absolute;
-    background-color: black;
-    flex-flow: column;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateX(-50%);
 }
 
-.metadataEditInnerDiv {
-    display: inline-flex;
-    flex-shrink: 1;
+.metadataInnerDiv {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 160px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: var(--t-h2);
+}
+
+.metadataNumerator {
+    width: 30px;
+    text-align: center;
+    border: 1px solid grey;
+    border-radius: 2px;
+    padding: 1px 0;
+}
+
+.metadataDenominator {
+    width: 30px;
+    background-color: white;
+    border: 1px solid grey;
+    border-radius: 2px;
+}
+
+.metadataDivider {
+    border: 1px solid #666;
+    width: auto;
+    height: 0px;
+    margin: 3px 0;
+}
+
+.metadataBPM {
+    width: 30px;
+    text-align: center;
+}
+
+.metadataSubmit {
+    background-color: white;
+    border: 1px solid grey;
+    border-radius: 2px;
+}
+
+.metadataProperty {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
 }
 
-.metadataEditInnerDiv > input {
-    width: 30px;
-}
-
-.metadataEditDivider {
-    border: 1px solid grey;
-    display: block;
-    width: auto;
-    height: 0px;
-    margin: 4px 0 4px 0;
+.metadataProperty > p {
+    font-weight: bold;
+    font-size: 13.3333px;
+    margin-right: 5px;
 }
 
 /* Track Settings Box */

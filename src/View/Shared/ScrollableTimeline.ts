@@ -193,38 +193,46 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
                 this.x = -this._scrollObjects[0].leftBound + this.startX;
             }
 
+            let anchor = this.x - this.endX;
+
             // While loops are used in this section because extremely quick, large scrolls can cause bars to be missing
             // Check right side for adding or removing bars offscreen
-            let rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+            let rightSideOffset = anchor + this._scrollObjects[this._scrollObjects.length - 1].rightBound;
             while (rightSideOffset < 100) { // If the right side is too close, need to add a new bar.
                 let lastBar = this._scrollObjects[this._scrollObjects.length - 1];
                 let bar = this._initialiseScrollableBar(lastBar.rightBound, lastBar.barNumber + 1, true);
                 this._scrollObjects.push(bar);
 
                 // Recalculate where the right side is.
-                rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+                rightSideOffset = anchor + this._scrollObjects[this._scrollObjects.length - 1].rightBound;
             }
+
+            // Now check the right side isn't too far
+            rightSideOffset = anchor + this._scrollObjects[this._scrollObjects.length - 1].leftBound;
             while (rightSideOffset > 800) {
                 let bar = this._scrollObjects.pop();
                 this._returnScrollableBar(bar);
 
-                rightSideOffset = this.x + this._scrollObjects[this._scrollObjects.length - 1].rightBound - this.endX;
+                rightSideOffset = anchor + this._scrollObjects[this._scrollObjects.length - 1].leftBound;
             }
 
+            anchor = this.startX - this.x;
 
             // Check left side for adding or removing bars offscreen
-            let leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
+            let leftSideOffset = anchor - this._scrollObjects[0].leftBound;
             while (leftSideOffset < 100 && this._scrollObjects[0].barNumber != 0) {
                 let firstBar = this._scrollObjects[0];
                 let bar = this._initialiseScrollableBar(firstBar.leftBound, firstBar.barNumber - 1, false);
                 this._scrollObjects.splice(0, 0, bar);
 
-                leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
+                leftSideOffset = anchor - this._scrollObjects[0].leftBound;
             }
+
+            leftSideOffset = anchor - this._scrollObjects[0].rightBound;
             while (leftSideOffset > 800) {
                 let bar = this._scrollObjects.splice(0, 1)[0];
                 this._returnScrollableBar(bar);
-                leftSideOffset = this.startX - this.x - this._scrollObjects[0].leftBound;
+                leftSideOffset = anchor - this._scrollObjects[0].rightBound;
             }
         }
     }
