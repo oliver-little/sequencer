@@ -73,10 +73,11 @@ interface LabelledCheckboxProps {
 }
 
 export class LabelledCheckbox extends React.PureComponent<LabelledCheckboxProps> {
+
     render() {
-        return <div className={this.props.className}>
+        return <div className={this.props.className} onClick={() => { this.props.onChange(!this.props.state) }}>
+            <p>{this.props.label}</p>
             <input type="checkbox" name={this.props.label} checked={this.props.state} onChange={(event) => { this.props.onChange(event.target.checked) }} />
-            <label htmlFor={this.props.label}>{this.props.label}</label>
         </div>
     }
 }
@@ -159,6 +160,7 @@ export class DropdownItem extends React.Component<DropdownItemProps> {
 
 // EITHER SELECTED OR TITLE IS REQUIRED
 interface BoxSelectProps {
+    className? : string,
     overlayClassName?: string,
     mainButtonClassName?: string,
     selectButtonClassName?: string,
@@ -197,7 +199,7 @@ export class BoxSelect extends React.PureComponent<BoxSelectProps, BoxSelectStat
     render() {
         const buttonClassName = "boxSelectButton" + (this.props.selectButtonClassName ? " " + this.props.selectButtonClassName : "");
 
-        return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
+        return <div className={this.props.className} style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
             <div>
                 <button className={(this.props.mainButtonClassName ? this.props.mainButtonClassName : "mainBoxSelectButton")} title={this.props.tooltip} ref={this._selectButton} onClick={() => {this.setState({ selectVisible: !this.state.selectVisible }) }} >{this.props.selected !== undefined ? this.props.options[this.props.selected] : (this.props.title ? this.props.title : this.props.children)}</button>
             </div>

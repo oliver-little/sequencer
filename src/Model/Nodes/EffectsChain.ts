@@ -77,7 +77,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
     }
 
     set preGain(value: number) {
-        this._preGain.gain.setValueAtTime(this._context.currentTime, value);
+        this._preGain.gain.value = value;
     }
 
     get postGain() {
@@ -85,7 +85,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
     }
 
     set postGain(value: number) {
-        this._postGain.gain.setValueAtTime(this._context.currentTime, value);
+        this._preGain.gain.value = value;
     }
 
     public destroy() {

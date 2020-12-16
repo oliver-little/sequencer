@@ -4,11 +4,14 @@
     --t-fg: #5F5F5F;
     --t-h: #999999;
     --t-h2: #DDDDDD;
-    font-family: sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
 }
 
 button {
     border: none;
+    user-select: none;
+    font-size: 13.3333px;
 }
 
 button:focus {
@@ -21,6 +24,14 @@ button:hover:enabled {
 
 input[type=number] {
     width: 50px;
+}
+
+input[type=checkbox] {
+    cursor: pointer;
+}
+
+.pointer {
+    cursor: pointer;
 }
 
 /* Main App */
@@ -65,7 +76,7 @@ input[type=number] {
 }
 
 .buttonAnim {
-    background-color: var(--t-h2);
+    background-color: white;
     transition: background-color 0.1s ease, box-shadow 0.1s ease;
 }
 
@@ -226,7 +237,7 @@ input[type=number] {
 }
 
 .effectsChainButton {
-    background-color: var(--t-h2);
+    background-color: white;
     border-radius: 2px;
     color: var(--t-bg);
     transition: background-color 0.15s ease, box-shadow 0.15s ease;
@@ -283,6 +294,7 @@ input[type=number] {
 
 .effectsListDroppable {
     padding: 5px 0 0 0;
+    margin-bottom: 5px;
     border-top: 2px solid;
     border-bottom: 2px solid;
     border-color: transparent;
@@ -303,7 +315,7 @@ input[type=number] {
 
     border-radius: 10px;
     background-color: var(--t-bg);
-    border: 2px solid var(--t-h2);
+    border: 2px solid white;
     transition: background-color 0.15s linear;
 }
 
@@ -322,7 +334,7 @@ input[type=number] {
 
 .chainEffectTitle {
     display: flex;
-    padding: 4px 5px 8px 5px;
+    padding: 4px 10px 8px 5px;
     justify-content: space-between;
     align-items: center;
 }
@@ -349,8 +361,6 @@ input[type=number] {
 }
 
 .effectsChainButton.dropdownButton {
-    margin-top: 5px;
-    margin-bottom: 5px;
     width: 26px;
     height: 26px;
 }
@@ -392,7 +402,7 @@ input[type=number] {
     width: 30px;
     font-size: 1.25em;
     font-weight: bold;
-    background-color: var(--t-h2);
+    background-color: white;
     color: var(--t-bg);
 }
 
@@ -437,6 +447,7 @@ input[type=number] {
 .boxSelectOverlayArrow {
     width: 0px;
     height: 0px;
+    animation: 0.2s ease-out 0s 1 boxSelectOverlayAnim;
 }
 
 .boxSelectOverlayArrow.top {
@@ -472,13 +483,9 @@ input[type=number] {
 }
 
 .mainBoxSelectButton {
+    background-color: white;
     padding: 2px 8px;
     border-radius: 5px;
-}
-
-.mainBoxSelectButton:disabled {
-    background-color: white;
-    color: black;
 }
 
 .mainBoxSelectButton:hover:enabled {
@@ -518,7 +525,7 @@ input[type=number] {
     position: relative;
     display: flex;
     align-items: center;
-    margin: 10px 0;
+    margin: 5px 0 5px 0;
 }
 
 /* Metadata Edit Box */
@@ -565,6 +572,7 @@ input[type=number] {
     background-color: var(--t-bg);
     padding: none;
     margin-top: 20px;
+    margin-bottom: 5px;
 }
 
 .trackSettingsSlider {
@@ -582,7 +590,7 @@ input[type=number] {
     border: none;
     border-radius: 2px;
 
-    background-color: var(--t-h);
+    background-color: white;
     color: var(--t-bg);
 }
 
@@ -595,6 +603,7 @@ input[type=number] {
     width: 35px;
     background-color: var(--t-bg);
     transition: transform 0.3s ease-in-out, filter 0.3s ease, border-color 0.3s ease;
+    margin: 5px 0;
 }
 
 .trackSettingsIconInput:hover {
@@ -608,11 +617,27 @@ input[type=number] {
     color: var(--t-h);
 }
 
-.trackSettingsCheckbox > label {
-    font-family: Arial, Helvetica, sans-serif;
-    color: white;
+.trackSettingsInteractable {
+    display: flex;
+    align-items: center;
+
+    border-radius: 5px;
+    padding: 1px 4px;
+    margin: 5px 0;
 }
 
-.trackSettingsCheckbox {
-    margin: 10px 0 0 0;
+.trackSettingsInteractable > p {
+    margin: 0 8px 0 0;
+    font-family: Arial;
+    font-size: 13.3333px;
+    color: white;
+    user-select: none;
+}
+
+.trackSettingsInteractable > input[type=checkbox] {
+    margin: 0;
+}
+
+.trackSettingsBoxSelect {
+    margin: 5px 0;
 }
