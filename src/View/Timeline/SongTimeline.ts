@@ -9,6 +9,7 @@ import { TimelineMode, MouseClickType } from "../Settings/Enums.js";
 import { editType } from "../Settings/EditType.js";
 import { UITrackStore } from "../ReactUI/UITrackStore.js";
 import { ScrollableBar } from "../Shared/ScrollableBar.js";
+import { mouseState } from "../Shared/MouseState.js";
 
 interface INewEventData {
     track: UITrack,
@@ -79,7 +80,7 @@ export class SongTimeline extends ScrollableTimeline {
 
         this._newEventGraphics.visible = false;
         super.pointerMoveHandler(event);
-        if (this.timelineMode == TimelineMode.Edit && this._mouseClickType == MouseClickType.None) {
+        if (this.timelineMode == TimelineMode.Edit && mouseState.buttons === 0) {
             this._newEventData = undefined;
             // Display new event outline (set width for note events, same length as soundfile for soundfile)
             let mousePos = event.data.getLocalPosition(this.parent);

@@ -10,6 +10,7 @@ import { NoteEvent } from "../../Model/Notation/SongEvents.js";
 import { NoteGroupMarker } from "./NoteGroupMarker.js";
 import { ObjectPool } from "../../HelperModules/ObjectPool.js";
 import { editType } from "../Settings/EditType.js";
+import { mouseState } from "../Shared/MouseState.js";
 
 interface INewNoteData {
     pitchString: string,
@@ -78,7 +79,7 @@ export class SequencerTimeline extends ScrollableTimeline {
     public pointerMoveHandler(event: PIXI.InteractionEvent) {
         this._newEventGraphics.visible = false;
         super.pointerMoveHandler(event);
-        if (this._mouseClickType == MouseClickType.None && this.timelineMode == TimelineMode.Edit) {
+        if (this.timelineMode == TimelineMode.Edit && mouseState.buttons === 0) {
             this._newEventData = undefined;
             // Get the mouse position, extract the y coordinate and invert by the height (so C8 is at the top of the rows, not the bottom)
             let mousePos = event.data.getLocalPosition(this.parent);
