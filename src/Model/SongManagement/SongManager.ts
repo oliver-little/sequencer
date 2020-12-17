@@ -15,11 +15,11 @@ export class SongManager {
     public lookaheadTime = 0.125;
 
     public metadata: SongMetadata;
-    public connectionManager : ConnectionManager;
-    public context: AudioContext|OfflineAudioContext;
+    public connectionManager: ConnectionManager;
+    public context: AudioContext | OfflineAudioContext;
     public scheduleEvent: SimpleEvent;
     public playingChangedEvent: SimpleEvent;
-    public quarterNotePositionChangedEvent : SimpleEvent;
+    public quarterNotePositionChangedEvent: SimpleEvent;
 
     protected _tracks: BaseTrack[];
     protected _playing = false;
@@ -29,9 +29,9 @@ export class SongManager {
 
     protected playingIntervalIDs = null;
 
-    protected _boundQuarterNoteUpdateFunction : () => any;
+    protected _boundQuarterNoteUpdateFunction: () => any;
 
-    constructor(context? : AudioContext|OfflineAudioContext) {
+    constructor(context?: AudioContext | OfflineAudioContext) {
         this.metadata = new SongMetadata();
         this.context = (context === undefined) ? new AudioContext() : context;
         this.connectionManager = new ConnectionManager(this.context);
@@ -51,13 +51,13 @@ export class SongManager {
         return this._quarterNotePosition;
     }
 
-    
+
     /**
      * Used for external setting of quarterNotePosition (forces the update function to use a new start time)
      *
      * @memberof SongManager
      */
-    set quarterNotePosition(value : number) {
+    set quarterNotePosition(value: number) {
         this._internalQuarterNotePosition = value;
         this._startTime = this.context.currentTime - this.metadata.positionQuarterNoteToSeconds(this._quarterNotePosition);
         if (this._playing) {
@@ -73,7 +73,7 @@ export class SongManager {
      * @private
      * @memberof SongManager
      */
-    private set _internalQuarterNotePosition(value : number) {
+    private set _internalQuarterNotePosition(value: number) {
         this._quarterNotePosition = value;
         this.quarterNotePositionChangedEvent.emit(value);
     }
@@ -89,7 +89,7 @@ export class SongManager {
      * @returns {OscillatorTrack}
      * @memberof SongManager
      */
-    public addOscillatorTrack(settings? : IOscillatorTrackSettings): OscillatorTrack {
+    public addOscillatorTrack(settings?: IOscillatorTrackSettings): OscillatorTrack {
         let newTrack = new OscillatorTrack(this.metadata, this.context, this.scheduleEvent, this.connectionManager, settings);
         this._tracks.push(newTrack);
         return newTrack;
@@ -103,13 +103,13 @@ export class SongManager {
      * @returns {Promise<SoundFileTrack>}
      * @memberof SongManager
      */
-    public async addSoundFileTrack(settings? : ISoundFileTrackSettings) : Promise<SoundFileTrack> {
+    public async addSoundFileTrack(settings?: ISoundFileTrackSettings): Promise<SoundFileTrack> {
         let newTrack = await SoundFileTrack.create(this.metadata, this.context, this.scheduleEvent, this.connectionManager, settings);
         this._tracks.push(newTrack);
         return newTrack;
     }
 
-    public removeTrack(track : BaseTrack) {
+    public removeTrack(track: BaseTrack) {
         let index = this._tracks.indexOf(track);
         if (index != -1) {
             this._tracks.splice(index, 1);
@@ -141,7 +141,7 @@ export class SongManager {
         this.connectionManager.outputGain.gain.setTargetAtTime(0.9999, this.context.currentTime, 0.03);
 
         // Schedule notes separately from quarter note update
-        this.playingIntervalIDs = setInterval(() => {this.scheduleNotes()}, 50);
+        this.playingIntervalIDs = setInterval(() => { this.scheduleNotes() }, 50);
         // Schedule quarter note update function until playing stops using animation frame (to keep animations smooth)
         requestAnimationFrame(this._boundQuarterNoteUpdateFunction);
         this._tracks.forEach(element => {
@@ -182,7 +182,7 @@ export class SongManager {
      * @returns {ISongSettings}
      * @memberof SongManager
      */
-    public serialise() : ISongSettings {
+    public serialise(): ISongSettings {
         let serialisedTracks = []
         this._tracks.forEach(track => {
             let trackSettings = track.serialise();
@@ -190,11 +190,11 @@ export class SongManager {
         });
         let serialisedChains = this.connectionManager.serialiseChains();
         return {
-            "fileType" : "SequencerSongSettings",
-            "version" : SongManager.saveFileVersion,
-            "metadataEvents" : this.metadata.serialise(),
-            "tracks" : serialisedTracks,
-            "chains" : serialisedChains
+            "fileType": "SequencerSongSettings",
+            "version": SongManager.saveFileVersion,
+            "metadataEvents": this.metadata.serialise(),
+            "tracks": serialisedTracks,
+            "chains": serialisedChains
         }
     }
 
@@ -204,13 +204,13 @@ export class SongManager {
      * @param {ISongSettings} settings
      * @memberof SongManager
      */
-    public async deserialise(settings : ISongSettings) {
+    public async deserialise(settings: ISongSettings) {
         if (settings.version != SongManager.saveFileVersion) {
             console.log("WARNING: Save file is an old version, loading may not function correctly.");
         }
 
         // Clear existing tracks
-        this._tracks.forEach(track => {track.destroy()});
+        this._tracks.forEach(track => { track.destroy() });
         this._tracks = [];
 
         this.connectionManager.deserialiseChains(settings.chains);
@@ -218,7 +218,7 @@ export class SongManager {
         for (let i = 0; i < settings.tracks.length; i++) {
             let track = settings.tracks[i];
             switch (track.source.type) {
-                case "oscillator": 
+                case "oscillator":
                     this.addOscillatorTrack(track as IOscillatorTrackSettings);
                     break;
                 case "soundFile":
@@ -243,11 +243,17 @@ export class SongManager {
      * @memberof SongManager
      */
     public async saveToWAV() {
-        let song = this.serialise();
-        let offlineManager = new OfflineSongManager(this.getPlaybackLength());
-        await offlineManager.deserialise(song);
-        let result = await offlineManager.saveToWAV();
-        return result;
+        let length = this.getPlaybackLength();
+        if (length > 0) {
+            let song = this.serialise();
+            let offlineManager = new OfflineSongManager(length);
+            await offlineManager.deserialise(song);
+            let result = await offlineManager.saveToWAV();
+            return result;
+        }
+        else {
+            throw new Error("Song Length must be greater than 0 to save to WAV.")
+        }
     }
 
     /**
@@ -257,7 +263,7 @@ export class SongManager {
      * @returns {number} The playback length of the song in seconds
      * @memberof SongManager
      */
-    protected getPlaybackLength() : number {
+    protected getPlaybackLength(): number {
         let longestEvent = 0;
         this._tracks.forEach(track => {
             if (track.timeline.playbackTime > longestEvent) {
@@ -284,14 +290,14 @@ export class SongManager {
 
 export class OfflineSongManager extends SongManager {
 
-    public context : OfflineAudioContext;
+    public context: OfflineAudioContext;
 
     /**
      * Constructs a SongManager for saving the track
      * @param {number} length
      * @memberof OfflineSongManager
      */
-    constructor(length : number) {
+    constructor(length: number) {
         super(new OfflineAudioContext(2, length * 44100, 44100));
     }
 
@@ -315,9 +321,9 @@ export class OfflineSongManager extends SongManager {
 
         // Interleave arrays
         const interleaved = new Float32Array(left.length * 2); // Double the length of the buffer because the two channels are being merged.
-        for (let src=0, dst=0; src < left.length; src++, dst+=2) {
-            interleaved[dst] =   left[src]
-            interleaved[dst+1] = right[src]
+        for (let src = 0, dst = 0; src < left.length; src++, dst += 2) {
+            interleaved[dst] = left[src]
+            interleaved[dst + 1] = right[src]
         };
 
         const wavBytes = getWavBytes(interleaved.buffer, {
@@ -326,7 +332,7 @@ export class OfflineSongManager extends SongManager {
             sampleRate: 44100,
         });
 
-        return new Blob([wavBytes], {type: "audio/wav"});
+        return new Blob([wavBytes], { type: "audio/wav" });
     }
 }
 
@@ -335,51 +341,51 @@ export class OfflineSongManager extends SongManager {
 function getWavBytes(buffer, options) {
     const type = options.isFloat ? Float32Array : Uint16Array;
     const numFrames = buffer.byteLength / type.BYTES_PER_ELEMENT;
-  
+
     const headerBytes = getWavHeader(Object.assign({}, options, { numFrames }));
     const wavBytes = new Uint8Array(headerBytes.length + buffer.byteLength);
-  
+
     // Prepend header, then add pcmBytes
     wavBytes.set(headerBytes, 0);
     wavBytes.set(new Uint8Array(buffer), headerBytes.length);
-  
+
     return wavBytes;
 }
 
 // Generates a WAV header (from https://gist.github.com/also/900023)
 function getWavHeader(options) {
-    const numFrames =      options.numFrames
-    const numChannels =    options.numChannels || 2
-    const sampleRate =     options.sampleRate || 44100
-    const bytesPerSample = options.isFloat? 4 : 2
-    const format =         options.isFloat? 3 : 1
-  
+    const numFrames = options.numFrames
+    const numChannels = options.numChannels || 2
+    const sampleRate = options.sampleRate || 44100
+    const bytesPerSample = options.isFloat ? 4 : 2
+    const format = options.isFloat ? 3 : 1
+
     const blockAlign = numChannels * bytesPerSample
     const byteRate = sampleRate * blockAlign
     const dataSize = numFrames * blockAlign
-  
+
     const buffer = new ArrayBuffer(44)
     const dv = new DataView(buffer)
-  
+
     let p = 0
-  
+
     function writeString(s) {
-      for (let i = 0; i < s.length; i++) {
-        dv.setUint8(p + i, s.charCodeAt(i))
-      }
-      p += s.length
+        for (let i = 0; i < s.length; i++) {
+            dv.setUint8(p + i, s.charCodeAt(i))
+        }
+        p += s.length
     }
-  
+
     function writeUint32(d) {
-      dv.setUint32(p, d, true)
-      p += 4
+        dv.setUint32(p, d, true)
+        p += 4
     }
-  
+
     function writeUint16(d) {
-      dv.setUint16(p, d, true)
-      p += 2
+        dv.setUint16(p, d, true)
+        p += 2
     }
-  
+
     writeString('RIFF')              // ChunkID
     writeUint32(dataSize + 36)       // ChunkSize
     writeString('WAVE')              // Format
@@ -393,14 +399,14 @@ function getWavHeader(options) {
     writeUint16(bytesPerSample * 8)  // BitsPerSample
     writeString('data')              // Subchunk2ID
     writeUint32(dataSize)            // Subchunk2Size
-  
+
     return new Uint8Array(buffer)
 }
 
 export interface ISongSettings {
-    "fileType" : "SequencerSongSettings"
-    "version" : string,
-    "metadataEvents" : Array<ISongEvent>,
-    "tracks" : Array<ITrackSettings>,
-    "chains" : Array<IChainSettings>
+    "fileType": "SequencerSongSettings"
+    "version": string,
+    "metadataEvents": Array<ISongEvent>,
+    "tracks": Array<ITrackSettings>,
+    "chains": Array<IChainSettings>
 }

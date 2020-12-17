@@ -169,7 +169,7 @@ export class OscillatorInstrument implements IInstrument {
             startTime = this._context.currentTime;
         }
 
-        source.frequency.setValueAtTime(frequency, startTime - 0.0005);
+        source.frequency.setValueAtTime(frequency, startTime);
 
         let attackEnd = startTime + 0.001;
         let releaseStart = endTime - 0.001;

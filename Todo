@@ -3,7 +3,7 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
-- Scroll to clicked timelineevent when moving between timeline and sequencer
+- Song end position (used for saving to WAV and ending playback)
 - Loading spinners, for async operations like loading in a new file: https://chevtek.io/how-to-create-versatile-loading-spinner-management-in-react/
 
 - Add selected effect to TrackTimelineEvents

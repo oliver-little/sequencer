@@ -22,6 +22,7 @@ export class SerialisePanel extends React.Component<SerialisePanelProps> {
         this._serialise = this._serialise.bind(this);
         this._deserialise = this._deserialise.bind(this);
         this._getFile = this._getFile.bind(this);
+        this._saveToWAV = this._saveToWAV.bind(this);
 
         this._inputRef = React.createRef();
     }
@@ -96,6 +97,14 @@ export class SerialisePanel extends React.Component<SerialisePanelProps> {
         }
     }
 
+    private async _saveToWAV() {
+        let file = await this.props.songManager.saveToWAV();
+        let a = document.createElement("a");
+        a.href = URL.createObjectURL(file);
+        a.download = new Date().toLocaleDateString() + ".wav";
+        a.click();
+    }
+
     componentDidMount() {
         this._inputRef.current.addEventListener("change", this._getFile);
     }
@@ -105,11 +114,12 @@ export class SerialisePanel extends React.Component<SerialisePanelProps> {
     }
 
     render() {
-        let c = "panelButton"
-        return <div>
-            <FAButton className={c} iconName="fa fa-save" onClick={this._serialise} />
-            <FAButton className={c} iconName="fa fa-upload" onClick={this._deserialise} />
-            <input type="file" ref={this._inputRef} accept=".sqn" style={{ position: "absolute", top: "-9999" }} />
+        let c = "panelButton buttonAnim"
+        return <div className="serialisePanel">
+            <FAButton className={c} title="Save File..." iconName="fa fa-save" onClick={this._serialise} />
+            <FAButton className={c} title="Open File..." iconName="fa fa-folder-open" onClick={this._deserialise} />
+            <FAButton className={c} title="Download as WAV" iconName="fa fa-music" onClick={this._saveToWAV} />
+            <input type="file" ref={this._inputRef} accept=".sqn" style={{ position: "absolute", top: "-9999px" }} />
         </div>
     }
 }

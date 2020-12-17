@@ -129,11 +129,9 @@ input[type=checkbox] {
 .editPanel {
     border-left: 2px solid var(--t-fg);
     display: flex;
-    flex: 5;
-    flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: left;
+    justify-content: center;
 }
 
 .snapTypeGroup, .lengthTypeGroup {
@@ -153,6 +151,14 @@ input[type=checkbox] {
 .selectionButton.selected:enabled {
     transition: box-shadow 0.1s ease;
     box-shadow: 0 0 0 2px blue;
+}
+
+/* Serialise Panel */
+.serialisePanel {
+    display: flex;
+    align-items: center;
+    border-left: 2px solid var(--t-fg);
+    padding-left: 10px;
 }
 
 /* Effects Chain Panel */

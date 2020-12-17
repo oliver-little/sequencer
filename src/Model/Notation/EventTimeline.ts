@@ -1,5 +1,5 @@
 import SortedArray from "../../HelperModules/SortedArray.js";
-import {BaseEvent, ISongEvent, NoteEvent, SecondsBaseEvent} from "./SongEvents.js";
+import { BaseEvent, ISongEvent, NoteEvent, SecondsBaseEvent } from "./SongEvents.js";
 import SongMetadata from "../SongManagement/SongMetadata.js";
 
 /**
@@ -11,7 +11,7 @@ export class EventTimeline {
 
     private _events = new SortedArray<BaseEvent>(BaseEvent.comparator);
     private _eventPosition = 0; // Tracks the next event that should be scheduled
-    
+
     // Used to calculate total playback time of this track.
     private longestEventIndex = null;
     private longestEventValue = 0;
@@ -21,8 +21,12 @@ export class EventTimeline {
     }
 
     get playbackTime() {
-        let event = this._events[this.longestEventIndex];
-        return event.startPosition + event.duration;
+        if (this._events.length > 0) {
+            let event = this._events[this.longestEventIndex];
+            return event.startPosition + event.duration;
+        } else {
+            return 0;
+        }
     }
 
     /**
@@ -33,8 +37,8 @@ export class EventTimeline {
     public updatePlaybackTime() {
         this.longestEventIndex = null;
         this.longestEventValue = 0;
-        for(let i = 0; i < this._events.length; i++) {
-            if ((this._events[i].startPosition + this._events[i].duration) > this.longestEventValue){
+        for (let i = 0; i < this._events.length; i++) {
+            if ((this._events[i].startPosition + this._events[i].duration) > this.longestEventValue) {
                 this.longestEventIndex = i;
             }
         }
@@ -47,7 +51,7 @@ export class EventTimeline {
      * @returns The index the event was added at
      * @memberof EventTimeline
      */
-    public addEvent(event: BaseEvent) : number {
+    public addEvent(event: BaseEvent): number {
         let index = this._events.insert(event);
 
         // Check if this event is the new longest event
@@ -70,7 +74,7 @@ export class EventTimeline {
      * @returns {number} The new index of the event
      * @memberof EventTimeline
      */
-    public editEvent(index : number, startPosition : number, duration? : number) : number {
+    public editEvent(index: number, startPosition: number, duration?: number): number {
         let event = this.events[index];
         event.startPosition = startPosition;
         if (duration != undefined) {
@@ -86,7 +90,7 @@ export class EventTimeline {
      * @param {BaseEvent} event
      * @memberof EventTimeline
      */
-    public removeEvent(event : BaseEvent) : void {
+    public removeEvent(event: BaseEvent): void {
         let index = this.getIndexOfEvent(event);
         if (index == -1) {
             throw new Error("Event doesn't exist.");
@@ -101,11 +105,11 @@ export class EventTimeline {
      * @param {BaseEvent} event
      * @memberof EventTimeline
      */
-    public removeAt(index : number) : void {
-        this._events.splice(index, 1); 
-        
+    public removeAt(index: number): void {
+        this._events.splice(index, 1);
+
         // Check if the longest event was removed, find the new longest event if it was.
-        if (index === this.longestEventIndex)  {
+        if (index === this.longestEventIndex) {
             if (this._events.length > 0) {
                 this.updatePlaybackTime();
             }
@@ -115,8 +119,8 @@ export class EventTimeline {
         }
     }
 
-    public getIndexOfEvent(event : BaseEvent) {
-        return this.events.map(function(x : BaseEvent) {return x.id}).indexOf(event.id);
+    public getIndexOfEvent(event: BaseEvent) {
+        return this.events.map(function (x: BaseEvent) { return x.id }).indexOf(event.id);
     }
 
     /**
@@ -125,10 +129,10 @@ export class EventTimeline {
      * @param {number} time The time in **quarter notes** to start playback at 
      * @memberof EventTimeline
      */
-    public start(time: number) : void {
+    public start(time: number): void {
         //FIXME: possibly better to do this using a binary search
         for (let i = 0; i < this._events.length; i++) {
-            if ((this._events[i].startPosition + this._events[i].duration) > time){ 
+            if ((this._events[i].startPosition + this._events[i].duration) > time) {
                 this._eventPosition = i;
                 break;
             }
@@ -143,9 +147,9 @@ export class EventTimeline {
      * @returns {BaseEvent[]} An array of events that should be scheduled up to the given time.
      * @memberof EventTimeline
      */
-    public getEventsUntilTime(time: number) : BaseEvent[] {
+    public getEventsUntilTime(time: number): BaseEvent[] {
         let eventsToSchedule = []
-        while(this._eventPosition < this._events.length && this._events[this._eventPosition].startPosition < time) {
+        while (this._eventPosition < this._events.length && this._events[this._eventPosition].startPosition < time) {
             eventsToSchedule.push(this._events[this._eventPosition]);
             this._eventPosition += 1;
         }
@@ -162,10 +166,10 @@ export class EventTimeline {
      * @returns {BaseEvent[]} The events within the time period
      * @memberof EventTimeline
      */
-    public getEventsBetweenTimes(startTime : number, endTime : number) : BaseEvent[] {
+    public getEventsBetweenTimes(startTime: number, endTime: number): BaseEvent[] {
         // FIXME: this works, but it isn't as efficient as working from the front of the array, then from the back to find the values in the middle.
         let index = 0;
-        
+
         while (index < this._events.length && (this._events[index].startPosition + this._events[index].duration) <= startTime) {
             index++;
         }
@@ -174,7 +178,7 @@ export class EventTimeline {
             index++;
         }
         let endIndex = index;
-        
+
         if (startIndex == endIndex) {
             return [];
         }
@@ -189,7 +193,7 @@ export class EventTimeline {
      */
     public serialise() {
         let serialisedEvents = [];
-        for(let i = 0; i < this.events.length; i++) {
+        for (let i = 0; i < this.events.length; i++) {
             serialisedEvents.push(this.events[i].serialise());
         }
         return serialisedEvents;
@@ -201,10 +205,10 @@ export class EventTimeline {
      * @param {ISongEvent[]} songEvents
      * @memberof EventTimeline
      */
-    public deserialise(songEvents : ISongEvent[], metadata : SongMetadata) {
+    public deserialise(songEvents: ISongEvent[], metadata: SongMetadata) {
         for (let i = 0; i < songEvents.length; i++) {
             switch (songEvents[i].eventType) {
-                case "BaseEvent": 
+                case "BaseEvent":
                     this._events.push(new BaseEvent(songEvents[i].startPosition, songEvents[i].duration));
                     break;
                 case "NoteEvent":
