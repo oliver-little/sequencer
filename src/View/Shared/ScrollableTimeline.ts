@@ -46,7 +46,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
      * @type {EventSnapType}
      * @memberof SongTimeline
      */
-    public get dragType() : EventSnapType {
+    public get dragType(): EventSnapType {
         return editType.snapType;
     }
 
@@ -56,7 +56,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
      * @type {SimpleEvent}
      * @memberof ScrollableTimeline
      */
-    public timelineViewChange : SimpleEvent;
+    public timelineViewChange: SimpleEvent;
 
     protected _zoomScale = 1;
 
@@ -64,7 +64,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     protected _barPool: ObjectPool<ScrollableBar>;
 
     protected _headerContainer: PIXI.Container;
-    protected _metadataEventContainer : PIXI.Container;
+    protected _metadataEventContainer: PIXI.Container;
     protected _eventContainer: PIXI.Container;
     protected _barContainer: PIXI.Container;
 
@@ -82,7 +82,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     // Timeline marker variables
     protected _timelineMarker: TimelineMarker;
 
-    private _onScreen : boolean;
+    private _onScreen: boolean;
 
     constructor(startX: number, endX: number, startY: number, endY: number, songManager: SongManager) {
         super();
@@ -124,15 +124,15 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         return ScrollableTimeline.beatWidth * this._zoomScale;
     }
 
-    public resize(width : number, height : number) {
+    public resize(width: number, height: number) {
         this.resizeInteractiveArea(width, height);
-        
+
         // Ensure end position is at least after the start position
-        this.endX = Math.max(width, this.startX+1);
-        this.endY = Math.max(height, this.startY+1);
+        this.endX = Math.max(width, this.startX + 1);
+        this.endY = Math.max(height, this.startY + 1);
 
         let barHeight = Math.max(this.contentHeight, this.endY);
-        for(let i = 0; i < this._barContainer.children.length; i++) {
+        for (let i = 0; i < this._barContainer.children.length; i++) {
             let bar = this._barContainer.children[i] as ScrollableBar;
             bar.resize(barHeight);
         }
@@ -240,7 +240,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     public pointerUpHandler(event: PIXI.InteractionEvent) {
         super.pointerUpHandler(event);
         this._startXPosition = undefined;
-        this._startPointerPosition = undefined;  
+        this._startPointerPosition = undefined;
     }
 
     public pointerUpClickHandler(event: PIXI.InteractionEvent) {
@@ -249,7 +249,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
             if ((this.timelineMode == TimelineMode.Playback || this._startPointerPosition.y < UIPositioning.timelineHeaderHeight) && this._startPointerPosition.x > this.startX) {
                 let [barPosition, beatPosition, numberOfBeats] = this._getBarFromStageCoordinates(this._startPointerPosition.x);
-                barPosition += beatPosition/numberOfBeats;
+                barPosition += beatPosition / numberOfBeats;
                 this.songManager.quarterNotePosition = this.metadata.positionBarsToQuarterNote(barPosition);
             }
         }
@@ -311,23 +311,31 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
      */
     public regenerateAroundPosition(barPosition: number) {
         let startBarPosition = this._getStageCoordinatesFromBar(barPosition);
-        // Regenerate the bars (at least until the bar we need)
-        this._regenerateTimeline(this._scrollObjects[0].barNumber, Math.floor(barPosition));
-        // Get the offset required to put the original position under the mouse
-        let offset = this._getStageCoordinatesFromBar(barPosition) - startBarPosition;
-
-        // If the first bar is bar 0, check the offset won't cause it to go past the left side of the timeline view.
-        if (this._scrollObjects[0].barNumber === 0 && this._scrollObjects[0].leftBound - offset > this.startX) {
-            // If it will, instead set the offset at most to the offset needed to put bar 0 at the start of the timeline view.
-            offset = this.startX - this._scrollObjects[0].leftBound;
+        // Check whether the given position was found in the bars
+        if (startBarPosition === -1) {
+            // If it wasn't, regenerate the timeline starting at the bar required.
+            this._regenerateTimeline(Math.floor(barPosition));
         }
-        this._offsetChildren(offset);
+        else {
+            // If it was, regenerate the timeline and move the position back to where it was.
+            // Regenerate the bars (at least until the bar we need)
+            this._regenerateTimeline(this._scrollObjects[0].barNumber, Math.floor(barPosition));
+            // Get the offset required to put the original position under the mouse
+            let offset = this._getStageCoordinatesFromBar(barPosition) - startBarPosition;
+
+            // If the first bar is bar 0, check the offset won't cause it to go past the left side of the timeline view.
+            if (this._scrollObjects[0].barNumber === 0 && this._scrollObjects[0].leftBound - offset > this.startX) {
+                // If it will, instead set the offset at most to the offset needed to put bar 0 at the start of the timeline view.
+                offset = this.startX - this._scrollObjects[0].leftBound;
+            }
+            this._offsetChildren(offset);
+        }
     }
 
     public addedHandler() {
         this._onScreen = true;
+        this.regenerateAroundPosition(this._scrollObjects[0].barNumber);
         this._playingStateChanged(this.songManager.playing);
-        this.regenerateAroundPosition(0);
     }
 
     public removedHandler() {
@@ -338,7 +346,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
     public destroy() {
         this.songManager.playingChangedEvent.removeListener(this._playingStateChanged);
-        super.destroy({children : true});
+        super.destroy({ children: true });
     }
 
     /**
@@ -417,7 +425,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         // Generate new timeline
         let currentXPosition = this.startX;
         let generatedABar = false;
-        while (currentXPosition < this.endX && !generatedABar) {
+        while (currentXPosition < this.endX || !generatedABar) {
             generatedABar = true;
             let bar = this._initialiseScrollableBar(currentXPosition, currentBar, true);
             this._scrollObjects.push(bar);
@@ -444,7 +452,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
                 event.reinitialise();
             }
         }
-        
+
 
         this._redrawTimelineMarker();
     }
@@ -609,13 +617,10 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     protected _playingStateChanged(value: boolean) {
         if (value == true && this._onScreen) {
             this.timelineMode = TimelineMode.Playback;
-            editType.markerCentered = true;
             requestAnimationFrame(this._timelineMarkerAnim);
-
         }
         else {
             this.timelineMode = TimelineMode.Edit;
-            editType.markerCentered = null;
             if (!this.songManager.quarterNotePositionChangedEvent.hasListener(this._repositionTimelineMarker)) {
                 this.songManager.quarterNotePositionChangedEvent.addListener(this._repositionTimelineMarker);
             }
@@ -626,11 +631,16 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._repositionTimelineMarker(this.songManager.quarterNotePosition);
 
         if (this.songManager.playing == true) {
-            if (editType.markerCentered && (this._timelineMarker.x > this.endX || this._timelineMarker.x < this.startX)) {
-                let barPosition = this.metadata.positionQuarterNoteToBars(this.songManager.quarterNotePosition);
-                this._scrollToPosition(barPosition);
+            try {
+                if (editType.markerCentered && (this._timelineMarker.x > this.endX || this._timelineMarker.x < this.startX)) {
+                    let barPosition = this.metadata.positionQuarterNoteToBars(this.songManager.quarterNotePosition);
+                    this._scrollToPosition(barPosition);
+                }
+                requestAnimationFrame(this._timelineMarkerAnim);
             }
-            requestAnimationFrame(this._timelineMarkerAnim);
+            catch (e) {
+                return;
+            }
         }
     }
 

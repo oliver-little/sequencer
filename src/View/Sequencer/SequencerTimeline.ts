@@ -51,7 +51,7 @@ export class SequencerTimeline extends ScrollableTimeline {
     protected _noteGroupPool : ObjectPool<NoteGroupMarker>;
 
 
-    constructor(startX: number, endX: number, endY: number, contentHeight: number, songManager: SongManager, track: NoteUITrack) {
+    constructor(startX: number, endX: number, endY: number, contentHeight: number, songManager: SongManager, track: NoteUITrack, startFrom? : number) {
         super(startX, endX, 0, endY, songManager);
         this.track = track;
         this._contentHeight = contentHeight;
@@ -64,7 +64,7 @@ export class SequencerTimeline extends ScrollableTimeline {
         this._newEventGraphics = new PIXI.Graphics();
         this.addChild(this._noteGroupContainer, this._newEventGraphics);
 
-        this._regenerateTimeline(0);
+        this._regenerateTimeline(startFrom);
     }
 
     get contentHeight() {

@@ -26,9 +26,6 @@ export class PlaybackPanel extends React.Component<PlaybackPanelProps, PlaybackP
     }
 
     private _markerCenteredChanged(value: boolean) {
-        if (value == null) {
-            value = true;
-        }
         this.setState({ markerCentred: value });
     }
 
@@ -40,7 +37,7 @@ export class PlaybackPanel extends React.Component<PlaybackPanelProps, PlaybackP
                 <PlayPauseButton className={c} playing={this.state.playing} playFunction={() => { this.props.songManager.start(); this.setState({ playing: this.props.songManager.playing }) }} pauseFunction={() => { this.props.songManager.stop(); this.setState({ playing: this.props.songManager.playing }) }} />
                 <FAButton className={c} iconName={"fa fa-stop"} onClick={() => { this.props.songManager.stopToBeginning(); this.setState({ playing: this.props.songManager.playing }) }} />
             </div>
-            <button className={"recentreButton buttonAnim"} onClick={() => { editType.markerCentered = true }} style={{ visibility: (!this.state.markerCentred ? "visible" : "hidden") }}>Recentre Marker</button>
+            <button className={"recentreButton buttonAnim"} onClick={() => { editType.markerCentered = true }} style={{ visibility: ((!this.state.markerCentred && this.props.songManager.playing) ? "visible" : "hidden") }}>Recentre Marker</button>
         </div>
     }
 }

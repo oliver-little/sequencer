@@ -21,10 +21,10 @@ export class SequencerView extends VerticalScrollView {
 
     private _backButtonContainer: HTMLDivElement;
 
-    constructor(width: number, height: number, track : NoteUITrack, songManager : SongManager) {
+    constructor(width: number, height: number, track : NoteUITrack, songManager : SongManager, startFrom? : number) {
         super(width, height);      
 
-        this.timeline = new SequencerTimeline(this._sidebarPosition, width, height, this.contentHeight, songManager, track);
+        this.timeline = new SequencerTimeline(this._sidebarPosition, width, height, this.contentHeight, songManager, track, startFrom);
         // Contains the background UI for the sidebar, as well as the 
         this._sidebarUI = new PIXI.Graphics().beginFill(UIColors.bgColor).drawRect(0, 0, this._sidebarPosition, height).endFill();
         this._sidebarUI.beginFill(UIColors.fgColor).drawRect(this._sidebarPosition - 4, 0, 4, height).endFill();

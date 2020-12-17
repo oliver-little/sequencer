@@ -24,7 +24,7 @@ export class TimelineView extends VerticalScrollView {
     private _newTrackDropdownContainer: HTMLDivElement;
 
     private _songManager: SongManager;
-    private _cleanupListener : Function;
+    private _cleanupListener: Function;
 
     constructor(width: number, height: number, songManager: SongManager) {
         super(width, height);
@@ -82,8 +82,16 @@ export class TimelineView extends VerticalScrollView {
         super.destroy();
     }
 
-    public showSequencer(track: NoteUITrack) {
-        navigationView.show(new SequencerView(this.endX, this.endY, track, this._songManager));
+    /**
+     * Shows a NoteUITrack in the sequencer view (optionally with a position to jump to)
+     *
+     * @param {NoteUITrack} track The track to show
+     * @param {number} [startPosition] Optional position to start the timeline at
+     * @memberof TimelineView
+     */
+    public showSequencer(track: NoteUITrack, startPosition?: number) {
+        let sequencerView = new SequencerView(this.endX, this.endY, track, this._songManager, Math.floor(this.timeline.metadata.positionQuarterNoteToBars(startPosition)));
+        navigationView.show(sequencerView);
     }
 
     public addedHandler() {
@@ -102,9 +110,9 @@ export class TimelineView extends VerticalScrollView {
         let tracks = UITrackStore.getState().tracks;
         let track = this._songManager.addOscillatorTrack();
         let startY = this.contentHeight != 0 ? this.contentHeight : UIPositioning.timelineHeaderHeight;
-        let settings = {name: "Track " + (tracks.length + 1).toString(), startY: startY, height: 250, modelTrackID: track.id, noteGroups: []} as IUIOscillatorTrackSettings;
-        
-        UITrackStore.dispatch({type: "ADD_TRACK", track: new NoteUITrack(settings, track)});
+        let settings = { name: "Track " + (tracks.length + 1).toString(), startY: startY, height: 250, modelTrackID: track.id, noteGroups: [] } as IUIOscillatorTrackSettings;
+
+        UITrackStore.dispatch({ type: "ADD_TRACK", track: new NoteUITrack(settings, track) });
 
 
         /*this.UITracksChanged.emit(this._tracks);
@@ -117,9 +125,9 @@ export class TimelineView extends VerticalScrollView {
         let tracks = UITrackStore.getState().tracks;
         let track = await this._songManager.addSoundFileTrack();
         let startY = this.contentHeight != 0 ? this.contentHeight : UIPositioning.timelineHeaderHeight;
-        let settings = {type: "soundFile", name: ("Track " + (tracks.length + 1).toString()), startY: startY, height: 250, displayActualWidth: true, modelTrackID: track.id} as IUISoundFileTrackSettings;
-        
-        UITrackStore.dispatch({type: "ADD_TRACK", track: new SoundFileUITrack(settings, track)});
+        let settings = { type: "soundFile", name: ("Track " + (tracks.length + 1).toString()), startY: startY, height: 250, displayActualWidth: true, modelTrackID: track.id } as IUISoundFileTrackSettings;
+
+        UITrackStore.dispatch({ type: "ADD_TRACK", track: new SoundFileUITrack(settings, track) });
     }
 
     protected updateVerticalScroll(value: number) {

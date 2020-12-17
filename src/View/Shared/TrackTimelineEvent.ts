@@ -322,12 +322,11 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
     private _clickCallback : Function;
 
     /**
-     * Creates an instance of NoteGroupTimelineEvent.
-     * @param {SongTimeline} timeline The timeline object this event is part of
-     * @param {number} x The x position of this object (pixels)
-     * @param {number} width The width of this object (pixels)
-     * @param {NoteUITrack} track The UITrack this event represents one of the note groups of
-     * @param {number[]} noteGroup The NoteGroup this event represents
+     *Creates an instance of NoteGroupTimelineEvent.
+     * @param {ScrollableTimeline} timeline The timeline this event is part of
+     * @param {NoteUITrack} track The track this event is part of
+     * @param {number[]} noteGroup The noteGroup this event represents
+     * @param {Function} [clickCallback] An optional callback to be called when this object is clicked
      * @memberof NoteGroupTimelineEvent
      */
     constructor(timeline: ScrollableTimeline, track: NoteUITrack, noteGroup: number[], clickCallback?: Function) {
@@ -436,7 +435,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
     }
 
     protected clickHandler() {
-        this._clickCallback(this.track);
+        this._clickCallback(this.track, this.eventStartPosition);
     }
 }
 

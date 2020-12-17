@@ -117,13 +117,13 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
       this._hideEditMenu();
       this.timeline.timelineViewChange.removeListener(this._hideEditMenu);
       this._timelineListenerActive = false;
-
+      let oldStartPosition = this.event.startPosition;
       // Setup the event for the next time the user left clicks on this object
       let closestEvent = this.timeline.metadata.events[this.timeline.metadata.events.binarySearch(this.event.startPosition, true)];
       this.event = new MetadataEvent(this.event.startPosition, closestEvent.bpm, closestEvent.timeSignature);
 
       // Regenerate the timeline
-      this.timeline.regenerateAroundPosition(this.event.startPosition);
+      this.timeline.regenerateAroundPosition(this.timeline.metadata.positionQuarterNoteToBars(oldStartPosition));
     }
   }
 
