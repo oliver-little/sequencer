@@ -32,7 +32,7 @@ export class SongManager {
 
     protected _boundQuarterNoteUpdateFunction: () => any;
 
-    private _stopTimeout : NodeJS.Timeout;
+    private _stopTimeout: NodeJS.Timeout;
 
     constructor(context?: AudioContext | OfflineAudioContext) {
         this.metadata = new SongMetadata();
@@ -63,8 +63,8 @@ export class SongManager {
     set quarterNotePosition(value: number) {
         this._internalQuarterNotePosition = value;
         this._startTime = this.context.currentTime - this.metadata.positionQuarterNoteToSeconds(this._quarterNotePosition);
-        clearTimeout(this._stopTimeout);
-        this._stopTimeout = setTimeout(() => {this.stopToBeginning();}, (this.getPlaybackLength() - this.metadata.positionQuarterNoteToSeconds(this._quarterNotePosition))* 1000)
+        this._scheduleStop();
+        
         if (this._playing) {
             this._tracks.forEach(element => {
                 element.start(this._quarterNotePosition);
@@ -153,7 +153,7 @@ export class SongManager {
             element.start(this._quarterNotePosition);
         });
 
-        this._stopTimeout = setTimeout(() => {this.stopToBeginning()}, (this.getPlaybackLength() - this.metadata.positionQuarterNoteToSeconds(startPosition))* 1000);
+        this._scheduleStop();
     }
 
     /**
@@ -263,7 +263,7 @@ export class SongManager {
             // to the current context after the WAV file has been created.
             setContext(this.context);
             return result;
-            
+
         }
         else {
             throw new Error("Song Length must be greater than 0 to save to WAV.")
@@ -279,7 +279,7 @@ export class SongManager {
      */
     protected getPlaybackLength(): number {
         let longestEvent = 0;
-        let cachedEffectLengths : {[connectionName: string] : number}= {};
+        let cachedEffectLengths: { [connectionName: string]: number } = {};
         this._tracks.forEach(track => {
             let playbackTime = track.timeline.playbackTime;
             let connection = this.connectionManager.getConnections(track.audioSource)[0];
@@ -298,7 +298,7 @@ export class SongManager {
                 longestEvent = playbackTime;
             }
         });
-        return longestEvent + 0.01;
+        return (longestEvent > 0 ? longestEvent + 0.01 : 0);
     }
 
     protected scheduleNotes() {
@@ -312,6 +312,14 @@ export class SongManager {
             let timeSinceStart = this.context.currentTime - this._startTime;
             this._internalQuarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
             requestAnimationFrame(this._boundQuarterNoteUpdateFunction);
+        }
+    }
+
+    private _scheduleStop() {
+        let length = this.getPlaybackLength();
+        if (length > 0) {
+            clearTimeout(this._stopTimeout);
+            this._stopTimeout = setTimeout(() => { this.stopToBeginning(); }, (length- this.metadata.positionQuarterNoteToSeconds(this._quarterNotePosition)) * 1000)
         }
     }
 }
