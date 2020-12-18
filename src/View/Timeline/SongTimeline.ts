@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js";
 import { UITrack, NoteUITrack, SoundFileUITrack } from "../Shared/UITrack.js";
 import { NoteGroupTimelineEvent, OneShotTimelineEvent, TrackTimelineEvent } from "../Shared/TrackTimelineEvent.js";
-import { UIColors } from "../Settings/UITheme.js";
+import { UIColors, UIPositioning } from "../Settings/UITheme.js";
 import { SecondsBaseEvent } from "../../Model/Notation/SongEvents.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { ScrollableTimeline } from "../Shared/ScrollableTimeline.js";
@@ -51,7 +51,7 @@ export class SongTimeline extends ScrollableTimeline {
         this._showSequencerCallback = showSequencerCallback;
 
         this._newEventGraphics = new PIXI.Graphics();
-        this.addChild(this._newEventGraphics);
+        this.addChildAt(this._newEventGraphics, this.children.length - 3);
 
         this._regenerateTimeline(0);
 
@@ -131,10 +131,10 @@ export class SongTimeline extends ScrollableTimeline {
 
                     this._newEventGraphics.clear();
                     this._newEventGraphics.beginFill(UIColors.trackEventColor)
-                        .drawRect(x, y, width, height)
+                        .drawRect(x, y + 2, width, height - 2)
                         .endFill()
                         .beginHole()
-                        .drawRect(x + 2, y + 2, width - 4, height - 4)
+                        .drawRect(x + 2, y + 4, width - 4, height - 6)
                         .endHole();
                     this._newEventGraphics.visible = true;
                     this._newEventData = { track: track, startPosition: startPosition };

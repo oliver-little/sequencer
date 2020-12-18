@@ -16,6 +16,7 @@ export class PlaybackPanel extends React.Component<PlaybackPanelProps, PlaybackP
     constructor(props) {
         super(props);
         this._markerCenteredChanged = this._markerCenteredChanged.bind(this);
+        this._playingStateChanged = this._playingStateChanged.bind(this);
 
         editType.markerCenteredChanged.addListener(this._markerCenteredChanged);
 
@@ -25,8 +26,20 @@ export class PlaybackPanel extends React.Component<PlaybackPanelProps, PlaybackP
         }
     }
 
+    private _playingStateChanged(value : boolean) {
+        this.setState({playing: value});
+    }
+
     private _markerCenteredChanged(value: boolean) {
         this.setState({ markerCentred: value });
+    }
+
+    componentDidMount() {
+        this.props.songManager.playingChangedEvent.addListener(this._playingStateChanged);
+    }
+
+    componentWillUnmount() {
+        this.props.songManager.playingChangedEvent.removeListener(this._playingStateChanged);
     }
 
     render() {
@@ -34,7 +47,7 @@ export class PlaybackPanel extends React.Component<PlaybackPanelProps, PlaybackP
 
         return <div className={"playbackPanel"}>
             <div className={"playbackButtons"}>
-                <PlayPauseButton className={c} playing={this.state.playing} playFunction={() => { this.props.songManager.start(); this.setState({ playing: this.props.songManager.playing }) }} pauseFunction={() => { this.props.songManager.stop(); this.setState({ playing: this.props.songManager.playing }) }} />
+                <PlayPauseButton className={c} playing={this.state.playing} playFunction={() => { this.props.songManager.start();}} pauseFunction={() => { this.props.songManager.stop(); }} />
                 <FAButton className={c} iconName={"fa fa-stop"} onClick={() => { this.props.songManager.stopToBeginning(); this.setState({ playing: this.props.songManager.playing }) }} />
             </div>
             <button className={"recentreButton buttonAnim"} onClick={() => { editType.markerCentered = true }} style={{ visibility: ((!this.state.markerCentred && this.props.songManager.playing) ? "visible" : "hidden") }}>Recentre Marker</button>

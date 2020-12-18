@@ -3,7 +3,7 @@ import * as React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
 import { NoteUITrack, SoundFileUITrack, UITrack } from "../Shared/UITrack.js";
 import { UIColors, UIPositioning } from "../Settings/UITheme.js";
-import { BoxSelect, IconFileInput, LabelledCheckbox, Slider } from "../SharedReact/BasicElements.js";
+import { BoxSelect, FAButton, IconFileInput, LabelledCheckbox, Slider } from "../SharedReact/BasicElements.js";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
@@ -76,6 +76,7 @@ export class TrackList extends PIXI.Container {
         this._trackSettingsContainer = document.createElement("div");
         this._trackSettingsContainer.style.position = "absolute";
         this._trackSettingsContainer.style.width = this._sidebarWidth.toString() + "px";
+        this._trackSettingsContainer.style.overflow = "hidden";
         document.getElementById("applicationContainer").appendChild(this._trackSettingsContainer);
 
         this.resize(width, height);
@@ -363,7 +364,7 @@ class SoundFileTrackSettingsBox extends React.PureComponent<SoundFileTrackSettin
 
     render() {
         return <div style={{ position: "relative" }}>
-            <button className="trackSettingsDeleteButton" onClick={() => { this.props.deleteTrack(this.props.index) }}>X</button>
+            <FAButton className="trackSettingsDeleteButton buttonColorAnim" iconName="fa fa-close" onClick={() => { this.props.deleteTrack(this.props.index) }} />
             <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
                 <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
                 <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" value={this.props.gain.toString()} onChange={this.handleGainChange} />
@@ -409,7 +410,7 @@ class OscillatorTrackSettingsBox extends React.PureComponent<OscillatorTrackSett
         let es = this.props.envelopeSettings;
 
         return <div style={{ position: "relative" }}>
-            <button className="trackSettingsDeleteButton" onClick={() => { this.props.deleteTrack(this.props.index) }}>X</button>
+            <FAButton className="trackSettingsDeleteButton buttonColorAnim" iconName="fa fa-close" onClick={() => { this.props.deleteTrack(this.props.index) }} />
             <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
                 <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
                 <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" value={this.props.gain.toString()} onChange={this.handleGainChange} />

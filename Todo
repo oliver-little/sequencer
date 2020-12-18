@@ -3,7 +3,6 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
-- Song end position (used for saving to WAV and ending playback)
 - Loading spinners, for async operations like loading in a new file: https://chevtek.io/how-to-create-versatile-loading-spinner-management-in-react/
 
 - Add selected effect to TrackTimelineEvents
@@ -15,10 +14,3 @@ Other:
 - Coherency across browser, particularly in areas like sliders, padding and margins where rendering could differ among browsers
 - Look at react rendering: check react objects are not unnecessarily rerendering (PureComponent vs Component)
 - Look at licenses for dependencies before deploying, need to figure out the best way to include them.
-
-BUG FIXES:
-- Mask timeline above bar headers (or move new event graphics behind bar headers)
-
-- Rare bug where long SoundFileTracks will be provided with a negative start time
-- Look at code for notes in SequencerTimeline and SequencerNotes, the implementation is confusing
-- Implementation of contentHeight is also more complex than it might need to be

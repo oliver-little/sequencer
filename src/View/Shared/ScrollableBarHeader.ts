@@ -18,8 +18,8 @@ export class BarHeader extends PIXI.Container {
     constructor(timeline : ScrollableTimeline) {
         super();
         this._headerText = new PIXI.Text("", UIFonts.trackFont);
-        this._headerText.x = 12;
-        this._headerText.y = 10;
+        this._headerText.x = 15;
+        this._headerText.y = 11;
         this._headerGraphics = new PIXI.Graphics();
         this._metadataTimelineEvent = new MetadataTimelineEvent(timeline);
         this.addChild(this._headerGraphics, this._headerText, this._metadataTimelineEvent);
@@ -32,7 +32,7 @@ export class BarHeader extends PIXI.Container {
                             .drawRect(1, 0, width, UIPositioning.timelineHeaderHeight)
                             .endFill()
                             .beginFill(UIColors.fgColor)
-                            .drawRect(1, 0, 2, 40)
+                            .drawRect(1, 0, 2, UIPositioning.timelineHeaderHeight)
                             .drawRect(1, UIPositioning.timelineHeaderHeight, width, 2)
                             .endFill();
                             

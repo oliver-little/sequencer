@@ -134,7 +134,7 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
             <div className={"effectsChainContent"} >
                 <div className={"effectsChainPanelTitle"}>
                     <BoxSelect mainButtonClassName={"effectsChainTitleButton"} selectButtonClassName={"effectsChainSelectButton"} selected={this.state.currentChainNumber} options={options} selectedCallback={this._selectedChainChanged} />
-                    <FAButton className="effectsChainButton delete title" iconName="fa fa-close" onClick={this._deleteCurrentChain} disabled={curChain.chainName === "Bus"} />
+                    <FAButton className="effectsChainButton buttonColorAnim delete title" iconName="fa fa-close" onClick={this._deleteCurrentChain} disabled={curChain.chainName === "Bus"} />
                 </div>
                 <EffectsChainInfo
                     effectsChain={curChain.effects}
@@ -220,7 +220,7 @@ class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
                     )}
                 </Droppable>
             </DragDropContext>
-            <BoxSelect mainButtonClassName={"effectsChainButton dropdownButton"} title="" options={EffectsChainInfo.effectTitles} selectedCallback={this.props.newEffect}>
+            <BoxSelect mainButtonClassName={"effectsChainButton buttonColorAnim dropdownButton"} title="" options={EffectsChainInfo.effectTitles} selectedCallback={this.props.newEffect}>
                 <i className={"fa fa-plus"} />
             </BoxSelect>
         </div >;
@@ -242,7 +242,7 @@ class ChainEffect extends React.PureComponent<ChainEffectProps> {
                     <div>
                         <div className={"chainEffectTitle"}>
                             <p className={"effectTitleText"} style={{ marginRight: "5px" }}>{this.props.effectType}</p>
-                            <FAButton className="effectsChainButton delete" iconName={"fa fa-close"} onClick={() => { this.props.onDelete(this.props.effectIndex) }} />
+                            <FAButton className="effectsChainButton buttonColorAnim delete" iconName={"fa fa-close"} onClick={() => { this.props.onDelete(this.props.effectIndex) }} />
                         </div>
                     </div>
                     {this.props.properties.map((property, index) => {

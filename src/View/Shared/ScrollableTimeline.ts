@@ -83,6 +83,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
     protected _timelineMarker: TimelineMarker;
 
     private _onScreen: boolean;
+    private _maskGraphics : PIXI.Graphics;
 
     constructor(startX: number, endX: number, startY: number, endY: number, songManager: SongManager) {
         super();
@@ -97,6 +98,9 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._scrollObjects = [];
         this._barPool = new ObjectPool();
 
+        this._maskGraphics = new PIXI.Graphics();
+        this.mask = this._maskGraphics;
+        this._maskGraphics.beginFill(0xFFFFFF).drawRect(this.startX, this.startY, this.endX, this.endY).endFill();
         this._interactivityRect = new PIXI.Graphics();
         this.addChild(this._interactivityRect);
         this.resizeInteractiveArea(endX, endY);
@@ -105,10 +109,8 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._headerContainer = new PIXI.Container();
         this._metadataEventContainer = new PIXI.Container();
         this._eventContainer = new PIXI.Container();
-        this.addChild(this._barContainer, this._eventContainer, this._headerContainer, this._metadataEventContainer);
-
         this._timelineMarker = new TimelineMarker();
-        this.addChild(this._timelineMarker);
+        this.addChild(this._barContainer, this._eventContainer, this._headerContainer, this._metadataEventContainer, this._timelineMarker);
 
         this._timelineMarkerAnim = this._timelineMarkerAnim.bind(this);
         this._playingStateChanged = this._playingStateChanged.bind(this);
@@ -126,6 +128,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
 
     public resize(width: number, height: number) {
         this.resizeInteractiveArea(width, height);
+        this._maskGraphics.clear().beginFill(0xFFFFFF).drawRect(this.startX, this.startY, width, height).endFill();
 
         // Ensure end position is at least after the start position
         this.endX = Math.max(width, this.startX + 1);
@@ -654,7 +657,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
         this._timelineMarker.redraw(
             0,
             UIPositioning.timelineHeaderHeight,
-            5 * this._zoomScale,
+            2,
             this.endY
         );
         this._repositionTimelineMarker(this.songManager.quarterNotePosition);
@@ -669,7 +672,7 @@ export abstract class ScrollableTimeline extends MouseTypeContainer {
      */
     protected _repositionTimelineMarker(position: number) {
         if (this._onScreen) {
-            this._timelineMarker.x = this.getTimelineEventX(position);
+            this._timelineMarker.x = Math.round(this.getTimelineEventX(position));
         }
     }
 }

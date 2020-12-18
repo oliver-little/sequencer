@@ -12,6 +12,7 @@ button {
     border: none;
     user-select: none;
     font-size: 13.3333px;
+    color: var(--t-bg);
 }
 
 button:focus {
@@ -91,6 +92,20 @@ input[type=checkbox] {
 .buttonAnim:disabled {
     background-color: var(--t-fg);
 }
+
+.buttonColorAnim {
+    background-color: white;
+    transition: background-color 0.1s ease;
+}
+
+.buttonColorAnim:hover:enabled {
+    background-color: var(--t-h2);
+}
+
+.buttonColorAnim:active:enabled {
+    background-color: var(--t-fg);
+}
+
 
 /* Playback Panel */
 .playbackPanel {
@@ -243,10 +258,7 @@ input[type=checkbox] {
 }
 
 .effectsChainButton {
-    background-color: white;
     border-radius: 2px;
-    color: var(--t-bg);
-    transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .effectsChainButton.title {
@@ -257,14 +269,6 @@ input[type=checkbox] {
 
 .effectsChainButton:disabled {
     background-color: var(--t-fg);
-}
-
-.effectsChainButton:hover:enabled {
-    box-shadow: 0 0 0 2px var(--t-h);
-}
-
-.effectsChainButton:active:enabled {
-    background-color: var(--t-h);
 }
 
 .effectsChainButton.delete {
@@ -409,11 +413,10 @@ input[type=checkbox] {
     font-size: 1.25em;
     font-weight: bold;
     background-color: white;
-    color: var(--t-bg);
 }
 
 .addTrackOptionsDiv {
-    background-color: var(--t-h2);
+    background-color: white;
     border-radius: 5px;
 }
 
@@ -607,8 +610,6 @@ input[type=checkbox] {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 2px;
-    margin-bottom: 2px;
 }
 
 .trackSettingsName {
@@ -628,17 +629,12 @@ input[type=checkbox] {
 }
 
 .trackSettingsDeleteButton {
-    margin-top: 0px;
     position: absolute;
-    top: 0px;
-    left: 0px; 
+    top: 7px;
+    left: 7px; 
     width: 25px;
     height: 25px;
-    border: none;
     border-radius: 2px;
-
-    background-color: white;
-    color: var(--t-bg);
 }
 
 .trackSettingsIconInput {

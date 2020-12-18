@@ -62,7 +62,8 @@ export class SequencerTimeline extends ScrollableTimeline {
         this._noteGroupContainer = new PIXI.Container();
         this._noteGroupPool = new ObjectPool();
         this._newEventGraphics = new PIXI.Graphics();
-        this.addChild(this._noteGroupContainer, this._newEventGraphics);
+        this.addChildAt(this._newEventGraphics, this.children.length - 3);
+        this.addChildAt(this._noteGroupContainer, this.children.length - 1);
 
         this._regenerateTimeline(startFrom);
     }
@@ -117,10 +118,10 @@ export class SequencerTimeline extends ScrollableTimeline {
 
             this._newEventGraphics.clear()
                 .beginFill(UIColors.trackEventColor)
-                .drawRect(x, y, width, SequencerTimeline.noteHeight)
+                .drawRect(x, y + 1, width, SequencerTimeline.noteHeight - 1)
                 .endFill()
                 .beginHole()
-                .drawRect(x + 2, y + 2, width - 4, SequencerTimeline.noteHeight - 4)
+                .drawRect(x + 2, y + 3, width - 4, SequencerTimeline.noteHeight - 5)
                 .endHole();
             this._newEventData = noteData;
             this._newEventGraphics.visible = true;
@@ -182,7 +183,7 @@ export class SequencerTimeline extends ScrollableTimeline {
     protected _initialiseNote(note: NoteEvent): TrackTimelineEvent {
         // Offset initialise location to account for one note error, and the height of the header.
         let y = this.offsetContentHeight - NoteHelper.noteStringToNoteNumber(note.pitchString) * SequencerTimeline.noteHeight;
-        let timelineEvent = new NoteTimelineEvent(this, this.track, note, y, SequencerTimeline.noteHeight);
+        let timelineEvent = new NoteTimelineEvent(this, this.track, note, y, SequencerTimeline.noteHeight - 1);
         timelineEvent.borderHeight = 1;
         this._eventContainer.addChild(timelineEvent);
         return timelineEvent;

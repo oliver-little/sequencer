@@ -37,7 +37,7 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
     this._hideEditMenu = this._hideEditMenu.bind(this);
 
     this._graphics = new PIXI.Graphics();
-    this._graphics.beginFill(UIColors.metadataEventColor).drawRect(0, 0, 3, UIPositioning.timelineHeaderHeight).endFill();
+    this._graphics.beginFill(UIColors.metadataEventColor).drawRect(0, 0, 4, UIPositioning.timelineHeaderHeight).endFill();
     this.addChild(this._graphics);
 
     this._editDiv = document.createElement("div");
@@ -57,7 +57,7 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
       this.alpha = 1;
     }
     else {
-      this.alpha = 0.2;
+      this.alpha = 0.4;
     }
   }
 
@@ -85,14 +85,14 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
   public pointerOverHandler(event: PIXI.InteractionEvent) {
     super.pointerOverHandler(event);
     if (!this.active) {
-      this.alpha = 0.5;
+      this.alpha = 0.7;
     }
   }
 
   public pointerOutHandler(event: PIXI.InteractionEvent) {
     super.pointerOutHandler(event);
     if (!this.active) {
-      this.alpha = 0.2;
+      this.alpha = 0.4;
     }
   }
 
@@ -105,7 +105,7 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
         this._timelineListenerActive = true;
         this._mountEditDiv();
       }
-      this._editDiv.style.left = (this.getGlobalPosition().x + 1).toString() + "px";
+      this._editDiv.style.left = (this.getGlobalPosition().x + 2).toString() + "px";
       // Render the edit box at the position of the MetadataTimelineEvent
       render(<MetadataEditBox numerator={this.event.timeSignature[0]} denominator={this.event.timeSignature[1]} bpm={this.event.bpm} onSubmit={this._eventEdited} />, this._editDiv);
       this._showingEditBox = true;

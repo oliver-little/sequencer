@@ -27,9 +27,12 @@ export class SequencerView extends VerticalScrollView {
         this.timeline = new SequencerTimeline(this._sidebarPosition, width, height, this.contentHeight, songManager, track, startFrom);
         // Contains the background UI for the sidebar, as well as the 
         this._sidebarUI = new PIXI.Graphics().beginFill(UIColors.bgColor).drawRect(0, 0, this._sidebarPosition, height).endFill();
-        this._sidebarUI.beginFill(UIColors.fgColor).drawRect(this._sidebarPosition - 4, 0, 4, height).endFill();
+        this._sidebarUI.beginFill(UIColors.fgColor)
+            .drawRect(0, UIPositioning.timelineHeaderHeight, this._sidebarPosition, 2)
+            .drawRect(this._sidebarPosition - 4, 0, 4, height)
+            .endFill();
         this._noteList = new SequencerNotes(this._sidebarPosition, width, height, SequencerView.numNotes);
-        this.addChild(this.timeline, this._sidebarUI, this._noteList);
+        this.addChild(this._sidebarUI, this._noteList, this.timeline);
 
         this._backButtonContainer = document.createElement("div");
         Object.assign(this._backButtonContainer.style, {
@@ -85,7 +88,7 @@ class SequencerNotes extends PIXI.Container {
             let height = i * SequencerTimeline.noteHeight;
             let text = new PIXI.Text(NoteHelper.noteNumberToNoteString(this._numNotes - 1 - i), UIFonts.trackFont);
             text.x = width / 2 - text.width/2;
-            text.y = UIPositioning.timelineHeaderHeight + height + SequencerTimeline.noteHeight/2 - text.height/2;
+            text.y = UIPositioning.timelineHeaderHeight + height + SequencerTimeline.noteHeight/2 - text.height/2 + 1;
             this.addChild(text);
         }
         this.addChild(this._horizontalLines);
