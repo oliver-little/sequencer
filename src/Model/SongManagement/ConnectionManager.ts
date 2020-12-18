@@ -213,6 +213,16 @@ export class ConnectionManager {
         }
     }
 
+    public getChainDelayTime(name: string): number {
+        let chain = this.getChain(name);
+        let delayTime = chain.getDelayTime();
+        if ("bus" in this._currentConnections[chain.id]) {
+            delayTime += this._bus.getDelayTime();
+        }
+
+        return delayTime;
+    }
+
     public serialiseChains(): Array<IChainSettings> {
         let serialisedChains = []
         this.chains.concat(this.bus).forEach(chain => {

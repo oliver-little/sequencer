@@ -140,6 +140,11 @@ export function Tuna(context) {
     userInstance = this;
 }
 
+// Modified code from source to allow the global context variable to be changed.
+export function setContext(context) {
+    userContext = context;
+}
+
 function connectify(context) {
     if (context.__connectified__ === true) return;
 

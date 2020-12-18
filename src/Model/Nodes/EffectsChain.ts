@@ -90,7 +90,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
 
     public destroy() {
         this._preGain.disconnect();
-        for(let i = 0; i < this._chainNodes.length; i++) {
+        for (let i = 0; i < this._chainNodes.length; i++) {
             this._chainNodes[i].disconnect();
         }
         this._postGain.disconnect();
@@ -175,6 +175,36 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
             this._settings.effects.splice(index, 1);
             this._settings.effects.splice(newIndex, 0, temp);
         }
+    }
+
+    /**
+     * Gets the time taken for this chain to stop producing noise after it stops receiving input.
+     *
+     * @memberof EffectsChain
+     */
+    public getDelayTime(): number {
+        let longestDelay = 0;
+        this._settings.effects.forEach((effect) => {
+            let thisEffectDelay = 0;
+            if (effect.effectType == "Delay") {
+                let feedback = effect.properties.find(property => property.propertyName == "feedback").value;
+                let delayTime = effect.properties.find(property => property.propertyName == "delayTime").value/1000;
+                thisEffectDelay = Math.log(0.005) / Math.log(feedback) * delayTime;
+            }
+            else if (effect.effectType == "PingPongDelay") {
+                let feedback = effect.properties.find(property => property.propertyName == "feedback").value;
+                let l = effect.properties.find(property => property.propertyName == "delayTimeLeft").value/1000;
+                let r = effect.properties.find(property => property.propertyName == "delayTimeRight").value/1000;
+                thisEffectDelay = Math.log(0.005) / Math.log(feedback) * Math.max(l + r);
+            }
+            else if (effect.effectType == "Convolver") {
+                thisEffectDelay = 3;
+            }
+
+            longestDelay += thisEffectDelay;
+        });
+
+        return longestDelay;
     }
 
     /**
@@ -332,7 +362,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
             id: uuid(),
             effectType: "Delay",
             properties: [
-                { type: "number", propertyName: "feedback", value: 0.45, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", propertyName: "feedback", value: 0.45, editable: true, step: 0.01, min: 0, max: 0.999 } as IEffectNumberRange,
                 { type: "number", displayName: "Delay Time", propertyName: "delayTime", value: 100, editable: true, step: 1, min: 1, max: 10000 } as IEffectNumberRange,
                 { type: "number", displayName: "Wet Level", propertyName: "wetLevel", value: 0.5, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
                 { type: "number", displayName: "Dry Level", propertyName: "dryLevel", value: 1, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
@@ -349,7 +379,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
             properties: [
                 { type: "number", propertyName: "rate", value: 0.1, editable: true, step: 0.01, min: 0, max: 8 } as IEffectNumberRange,
                 { type: "number", propertyName: "depth", value: 0.6, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
-                { type: "number", propertyName: "feedback", value: 0.7, editable: true, step: 0.01, min: 0, max: 1 } as IEffectNumberRange,
+                { type: "number", propertyName: "feedback", value: 0.7, editable: true, step: 0.01, min: 0, max: 0.999 } as IEffectNumberRange,
                 { type: "number", displayName: "Stereo Phase", propertyName: "stereoPhase", value: 40, editable: true, step: 1, min: 0, max: 180 } as IEffectNumberRange,
                 { type: "number", displayName: "Base Modulation Frequency", propertyName: "baseModulationFrequency", value: 700, editable: true, step: 1, min: 500, max: 1500 } as IEffectNumberRange,
                 { type: "boolean", propertyName: "bypass", value: false, editable: true } as IEffectBooleanProperty
@@ -511,19 +541,19 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
             properties: [{ type: "number", propertyName: "gain", value: 1, editable: true, step: 0.01, min: 0, max: 2 } as IEffectNumberRange]
         }
     }
-    public static possibleEffects : Map<string, (() =>IEffect)> = new Map([["Chorus", EffectsChain.Chorus], 
-        ["Delay", EffectsChain.Delay], 
-        ["Ping Pong Delay", EffectsChain.PingPongDelay], 
-        ["Overdrive", EffectsChain.Overdrive], 
-        ["Gain", EffectsChain.Gain], 
-        ["Compressor",  EffectsChain.Compressor], 
-        ["Pan", EffectsChain.Panner], 
-        ["Convolver Reverb", EffectsChain.Convolver], 
-        ["Tremolo", EffectsChain.Tremolo], 
-        ["Filter", EffectsChain.Filter], 
-        ["Bitcrusher", EffectsChain.Bitcrusher], 
-        ["Phaser", EffectsChain.Phaser], 
-        ["Wah", EffectsChain.WahWah], 
-        ["Moog Filter", EffectsChain.Moog], 
-        ["Cabinet Emulator", EffectsChain.Cabinet]]);
+    public static possibleEffects: Map<string, (() => IEffect)> = new Map([["Chorus", EffectsChain.Chorus],
+    ["Delay", EffectsChain.Delay],
+    ["Ping Pong Delay", EffectsChain.PingPongDelay],
+    ["Overdrive", EffectsChain.Overdrive],
+    ["Gain", EffectsChain.Gain],
+    ["Compressor", EffectsChain.Compressor],
+    ["Pan", EffectsChain.Panner],
+    ["Convolver Reverb", EffectsChain.Convolver],
+    ["Tremolo", EffectsChain.Tremolo],
+    ["Filter", EffectsChain.Filter],
+    ["Bitcrusher", EffectsChain.Bitcrusher],
+    ["Phaser", EffectsChain.Phaser],
+    ["Wah", EffectsChain.WahWah],
+    ["Moog Filter", EffectsChain.Moog],
+    ["Cabinet Emulator", EffectsChain.Cabinet]]);
 }

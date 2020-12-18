@@ -142,6 +142,8 @@ export class SoundFileInstrument implements IInstrument {
         if (offset < 0) {
             offset = 0;
         }
+
+        startTime = Math.max(0, startTime);
         bufferSource.start(startTime, offset);
     }
 

@@ -6,6 +6,7 @@ import { OscillatorTrack } from "../Tracks/OscillatorTrack.js";
 import { SoundFileTrack } from "../Tracks/SoundFileTrack.js";
 import { ConnectionManager } from "./ConnectionManager.js";
 import { ISongEvent } from "../Notation/SongEvents.js";
+import { setContext } from "../../../dependencies/tuna.js";
 
 export class SongManager {
 
@@ -30,6 +31,8 @@ export class SongManager {
     protected playingIntervalIDs = null;
 
     protected _boundQuarterNoteUpdateFunction: () => any;
+
+    private _stopTimeout : NodeJS.Timeout;
 
     constructor(context?: AudioContext | OfflineAudioContext) {
         this.metadata = new SongMetadata();
@@ -60,6 +63,8 @@ export class SongManager {
     set quarterNotePosition(value: number) {
         this._internalQuarterNotePosition = value;
         this._startTime = this.context.currentTime - this.metadata.positionQuarterNoteToSeconds(this._quarterNotePosition);
+        clearTimeout(this._stopTimeout);
+        this._stopTimeout = setTimeout(() => {this.stopToBeginning();}, (this.getPlaybackLength() - this.metadata.positionQuarterNoteToSeconds(this._quarterNotePosition))* 1000)
         if (this._playing) {
             this._tracks.forEach(element => {
                 element.start(this._quarterNotePosition);
@@ -147,6 +152,8 @@ export class SongManager {
         this._tracks.forEach(element => {
             element.start(this._quarterNotePosition);
         });
+
+        this._stopTimeout = setTimeout(() => {this.stopToBeginning()}, (this.getPlaybackLength() - this.metadata.positionQuarterNoteToSeconds(startPosition))* 1000);
     }
 
     /**
@@ -160,6 +167,7 @@ export class SongManager {
 
         this.connectionManager.outputGain.gain.setTargetAtTime(0.0001, this.context.currentTime, 0.03);
 
+        clearTimeout(this._stopTimeout);
         clearInterval(this.playingIntervalIDs);
         this._tracks.forEach(element => {
             element.stop();
@@ -246,10 +254,16 @@ export class SongManager {
         let length = this.getPlaybackLength();
         if (length > 0) {
             let song = this.serialise();
-            let offlineManager = new OfflineSongManager(length);
+            let offlineManager = new OfflineSongManager(length + 0.1);
             await offlineManager.deserialise(song);
             let result = await offlineManager.saveToWAV();
+
+            // Tuna.js has a global variable defining the context to use - this gets changed to the OfflineAudioContext
+            // when savetoWAV is called. setContext has been created inside tuna.js to allow the context to be set back
+            // to the current context after the WAV file has been created.
+            setContext(this.context);
             return result;
+            
         }
         else {
             throw new Error("Song Length must be greater than 0 to save to WAV.")
@@ -265,12 +279,26 @@ export class SongManager {
      */
     protected getPlaybackLength(): number {
         let longestEvent = 0;
+        let cachedEffectLengths : {[connectionName: string] : number}= {};
         this._tracks.forEach(track => {
-            if (track.timeline.playbackTime > longestEvent) {
-                longestEvent = track.timeline.playbackTime;
+            let playbackTime = track.timeline.playbackTime;
+            let connection = this.connectionManager.getConnections(track.audioSource)[0];
+            if (connection != "Context") {
+                if (connection in cachedEffectLengths) {
+                    playbackTime += cachedEffectLengths[connection];
+                }
+                else {
+                    let chainDelayTime = this.connectionManager.getChainDelayTime(connection);
+                    playbackTime += chainDelayTime;
+                    cachedEffectLengths[connection] = chainDelayTime;
+                }
+            }
+
+            if (playbackTime > longestEvent) {
+                longestEvent = playbackTime;
             }
         });
-        return longestEvent;
+        return longestEvent + 0.01;
     }
 
     protected scheduleNotes() {
