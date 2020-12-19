@@ -169,21 +169,18 @@ export class EventTimeline {
     public getEventsBetweenTimes(startTime: number, endTime: number): BaseEvent[] {
         // FIXME: this works, but it isn't as efficient as working from the front of the array, then from the back to find the values in the middle.
         let index = 0;
-
-        while (index < this._events.length && (this._events[index].startPosition + this._events[index].duration) <= startTime) {
+        let foundEvents = [];
+        while (index < this._events.length && this._events[index].endPosition <= startTime) {
             index++;
         }
-        let startIndex = index;
         while (index < this._events.length && this._events[index].startPosition < endTime) {
+            if (this._events[index].startPosition < endTime && this._events[index].endPosition > startTime) {
+                foundEvents.push(this._events[index]);
+            }
             index++;
         }
-        let endIndex = index;
 
-        if (startIndex == endIndex) {
-            return [];
-        }
-
-        return this._events.slice(startIndex, endIndex);
+        return foundEvents;
     }
 
     /**
