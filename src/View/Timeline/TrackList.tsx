@@ -150,6 +150,7 @@ export class TrackList extends PIXI.Container {
     private _gainChanged(index: number, value: number) {
         let tracks = UITrackStore.getState().tracks;
         tracks[index].track.audioSource.masterGain = value;
+        this._rerenderList();
     }
 
     private _soundFileChanged(index: number, files: FileList) {
@@ -354,8 +355,8 @@ class SoundFileTrackSettingsBox extends React.PureComponent<SoundFileTrackSettin
         this.props.onNameChange(this.props.index, value);
     }
 
-    handleGainChange(value: string) {
-        this.props.onGainChange(this.props.index, parseFloat(value));
+    handleGainChange(value: number) {
+        this.props.onGainChange(this.props.index, value);
     }
 
     handleConnectionChanged(index: number) {
@@ -367,7 +368,7 @@ class SoundFileTrackSettingsBox extends React.PureComponent<SoundFileTrackSettin
             <FAButton className="trackSettingsDeleteButton buttonColorAnim" iconName="fa fa-close" onClick={() => { this.props.deleteTrack(this.props.index) }} />
             <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
                 <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
-                <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" value={this.props.gain.toString()} onChange={this.handleGainChange} />
+                <Slider min={0} max={1} step={0.01} value={this.props.gain} onChange={this.handleGainChange} />
                 <IconFileInput className={"trackSettingsIconInput"} iconName={"fa fa-music"} onChange={(files: FileList) => { this.props.soundFileChange(this.props.index, files) }} accept="audio/*" />
                 <LabelledCheckbox className={"trackSettingsInteractable pointer"} label={"Display Actual Width:"} state={this.props.displayActualWidth} onChange={(value) => { this.props.displayActualWidthChange(this.props.index, value) }} />
                 <LabelledCheckbox className={"trackSettingsInteractable pointer"} label={"Allow Overlaps:"} state={this.props.allowOverlap} onChange={(value) => { this.props.allowOverlapChange(this.props.index, value) }} />
@@ -398,8 +399,8 @@ class OscillatorTrackSettingsBox extends React.PureComponent<OscillatorTrackSett
         this.props.onNameChange(this.props.index, value);
     }
 
-    handleGainChange(value: string) {
-        this.props.onGainChange(this.props.index, parseFloat(value));
+    handleGainChange(value: number) {
+        this.props.onGainChange(this.props.index, value);
     }
 
     handleConnectionChanged(index: number) {
@@ -413,7 +414,7 @@ class OscillatorTrackSettingsBox extends React.PureComponent<OscillatorTrackSett
             <FAButton className="trackSettingsDeleteButton buttonColorAnim" iconName="fa fa-close" onClick={() => { this.props.deleteTrack(this.props.index) }} />
             <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
                 <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
-                <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" value={this.props.gain.toString()} onChange={this.handleGainChange} />
+                <Slider min={0} max={1} step={0.01} value={this.props.gain} onChange={this.handleGainChange} />
                 <div className="trackSettingsInteractable">
                     <p>Type:</p>
                     <BoxSelect title={this.props.oscillatorType} options={OscillatorTrackSettingsBox.oscillatorOptions} selectedCallback={(value) => { this.props.oscillatorTypeChanged(this.props.index, OscillatorTrackSettingsBox.oscillatorOptions[value]) }} />
@@ -440,7 +441,7 @@ interface OscillatorEnvelopeState {
     detailsVisible: boolean
 }
 
-class OscillatorEnvelope extends React.Component<OscillatorEnvelopeProps, OscillatorEnvelopeState> {
+class OscillatorEnvelope extends React.PureComponent<OscillatorEnvelopeProps, OscillatorEnvelopeState> {
 
     private _openCloseButton: React.RefObject<HTMLButtonElement>;
 

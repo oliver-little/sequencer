@@ -236,7 +236,7 @@ input[type=checkbox] {
 .effectsChainContent {
     border-left: 2px solid var(--t-fg);
     height: 100%;
-    color: #FFF;
+    color: white;
     background-color: var(--t-bg);
     overflow: hidden;
 }
@@ -335,8 +335,12 @@ input[type=checkbox] {
     transition: background-color 0.15s linear;
 }
 
+.chainEffect:focus {
+    outline: none;
+}
+
 .chainEffect.dragging {
-    border-color: #FFF;
+    border-color: white;
     background-color: #3F3F3F;
 }
 
@@ -356,11 +360,16 @@ input[type=checkbox] {
 }
 
 .effectProperty {
+    margin: 2px 0;
     width: 100%;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+}
+
+.effectProperty.boolean, .effectProperty.list {
+    margin-top: 12px;
 }
 
 .effectProperty > *:first-child {
@@ -507,10 +516,6 @@ input[type=checkbox] {
     background-color: var(--t-fg);
 }
 
-.slider {
-    cursor: pointer;
-}
-
 /* Envelope Overlay */
 .envelopeOverlayOuterContainer {
     position: absolute;
@@ -632,11 +637,6 @@ input[type=checkbox] {
     margin-bottom: 5px;
 }
 
-.trackSettingsSlider {
-    margin-top: 10px;
-    margin-bottom: 10px;
-}
-
 .trackSettingsDeleteButton {
     position: absolute;
     top: 7px;
@@ -692,4 +692,58 @@ input[type=checkbox] {
 
 .trackSettingsBoxSelect {
     margin: 5px 0;
+}
+
+/* Slider */
+.slider {
+    cursor: pointer;
+    position: relative;
+    width: 200px;
+    max-width: 80%;
+    height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.sliderTrack {
+    height: 8px;
+    width: 200px;
+    background-color: white;
+    border-radius: 25px;
+}
+
+.sliderTrackActive {
+    height: 100%;
+    background-color: #0075ff;
+    border-radius: 25px;
+}
+
+
+.sliderHandle {
+    width: 18px;
+    height: 18px;
+    margin-left: -0.5rem;
+    margin-top: -0.95rem;
+    border-radius: 50%;
+    background-color: #0075ff;
+}
+
+.sliderValueLabel {
+    display: none;
+}
+
+.sliderMinLabel, .sliderMaxLabel {
+    color: white;
+    position: absolute;
+    top: 35px;
+}
+
+.sliderMaxLabel {
+    float: right;
+    left: 100%;
+}
+
+.sliderMaxLabel > span {
+    display: inline-block;
+    transform: translateX(-100%);
 }

@@ -1,34 +1,48 @@
 import * as React from "react";
+import InputRange, { InputRangeClassNames } from "react-input-range";
 
 interface SliderProps {
-    onRelease? : boolean
-    className?: string,
-    min: string,
-    max: string,
-    step: string,
-    onChange: Function
-    value: string
+    onRelease?: boolean
+    min: number,
+    max: number,
+    step: number,
+    onChange: (value: number) => void
+    value: number
 }
 
-export class Slider extends React.PureComponent<SliderProps> {
+interface SliderState {
+    currentValue: number
+}
 
-    private _sliderRef: HTMLInputElement;
+export class Slider extends React.PureComponent<SliderProps, SliderState> {
 
-    componentDidMount() {
-        this._sliderRef.value = this.props.value;
+    public static classNames: InputRangeClassNames = {
+        activeTrack: "sliderTrackActive",
+        disabledInputRange: "sliderDisabled",
+        inputRange: "slider",
+        labelContainer: "sliderLabelContainer",
+        maxLabel: "sliderMaxLabel",
+        minLabel: "sliderMinLabel",
+        slider: "sliderHandle",
+        sliderContainer: "sliderHandleContainer",
+        track: "sliderTrack",
+        valueLabel: "sliderValueLabel"
     }
 
-    componentDidUpdate() {
-        this._sliderRef.value = this.props.value;
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            currentValue: this.props.value
+        }
     }
 
     render() {
-        let className = "slider" + (this.props.className ? this.props.className : "");
         if (this.props.onRelease) {
-            return <input className={className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => { this._sliderRef = ref }} onPointerUp={() => {this.props.onChange(this._sliderRef.value)}} />
+            return <InputRange classNames={Slider.classNames} minValue={this.props.min} maxValue={this.props.max} step={this.props.step} value={this.state.currentValue} onChange={(value: number) => this.setState({ currentValue: value })} onChangeComplete={this.props.onChange} />;
         }
         else {
-            return <input className={className} type="range" min={this.props.min} max={this.props.max} step={this.props.step} ref={(ref) => { this._sliderRef = ref }} onChange={(event) => {this.props.onChange(event.target.value)}} />
+            return <InputRange classNames={Slider.classNames} minValue={this.props.min} maxValue={this.props.max} step={this.props.step} value={this.props.value} onChange={this.props.onChange} />;
         }
     }
 }
@@ -160,7 +174,7 @@ export class DropdownItem extends React.Component<DropdownItemProps> {
 
 // EITHER SELECTED OR TITLE IS REQUIRED
 interface BoxSelectProps {
-    className? : string,
+    className?: string,
     overlayClassName?: string,
     mainButtonClassName?: string,
     selectButtonClassName?: string,
@@ -201,7 +215,7 @@ export class BoxSelect extends React.PureComponent<BoxSelectProps, BoxSelectStat
 
         return <div className={this.props.className} style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
             <div>
-                <button className={(this.props.mainButtonClassName ? this.props.mainButtonClassName : "mainBoxSelectButton")} title={this.props.tooltip} ref={this._selectButton} onClick={() => {this.setState({ selectVisible: !this.state.selectVisible }) }} >{this.props.selected !== undefined ? this.props.options[this.props.selected] : (this.props.title ? this.props.title : this.props.children)}</button>
+                <button className={(this.props.mainButtonClassName ? this.props.mainButtonClassName : "mainBoxSelectButton")} title={this.props.tooltip} ref={this._selectButton} onClick={() => { this.setState({ selectVisible: !this.state.selectVisible }) }} >{this.props.selected !== undefined ? this.props.options[this.props.selected] : (this.props.title ? this.props.title : this.props.children)}</button>
             </div>
             {this.state.selectVisible && <BoxSelectOverlay buttonClassName={buttonClassName} selectButton={this._selectButton} options={this.props.options} selectOptionClickedCallback={this._selectOptionClicked} />}
         </div>
@@ -263,12 +277,12 @@ class BoxSelectOverlay extends React.Component<BoxSelectOverlayProps, BoxSelectO
 }
 
 interface SelectionGroupProps {
-    className? : string,
-    buttonClassName? : string,
-    disabled : boolean,
-    selectedButton : number,
-    buttonContents : any[]
-    onButtonClick : Function,
+    className?: string,
+    buttonClassName?: string,
+    disabled: boolean,
+    selectedButton: number,
+    buttonContents: any[]
+    onButtonClick: Function,
 }
 
 export class SelectionGroup extends React.Component<SelectionGroupProps> {
@@ -280,24 +294,24 @@ export class SelectionGroup extends React.Component<SelectionGroupProps> {
                     selected = true;
                 }
 
-                return <SelectionButton key={index} className={this.props.buttonClassName} disabled={this.props.disabled} selected={selected} content={value} onClick={() => {this.props.onButtonClick(index)}}/>
+                return <SelectionButton key={index} className={this.props.buttonClassName} disabled={this.props.disabled} selected={selected} content={value} onClick={() => { this.props.onButtonClick(index) }} />
             })}
         </div>;
     }
 }
 
 interface SelectionButtonProps {
-    className? : string,
-    disabled : boolean
-    selected : boolean,
-    content : any,
-    onClick : Function
+    className?: string,
+    disabled: boolean
+    selected: boolean,
+    content: any,
+    onClick: Function
 }
 
 class SelectionButton extends React.Component<SelectionButtonProps> {
     render() {
         const classes = "selectionButton" + (this.props.selected ? " selected" : "") + (this.props.className != null ? " " + this.props.className : "");
 
-        return <button className={classes} onClick={() => {this.props.onClick()}} disabled={this.props.disabled}>{this.props.content}</button>
+        return <button className={classes} onClick={() => { this.props.onClick() }} disabled={this.props.disabled}>{this.props.content}</button>
     }
 }
