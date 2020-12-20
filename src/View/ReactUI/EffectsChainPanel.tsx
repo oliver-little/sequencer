@@ -209,7 +209,7 @@ class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
                 <BoxSelect mainButtonClassName="" title={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.props.connectionChangedCallback} />
             </div>
             <div className={"effectsListDivider"} />
-            <p className={"effectListTitleText"}>Effects:</p>
+            <p className={"effectTitleText"}>Effects:</p>
             <DragDropContext onDragEnd={this._onDragEnd}>
                 <Droppable droppableId={"effectsList"}>
                     {(provided, snapshot) => (

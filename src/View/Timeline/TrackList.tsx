@@ -204,16 +204,16 @@ export class TrackList extends PIXI.Container {
         UITrackStore.dispatch({ type: "REMOVE_TRACK", index: index });
     }
 
-    private _oscillatorTypeChanged(index : number, value : string) {
+    private _oscillatorTypeChanged(index: number, value: string) {
         let track = UITrackStore.getState().tracks[index];
         if (track instanceof NoteUITrack) {
-            
+
             track.track.audioSource.oscillatorType = value.toLowerCase();
             this._rerenderList();
         }
     }
 
-    private _envelopeEnabledChanged(index : number, value : boolean) {
+    private _envelopeEnabledChanged(index: number, value: boolean) {
         let track = UITrackStore.getState().tracks[index];
         if (track instanceof NoteUITrack) {
             track.track.audioSource.envelopeEnabled = value;
@@ -222,7 +222,7 @@ export class TrackList extends PIXI.Container {
     }
 
 
-    private _envelopeAttackChanged(index : number, value : number) {
+    private _envelopeAttackChanged(index: number, value: number) {
         let track = UITrackStore.getState().tracks[index];
         if (track instanceof NoteUITrack) {
             value = Math.max(0, Math.min(4, value));
@@ -231,7 +231,7 @@ export class TrackList extends PIXI.Container {
         }
     }
 
-    private _envelopeReleaseChanged(index : number, value : number) {
+    private _envelopeReleaseChanged(index: number, value: number) {
         let track = UITrackStore.getState().tracks[index];
         if (track instanceof NoteUITrack) {
             value = Math.max(0, Math.min(4, value));
@@ -253,7 +253,7 @@ export class TrackList extends PIXI.Container {
                 onDeleteTrack={this._deleteTrack}
                 onConnectionChanged={this._connectionChanged}
                 width={this._sidebarWidth}
-                verticalScroll={this._verticalScroll} 
+                verticalScroll={this._verticalScroll}
                 onOscillatorTypeChanged={this._oscillatorTypeChanged}
                 onEnvelopeEnabledChanged={this._envelopeEnabledChanged}
                 onEnvelopeAttackChanged={this._envelopeAttackChanged}
@@ -379,7 +379,7 @@ class SoundFileTrackSettingsBox extends React.PureComponent<SoundFileTrackSettin
 
 interface OscillatorTrackSettingsProps extends TrackSettingsProps {
     oscillatorType: string,
-    oscillatorTypeChanged : Function,
+    oscillatorTypeChanged: Function,
     envelopeSettings: OscillatorEnvelopeProps
 }
 
@@ -416,11 +416,11 @@ class OscillatorTrackSettingsBox extends React.PureComponent<OscillatorTrackSett
                 <Slider className={"trackSettingsSlider"} min="0" max="1" step="0.01" value={this.props.gain.toString()} onChange={this.handleGainChange} />
                 <div className="trackSettingsInteractable">
                     <p>Type:</p>
-                    <BoxSelect title={this.props.oscillatorType} options={OscillatorTrackSettingsBox.oscillatorOptions} selectedCallback={(value) => {this.props.oscillatorTypeChanged(this.props.index, OscillatorTrackSettingsBox.oscillatorOptions[value])}} />
+                    <BoxSelect title={this.props.oscillatorType} options={OscillatorTrackSettingsBox.oscillatorOptions} selectedCallback={(value) => { this.props.oscillatorTypeChanged(this.props.index, OscillatorTrackSettingsBox.oscillatorOptions[value]) }} />
                 </div>
-                <OscillatorEnvelope enabled={es.enabled} enabledChanged={(value) => {es.enabledChanged(this.props.index, value)}}
-                                    attack={es.attack} attackChanged={(value) => {es.attackChanged(this.props.index, value)}}
-                                    release={es.release} releaseChanged={(value) => {es.releaseChanged(this.props.index, value)}} />
+                <OscillatorEnvelope enabled={es.enabled} enabledChanged={(value) => { es.enabledChanged(this.props.index, value) }}
+                    attack={es.attack} attackChanged={(value) => { es.attackChanged(this.props.index, value) }}
+                    release={es.release} releaseChanged={(value) => { es.releaseChanged(this.props.index, value) }} />
                 <BoxSelect className={"trackSettingsBoxSelect"} title={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
             </div>
         </div>
@@ -467,8 +467,8 @@ interface OscillatorDetailsProps extends OscillatorEnvelopeProps {
 }
 
 interface OscillatorDetailsState {
-    lastAttackValue : string,
-    lastReleaseValue : string
+    lastAttackValue: string,
+    lastReleaseValue: string
 }
 
 class OscillatorEnvelopeDetails extends React.Component<OscillatorDetailsProps, OscillatorDetailsState> {
@@ -484,20 +484,22 @@ class OscillatorEnvelopeDetails extends React.Component<OscillatorDetailsProps, 
     render() {
         let disabled = !this.props.enabled;
 
-        return <div className="envelopeOverlayContainer" style={{ left: this.props.mainButton.current.offsetWidth + 2}}>
-            <div className="boxSelectOverlayArrow left" />
-            <div className="boxSelectOverlay envelopeOverlayContent">
-                <div className={"effectProperty"}>
-                    <p>Enabled:</p>
-                    <input type="checkbox" checked={this.props.enabled} onChange={(event) => { this.props.enabledChanged(event.target.checked) }} />
-                </div>
-                <div className={"effectProperty"}>
-                    <p>Attack:</p>
-                    <input type="number" step="0.01" value={(parseFloat(this.state.lastAttackValue) === this.props.attack? this.state.lastAttackValue : this.props.attack.toString())} onChange={(event) => {this.setState({lastAttackValue: event.target.value}); this.props.attackChanged(event.target.value) }} disabled={disabled} />
-                </div>
-                <div className={"effectProperty"}>
-                    <p>Release:</p>
-                    <input type="number" step="0.01" value={(parseFloat(this.state.lastReleaseValue) === this.props.release? this.state.lastReleaseValue : this.props.release.toString())} onChange={(event) => {this.setState({lastReleaseValue: event.target.value}); this.props.releaseChanged(event.target.value) }} disabled={disabled} />
+        return <div className="envelopeOverlayOuterContainer" style={{left: this.props.mainButton.current.offsetWidth + 2 }}>
+            <div className="envelopeOverlayInnerContainer">
+                <div className="boxSelectOverlayArrow left" />
+                <div className="boxSelectOverlay envelopeOverlayContent">
+                    <div className={"effectProperty"}>
+                        <p>Enabled:</p>
+                        <input type="checkbox" checked={this.props.enabled} onChange={(event) => { this.props.enabledChanged(event.target.checked) }} />
+                    </div>
+                    <div className={"effectProperty"}>
+                        <p>Attack:</p>
+                        <input type="number" step="0.01" value={(parseFloat(this.state.lastAttackValue) === this.props.attack ? this.state.lastAttackValue : this.props.attack.toString())} onChange={(event) => { this.setState({ lastAttackValue: event.target.value }); this.props.attackChanged(event.target.value) }} disabled={disabled} />
+                    </div>
+                    <div className={"effectProperty"}>
+                        <p>Release:</p>
+                        <input type="number" step="0.01" value={(parseFloat(this.state.lastReleaseValue) === this.props.release ? this.state.lastReleaseValue : this.props.release.toString())} onChange={(event) => { this.setState({ lastReleaseValue: event.target.value }); this.props.releaseChanged(event.target.value) }} disabled={disabled} />
+                    </div>
                 </div>
             </div>
         </div>

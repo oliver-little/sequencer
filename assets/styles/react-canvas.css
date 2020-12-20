@@ -5,14 +5,19 @@
     --t-h: #999999;
     --t-h2: #DDDDDD;
     --t-acc: #00367c;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 16px;
+    font-family: "Heebo", Arial, Helvetica, sans-serif;
+    font-size: 14px;
 }
 
 button {
     border: none;
     user-select: none;
+    font-family: inherit;
     font-size: 13.3333px;
+    color: black;
+}
+
+button:disabled {
     color: var(--t-bg);
 }
 
@@ -22,6 +27,10 @@ button:focus {
 
 button:hover:enabled {
     cursor: pointer;
+}
+
+input {
+    font-family: "Heebo", Arial, Helvetica, sans-serif;
 }
 
 input[type=number] {
@@ -277,13 +286,9 @@ input[type=checkbox] {
     height: 25px;
 }
 
-.effectListTitleText {
-    margin: 0 0 10px 10px;
-    font-weight: bold;
-}
-
 .effectTitleText {
     margin: 0 0 0px 10px;
+    font-size: 16px;
     font-weight: bold;
 }
 
@@ -421,10 +426,6 @@ input[type=checkbox] {
     border-radius: 5px;
 }
 
-.addTrackItem {
-    color: var(--t-bg);
-}
-
 /* Box Select */
 .boxSelectOverlayContainer {
     position: absolute;
@@ -511,12 +512,17 @@ input[type=checkbox] {
 }
 
 /* Envelope Overlay */
-.envelopeOverlayContainer {
+.envelopeOverlayOuterContainer {
     position: absolute;
+    display: flex;
+    align-items: center;
+}
+
+.envelopeOverlayInnerContainer {
+    position: fixed;
     flex-direction: row;
     display: flex;
     align-items: center;
-    overflow: visible;
     z-index: 100;
 }
 
@@ -597,11 +603,13 @@ input[type=checkbox] {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin: 5px 0px;
 }
 
 .metadataProperty > p {
     font-weight: bold;
-    font-size: 13.3333px;
+    font-size: 14px;
+    margin: 0 0;
     margin-right: 5px;
 }
 
@@ -672,7 +680,7 @@ input[type=checkbox] {
 
 .trackSettingsInteractable > p {
     margin: 0 8px 0 0;
-    font-family: Arial;
+    font-family: "Heebo", Arial;
     font-size: 13.3333px;
     color: white;
     user-select: none;

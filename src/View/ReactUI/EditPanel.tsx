@@ -60,6 +60,6 @@ interface FractionProps {
 
 class Fraction extends React.PureComponent<FractionProps> {
     render() {
-        return <p><sup>{this.props.n}</sup>&#x2044;<sub>{this.props.d}</sub></p>
+        return <p style={{fontFamily: "Arial, Helvetica, sans-serif"}}><sup>{this.props.n}</sup>&#x2044;<sub>{this.props.d}</sub></p>
     }
 }
