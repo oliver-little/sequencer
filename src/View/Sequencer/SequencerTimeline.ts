@@ -105,7 +105,6 @@ export class SequencerTimeline extends ScrollableTimeline {
 
             // Check no events already occur at the point the new event should be added
             let events = this.track.track.timeline.getEventsBetweenTimes(startPosition, startPosition + length) as NoteEvent[];
-
             for (let i = 0; i < events.length; i++) {
                 if (events[i].pitchString === noteData.pitchString) {
                     return;

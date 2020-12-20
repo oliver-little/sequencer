@@ -2,12 +2,12 @@ export class UIColors {
     public static bgColor = 0x303030;
     public static fgColor = 0x5F5F5F;
     public static timelineMarkerColor = 0xEEEEEE;
-    public static metadataEventColor = 0x1B9AAA;
-    public static trackEventColor = 0xF2903B;
-    //public static trackEventSelectedColor = 0xffcc14;
-    public static trackEventSelectedColor = 0x000000;
-    public static trackEventHoveredColor = 0x666666;
-    public static trackEventHighlightColor = 0xFFAA61;
+    public static metadataEventColor = 0x0075ff;
+    public static trackEventColor = 0x319999;
+    public static trackEventSelectedColor = 0x004545;
+    public static trackEventHoveredColor = 0x097272;
+    public static trackEventDeleteColor = 0xFF0000;
+    public static trackEventHighlightColor = 0x54b7b7;
 }
 
 export class UIFonts {

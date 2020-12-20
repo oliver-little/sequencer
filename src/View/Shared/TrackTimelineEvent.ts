@@ -22,10 +22,9 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
     public borderLeft = 1;
     public borderRight = 2;
     public borderHeight = 2;
-    public paddingHeight = 6;
-    public selectedBorderWidth = 4;
+    public paddingHeight = 2;
+    public selectedBorderWidth = 3;
 
-    protected _selected: boolean = false;
     protected _hovered: boolean = false;
     protected _opacity: number = 1;
     protected _contentGraphics: PIXI.Graphics;
@@ -37,7 +36,7 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
 
     // Stores a snapped version of the start pointer position, which is used to calculate where the event should be positioned
     // if snapping is enabled in the parent ScrollableTimeline
-    protected _snappedStartPointerPosition : PIXI.Point;
+    protected _snappedStartPointerPosition: PIXI.Point;
 
     /**
      *Creates an instance of TrackTimelineEvent.
@@ -96,15 +95,6 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
         return this.x + this.width;
     }
 
-    get selected() {
-        return this._selected;
-    }
-
-    set selected(value: boolean) {
-        this._selected = value;
-        this.redrawSelected();
-    }
-
     get hovered() {
         return this._hovered;
     }
@@ -139,7 +129,7 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
     }
 
     public destroy() {
-        super.destroy({children: true});
+        super.destroy({ children: true });
     }
 
     /**
@@ -163,8 +153,8 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
      */
     public redrawSelected() {
         this._selectedGraphics.clear();
-        if (this.hovered || this.selected) {
-            this._selectedGraphics.beginFill(this.hovered ? this._hoveredColor : UIColors.trackEventSelectedColor, this.opacity)
+        if (this.hovered) {
+            this._selectedGraphics.beginFill(this._hoveredColor, this.opacity)
                 .drawRect(0, 0, this.assignedWidth, this.assignedHeight)
                 .endFill()
                 .beginHole()
@@ -186,6 +176,13 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
             return;
         }
         event.stopPropagation();
+
+        if (this._mouseClickType == MouseClickType.LeftClick) {
+            this.hoveredColor = UIColors.trackEventSelectedColor;
+        }
+        else if (this._mouseClickType == MouseClickType.RightClick) {
+            this.hoveredColor = UIColors.trackEventDeleteColor;
+        }
 
         this._startXPosition = this.x;
         this._startYPosition = this.y;
@@ -226,12 +223,16 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
      */
     public pointerUpHandler(event: PIXI.InteractionEvent) {
         super.pointerUpHandler(event);
-        this._startXPosition = undefined;
-        this._startYPosition = undefined;
-        this._startPointerPosition = undefined;
-        this._snappedStartPointerPosition = undefined;
-    }
 
+        if (!this._destroyed) {
+            this.hoveredColor = UIColors.trackEventHoveredColor;
+
+            this._startXPosition = undefined;
+            this._startYPosition = undefined;
+            this._startPointerPosition = undefined;
+            this._snappedStartPointerPosition = undefined;
+        }
+    }
 
     /**
      * Handler for pointer up events where it was calculated that this event was a click
@@ -272,7 +273,22 @@ export abstract class TrackTimelineEvent extends MouseTypeContainer {
                 let dragDistance = new PIXI.Point(moveX, moveY);
                 this.dragHandler(dragDistance);
             }
+            else if (this._mouseClickType == MouseClickType.RightClick && this.mouseIsOver) {
+                this.deleteEvent();
+            }
         }
+    }
+
+    public pointerOverHandler(event: PIXI.InteractionEvent) {
+        super.pointerOverHandler(event);
+        this._hovered = true;
+        this.redrawSelected();
+    }
+
+    public pointerOutHandler(event: PIXI.InteractionEvent) {
+        super.pointerOutHandler(event);
+        this._hovered = false;
+        this.redrawSelected();
     }
 
     /**
@@ -316,10 +332,12 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
     public track: NoteUITrack;
 
+    public static noteMarginHeight = 2;
+
     private _noteGroup: number[];
     private _notes: NoteEvent[];
 
-    private _clickCallback : Function;
+    private _clickCallback: Function;
 
     /**
      *Creates an instance of NoteGroupTimelineEvent.
@@ -371,9 +389,9 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
             let startX = positionMap(note.startPosition) * this.assignedWidth;
             let endX = positionMap(note.endPosition) * this.assignedWidth;
             this._contentGraphics.drawRect(startX,
-                NoteHelper.distanceBetweenNotes(highestNote, note.pitchString) * noteHeight + this.paddingHeight,
+                NoteHelper.distanceBetweenNotes(highestNote, note.pitchString) * noteHeight + this.paddingHeight + NoteGroupTimelineEvent.noteMarginHeight,
                 endX - startX - 2,
-                noteHeight);
+                noteHeight - NoteGroupTimelineEvent.noteMarginHeight * 2);
         });
         this._contentGraphics.endFill();
     }
@@ -388,7 +406,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
         let beatChange = dragDistance.x / this.timeline.beatWidth;
 
         noteGroup[0] = metadata.positionBeatsToQuarterNote(metadata.positionQuarterNoteToBeats(noteGroup[0]) + beatChange);
-        
+
         // Use the new noteGroup position to calculate the number of quarter notes the event was moved by
         let quarterNoteChange = noteGroup[0] - this._noteGroup[0];
         noteGroup[1] = noteGroup[1] + quarterNoteChange;
@@ -427,7 +445,7 @@ export class NoteGroupTimelineEvent extends TrackTimelineEvent {
 
     public deleteEvent() {
         this._notes.forEach(note => {
-            this.track.track.timeline.removeEvent(note);
+            this.track.track.removeNote(note);
         });
         delete this._notes;
         this.track.removeNoteGroup(this.noteGroup[0]);
@@ -565,7 +583,7 @@ export class NoteTimelineEvent extends TrackTimelineEvent {
             let oldNoteNumber = NoteHelper.noteStringToNoteNumber(this.event.pitchString);
             let noteYPosition = Math.min(this.timeline.offsetContentHeight - UIPositioning.timelineHeaderHeight, Math.max(0, oldNoteNumber * SequencerTimeline.noteHeight - moveDelta));
             this._lastNoteNumber = Math.floor(noteYPosition / SequencerTimeline.noteHeight);
-            this.y =  this._startYPosition - (this._lastNoteNumber - oldNoteNumber) * SequencerTimeline.noteHeight;
+            this.y = this._startYPosition - (this._lastNoteNumber - oldNoteNumber) * SequencerTimeline.noteHeight;
         }
     }
 
