@@ -2,7 +2,7 @@ import * as React from "react";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 import { EffectsChain } from "../../Model/Nodes/EffectsChain";
 import { ConnectionManager } from "../../Model/SongManagement/ConnectionManager";
-import { IEffect, IEffectBooleanProperty, IEffectListProperty, IEffectNumberProperty, IEffectNumberRange, IEffectStringProperty } from "../../Model/Interfaces/IInstrumentSettings";
+import { IEffect, IEffectBooleanProperty, IEffectListProperty, IEffectNumberProperty, IEffectNumberRange, IEffectProperty, IEffectStringProperty } from "../../Model/Interfaces/IInstrumentSettings";
 import { BoxSelect, FAButton, Slider } from "../SharedReact/BasicElements";
 
 interface EffectsChainPanelProps {
@@ -128,7 +128,6 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
         options.push("New Chain...");
 
         let curChain = this.currentChain;
-
         return <div className={"effectsChainPanel" + (this.state.hidden ? " hidden" : "")}>
             <FAButton title={this.state.hidden ? "Show Effects" : "Hide Effects"} className="effectsChainHideShowButton" iconName={this.state.hidden ? "fa fa-caret-left" : "fa fa-caret-right"} onClick={() => { this._hidePanel() }} />
             <div className={"effectsChainContent"} >
@@ -233,8 +232,7 @@ interface ChainEffectProps extends IEffect {
     onDelete: Function
 }
 
-class ChainEffect extends React.PureComponent<ChainEffectProps> {
-
+class ChainEffect extends React.Component<ChainEffectProps> {
     render() {
         return <Draggable draggableId={this.props.id} index={this.props.effectIndex}>
             {(provided, snapshot) => (
@@ -341,6 +339,7 @@ class StringEffectProperty extends React.PureComponent<StringEffectPropertyProps
 }
 
 class BooleanEffectProperty extends React.PureComponent<BooleanEffectPropertyProps> {
+
     render() {
         let nameToUse = capitalise(this.props.displayName ? this.props.displayName : this.props.propertyName) + ":";
 
