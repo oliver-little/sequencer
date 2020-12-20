@@ -450,7 +450,7 @@ input[type=checkbox] {
     flex-direction: column;
     align-items: center;
     overflow: visible;
-    z-index: 100;
+    z-index: 10;
 }
 
 @keyframes boxSelectOverlayAnim {
@@ -536,7 +536,7 @@ input[type=checkbox] {
     flex-direction: row;
     display: flex;
     align-items: center;
-    z-index: 100;
+    z-index: 10;
 }
 
 .envelopeOverlayContent {

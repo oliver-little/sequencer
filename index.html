@@ -14,14 +14,22 @@
             width: 100%;
             height: 100%;
             background-color: #333333;
+            transition: opacity 1s ease;
+            transform: none;
+            z-index: 100;
+        }
+
+        .sequencerLoader.hide {
+            opacity: 0;
         }
 
         .noscriptWarning {
             position: absolute;
-            top: 50%;
+            top: 75%;
             width: 100%;
             display: flex;
             justify-content: center;
+            color: white;
         }
 
         .loadDetails {
@@ -30,10 +38,6 @@
             height: 100%;
             align-items: center;
             justify-content: center;
-        }
-
-        .loadDetails.show {
-            opacity: 1;
         }
 
         .loadTitle {
@@ -105,23 +109,23 @@
 
 <body>
     <div id="root">
-        <div class="sequencerLoader" id="loader">
-            <!-- Place the loader inside root as react will replace it when it renders -->
-            <div class="loadDetails">
-                <p class="loadTitle">Loading Sequencer...</p>
-                <div class="sequencerSpinner">
-                    <span>&#119133;</span>
-                    <span>&#119134;</span>
-                    <span>&#119135;</span>
-                    <span>&#119136;</span>
-                </div>
+    </div>
+    <div class="sequencerLoader" id="loader">
+        <!-- Place the loader inside root as react will replace it when it renders -->
+        <div class="loadDetails">
+            <p class="loadTitle">Loading Sequencer...</p>
+            <div class="sequencerSpinner">
+                <span>&#119133;</span>
+                <span>&#119134;</span>
+                <span>&#119135;</span>
+                <span>&#119136;</span>
             </div>
-            <noscript>
-                <div class="noscriptWarning">
-                    <p>Sequencer doesn't work without JavaScript! Please enable JavaScript to use this tool.</p>
-                </div>
-            </noscript>
         </div>
+        <noscript>
+            <div class="noscriptWarning">
+                <p>Sequencer doesn't work without JavaScript! Please enable JavaScript to use this tool.</p>
+            </div>
+        </noscript>
     </div>
 </body>
 

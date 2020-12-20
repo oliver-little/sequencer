@@ -13,7 +13,7 @@ interface SequencerAppState {
     songManager: SongManager;
 }
 
-export class SequencerApp extends React.Component<{}, SequencerAppState> {
+export class SequencerApp extends React.Component<{hideLoader : () => void}, SequencerAppState> {
 
     private _timelineRef : React.RefObject<PIXITimeline>;
     private _hideShowCallback = () => {this._timelineRef.current.resizePIXIApp()};
@@ -25,6 +25,10 @@ export class SequencerApp extends React.Component<{}, SequencerAppState> {
         }
 
         this._timelineRef = React.createRef();
+    }
+
+    componentDidMount() {
+        this.props.hideLoader();
     }
 
     componentWillUnmount() {
