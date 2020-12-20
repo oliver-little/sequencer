@@ -394,22 +394,25 @@ input[type=checkbox] {
 .dropdown {
     /* Keeps the dropdown out of the way until it is clicked */
     position: absolute;
-    left: 100vw;
 
     display: flex;
     align-items: center;
     justify-content:center;
     flex-direction: column;;
 
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: transform 0.1s ease, opacity 0.2s ease;
+    animation: dropdownAnim;
 }
 
-.dropdown.dropdownVisible {
-    position: static;
-    transform: translateY(0px);
-    opacity: 1;
+@keyframes dropdownAnim {
+    0% {
+
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    100% {
+        transform: none;
+        opacity: 1;
+    }
 }
 
 .dropdownItem {
@@ -436,6 +439,11 @@ input[type=checkbox] {
 }
 
 /* Box Select */
+.boxSelectWatcher {
+    display: flex;
+    justify-content: center;
+}
+
 .boxSelectOverlayContainer {
     position: absolute;
     display: flex;

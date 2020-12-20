@@ -146,14 +146,17 @@ export class Dropdown extends React.PureComponent<DropdownProps, DropdownState> 
     }
 
     render() {
-        const objDivClasses = "dropdown" + (this.props.optionsDivClassName == undefined ? "" : " " + this.props.optionsDivClassName) + (this.state.dropdownVisible ? " dropdownVisible" : "");
+        const objDivClasses = "dropdown" + (this.props.optionsDivClassName == undefined ? "" : " " + this.props.optionsDivClassName);
         return <div>
-            <button className={this.props.buttonClassName} onClick={() => { this._handleDropdownClick() }}>{this.props.title}</button>
-            <div className={objDivClasses}>
-                {this.props.optionTitles.map((title, index) => {
-                    return <DropdownItem key={index} index={index} className={this.props.optionClassName} title={title} callback={(index) => { this._handleDropdownClick(); this.props.optionClickCallback(index); }} />
-                })}
-            </div>
+            <button className={this.props.buttonClassName} onClick={() => { this._handleDropdownClick(); }}>{this.props.title}</button>
+
+            {this.state.dropdownVisible && <ClickOutsideWatcher callback={() => this.setState({ dropdownVisible: false })}>
+                <div className={objDivClasses}>
+                    {this.props.optionTitles.map((title, index) => {
+                        return <DropdownItem key={index} index={index} className={this.props.optionClassName} title={title} callback={(index) => { this._handleDropdownClick(); this.props.optionClickCallback(index); }} />
+                    })}
+                </div>
+            </ClickOutsideWatcher>}
         </div>
     }
 }
@@ -217,7 +220,9 @@ export class BoxSelect extends React.PureComponent<BoxSelectProps, BoxSelectStat
             <div>
                 <button className={(this.props.mainButtonClassName ? this.props.mainButtonClassName : "mainBoxSelectButton")} title={this.props.tooltip} ref={this._selectButton} onClick={() => { this.setState({ selectVisible: !this.state.selectVisible }) }} >{this.props.selected !== undefined ? this.props.options[this.props.selected] : (this.props.title ? this.props.title : this.props.children)}</button>
             </div>
-            {this.state.selectVisible && <BoxSelectOverlay buttonClassName={buttonClassName} selectButton={this._selectButton} options={this.props.options} selectOptionClickedCallback={this._selectOptionClicked} />}
+            {this.state.selectVisible && <ClickOutsideWatcher className={"boxSelectWatcher"} callback={() => { this.setState({ selectVisible: false }) }}>
+                <BoxSelectOverlay buttonClassName={buttonClassName} selectButton={this._selectButton} options={this.props.options} selectOptionClickedCallback={this._selectOptionClicked} />
+            </ClickOutsideWatcher>}
         </div>
     }
 }
@@ -313,5 +318,40 @@ class SelectionButton extends React.Component<SelectionButtonProps> {
         const classes = "selectionButton" + (this.props.selected ? " selected" : "") + (this.props.className != null ? " " + this.props.className : "");
 
         return <button className={classes} onClick={() => { this.props.onClick() }} disabled={this.props.disabled}>{this.props.content}</button>
+    }
+}
+
+interface ClickOutsideWatcherProps {
+    className?: string
+    callback: Function
+}
+
+export class ClickOutsideWatcher extends React.Component<ClickOutsideWatcherProps> {
+
+    private _childRef: React.RefObject<HTMLDivElement>;
+
+    constructor(props) {
+        super(props);
+
+        this._childRef = React.createRef();
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    public handleClick(e: PointerEvent) {
+        if (this._childRef && e.target instanceof Element && !this._childRef.current.contains(e.target)) {
+            this.props.callback()
+        }
+    }
+
+    componentDidMount() {
+        document.addEventListener("pointerdown", this.handleClick);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener("pointerdown", this.handleClick);
+    }
+
+    render() {
+        return <div className={this.props.className} ref={this._childRef}>{this.props.children} </div>
     }
 }

@@ -3,7 +3,7 @@ import * as React from "react";
 import { render, unmountComponentAtNode } from "react-dom";
 import { NoteUITrack, SoundFileUITrack, UITrack } from "../Shared/UITrack.js";
 import { UIColors, UIPositioning } from "../Settings/UITheme.js";
-import { BoxSelect, FAButton, IconFileInput, LabelledCheckbox, Slider } from "../SharedReact/BasicElements.js";
+import { BoxSelect, ClickOutsideWatcher, FAButton, IconFileInput, LabelledCheckbox, Slider } from "../SharedReact/BasicElements.js";
 import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
@@ -458,7 +458,9 @@ class OscillatorEnvelope extends React.PureComponent<OscillatorEnvelopeProps, Os
     render() {
         return <div className="oscillatorEnvelopeContainer">
             <button className="mainBoxSelectButton" ref={this._openCloseButton} onClick={() => { this.setState({ detailsVisible: !this.state.detailsVisible }) }}>Envelope Settings</button>
-            {this.state.detailsVisible && <OscillatorEnvelopeDetails {...this.props} mainButton={this._openCloseButton} />}
+            {this.state.detailsVisible && <ClickOutsideWatcher callback={() => this.setState({detailsVisible: false})}>
+                <OscillatorEnvelopeDetails {...this.props} mainButton={this._openCloseButton} />
+                </ClickOutsideWatcher>}
         </div>
     }
 }
