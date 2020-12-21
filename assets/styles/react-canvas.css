@@ -215,9 +215,20 @@ input[type=checkbox] {
     line-height: 50%;
 }
 
+.selectionGroup {
+    position: relative;
+}
+
+.selectionGroupTitle {
+    position: absolute;
+    top: -50%;
+    color: white;
+    margin: 0 0 5px 15px;
+}
+
 .selectionButton.selected:enabled {
     transition: box-shadow 0.1s ease;
-    box-shadow: 0 0 0 2px blue;
+    box-shadow: 0 0 0 2px #0075FF;
 }
 
 /* Serialise Panel */
@@ -392,7 +403,7 @@ input[type=checkbox] {
 
 }
 
-.chainEffectTitle:hover{
+.chainEffectTitle:hover {
     background-color: #3F3F3F; 
 }
 

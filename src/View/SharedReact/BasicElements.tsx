@@ -288,7 +288,8 @@ interface SelectionGroupProps {
     buttonClassName?: string,
     disabled: boolean,
     selectedButton: number,
-    buttonContents: any[]
+    buttonContents: any[],
+    buttonTitles? : string[],
     onButtonClick: Function,
 }
 
@@ -301,7 +302,12 @@ export class SelectionGroup extends React.Component<SelectionGroupProps> {
                     selected = true;
                 }
 
-                return <SelectionButton key={index} className={this.props.buttonClassName} disabled={this.props.disabled} selected={selected} content={value} onClick={() => { this.props.onButtonClick(index) }} />
+                let title = undefined;
+                if (this.props.buttonTitles && this.props.buttonTitles.length > index) {
+                    title = this.props.buttonTitles[index];
+                }
+
+                return <SelectionButton key={index} title={title} className={this.props.buttonClassName} disabled={this.props.disabled} selected={selected} content={value} onClick={() => { this.props.onButtonClick(index) }} />
             })}
         </div>;
     }
@@ -309,6 +315,7 @@ export class SelectionGroup extends React.Component<SelectionGroupProps> {
 
 interface SelectionButtonProps {
     className?: string,
+    title? : string
     disabled: boolean
     selected: boolean,
     content: any,
@@ -319,7 +326,7 @@ class SelectionButton extends React.Component<SelectionButtonProps> {
     render() {
         const classes = "selectionButton" + (this.props.selected ? " selected" : "") + (this.props.className != null ? " " + this.props.className : "");
 
-        return <button className={classes} onClick={() => { this.props.onClick() }} disabled={this.props.disabled}>{this.props.content}</button>
+        return <button className={classes} title={this.props.title} onClick={() => { this.props.onClick() }} disabled={this.props.disabled}>{this.props.content}</button>
     }
 }
 
