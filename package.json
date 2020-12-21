@@ -17,14 +17,18 @@
   },
   "devDependencies": {
     "@types/react": "^17.0.0",
+    "cssnano": "^4.1.10",
+    "postcss": "^8.2.1",
+    "postcss-cli": "^8.3.1",
     "terser-webpack-plugin": "^5.0.3",
     "webpack": "^5.10.1",
     "webpack-cli": "^4.2.0",
-    "webpack-dev-server": "^3.11.0"
+    "webpack-dev-server": "^3.11.0",
+    "webpack-merge": "^5.7.2"
   },
   "scripts": {
-    "dev": "tsc -p ./tsconfig.json & webpack --mode development",
-    "build": "tsc -p ./tsconfig.json & webpack --mode production",
+    "dev": "tsc -p ./tsconfig.json & webpack --config webpack.dev.js & postcss src/Styles/main.css > assets/styles/main.min.css",
+    "prod": "tsc -p ./tsconfig.json & webpack --config webpack.prod.js & postcss src/Styles/main.css > assets/styles/main.min.css",
     "start": "webpack-dev-server --mode development --open"
   },
   "repository": {

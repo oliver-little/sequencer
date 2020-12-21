@@ -1,5 +1,4 @@
 const path = require('path');
-const TerserPlugin = require('terser-webpack-plugin');
 const webpack = require("webpack");
 
 module.exports = {
@@ -10,8 +9,8 @@ module.exports = {
     "react-beautiful-dnd": "ReactBeautifulDnd"
   },
   output: {
-      path: path.resolve(__dirname, 'assets/scripts/'),
-      filename: 'bundle.js',  // where js files would be bundled to
+    path: path.resolve(__dirname, 'assets/scripts/'),
+    filename: 'bundle.js',  // where js files would be bundled to
   },
   devtool: "source-map",
   /*plugins: [ // Use in production build
@@ -23,6 +22,13 @@ module.exports = {
   ],
   optimization: {
     minimize: true,
-    minimizer: [new TerserPlugin()],
+    minimizer: [new TerserPlugin({
+      terserOptions: {
+        format: {
+          comments: /@license/i,
+        },
+      },
+      extractComments: true,
+    })],
   }*/
-} 
+}
