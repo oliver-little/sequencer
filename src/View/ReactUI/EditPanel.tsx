@@ -52,7 +52,7 @@ export class EditPanel extends React.Component<{}, EditPanelState> {
                 <SelectionGroup className={"snapTypeGroup"} buttonClassName={"panelButton buttonAnim"} disabled={false} selectedButton={this.state.selectedSnapButton} buttonContents={["1", <Fraction n={1} d={2} />, <Fraction n={1} d={4} />, <Fraction n={1} d={8} />, <p>&#x2716;</p>]} buttonTitles={["Snap to Whole Beat", "Snap To Half Beat", "Snap To Quarter Beat", "Snap to Eighth Beat", "No Snapping"]} onButtonClick={this._snapTypeChanged} />
             </div>
             <div className="selectionGroup">
-                <p className={"selectionGroupTitle" + (this.state.lengthEnabled ? "" : "disabled")}>Note Length:</p>
+                <p className={"selectionGroupTitle"}>Note Length:</p>
                 <SelectionGroup className={"lengthTypeGroup"} buttonClassName={"panelButton buttonAnim noteButton"} disabled={this.state.lengthEnabled} selectedButton={this.state.selectedLengthButton} buttonContents={[<span>&#119133;</span>, <span>&#119134;</span>, <span>&#119135;</span>, <span>&#119136;</span>, <span>&#119137;</span>, <span>&#119138;</span>]} buttonTitles={["Whole Note", "Half Note", "Quarter Note", "8th Note", "16th Note", "32nd Note"]} onButtonClick={this._lengthTypeChanged} />
             </div>
         </div>;
