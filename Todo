@@ -3,14 +3,6 @@ To Add backend:
 - Finish TODOs
 
 To Add UI: 
-- Loading spinners, for async operations like loading in a new file: https://chevtek.io/how-to-create-versatile-loading-spinner-management-in-react/
-
-- Add selected effect to TrackTimelineEvents
 - Scrollbars, both vertical and horizontal
 - Ability to move all notes in a note group in the sequencer view.
 - Update TrackTimelineEvent width on drag, not only on mouse release
-
-Other:
-- Coherency across browser, particularly in areas like sliders, padding and margins where rendering could differ among browsers
-- Look at react rendering: check react objects are not unnecessarily rerendering (PureComponent vs Component)
-- Look at licenses for dependencies before deploying, need to figure out the best way to include them.

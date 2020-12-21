@@ -17,10 +17,10 @@ module.exports = merge(common, {
     minimizer: [new TerserPlugin({
       terserOptions: {
         format: {
-          comments: /@license/i,
+          comments: "some",
         },
       },
-      extractComments: true,
     })],
-  }
+  },
+  devtool: "source-map"
 });
