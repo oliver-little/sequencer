@@ -353,6 +353,7 @@ interface SoundFileTrackSettingsProps extends TrackSettingsProps {
     allowOverlapChange: Function
 }
 
+// TODO: Merge Oscillator and SoundFile settings boxes uses component composition
 class SoundFileTrackSettingsBox extends React.PureComponent<SoundFileTrackSettingsProps> {
     constructor(props) {
         super(props);
@@ -375,14 +376,14 @@ class SoundFileTrackSettingsBox extends React.PureComponent<SoundFileTrackSettin
 
     render() {
         return <div style={{ position: "relative" }}>
-            <FAButton className="trackSettingsDeleteButton buttonColorAnim" iconName="fa fa-close" onClick={() => { this.props.deleteTrack(this.props.index) }} />
+            <FAButton className="trackSettingsDeleteButton buttonColorAnim" title={"Delete Track"} iconName="fa fa-close" onClick={() => { this.props.deleteTrack(this.props.index) }} />
             <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
                 <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
                 <Slider min={0} max={1} step={0.01} value={this.props.gain} onChange={this.handleGainChange} />
-                <IconFileInput className={"trackSettingsIconInput"} iconName={"fa fa-music"} onChange={(files: FileList) => { this.props.soundFileChange(this.props.index, files) }} accept="audio/*" />
+                <IconFileInput className={"trackSettingsIconInput buttonColorAnim"} title="Set Sound File" iconName={"fa fa-music"} onChange={(files: FileList) => { this.props.soundFileChange(this.props.index, files) }} accept="audio/*" />
                 <LabelledCheckbox className={"trackSettingsInteractable pointer"} label={"Display Actual Width:"} state={this.props.displayActualWidth} onChange={(value) => { this.props.displayActualWidthChange(this.props.index, value) }} />
                 <LabelledCheckbox className={"trackSettingsInteractable pointer"} label={"Allow Overlaps:"} state={this.props.allowOverlap} onChange={(value) => { this.props.allowOverlapChange(this.props.index, value) }} />
-                <BoxSelect className={"trackSettingsBoxSelect"} title={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
+                <BoxSelect className={"trackSettingsBoxSelect"} boxSelectTitle={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
             </div>
         </div>
     }
@@ -421,18 +422,18 @@ class OscillatorTrackSettingsBox extends React.PureComponent<OscillatorTrackSett
         let es = this.props.envelopeSettings;
 
         return <div style={{ position: "relative" }}>
-            <FAButton className="trackSettingsDeleteButton buttonColorAnim" iconName="fa fa-close" onClick={() => { this.props.deleteTrack(this.props.index) }} />
+            <FAButton className="trackSettingsDeleteButton buttonColorAnim" title="Delete Effect" iconName="fa fa-close" onClick={() => { this.props.deleteTrack(this.props.index) }} />
             <div className="trackSettingsDiv" style={{ width: this.props.width, height: this.props.height }}>
                 <input className="trackSettingsName" type="text" value={this.props.name} size={Math.max(1, this.props.name.length)} onChange={(event) => { this.handleNameChange(event.target.value) }} />
                 <Slider min={0} max={1} step={0.01} value={this.props.gain} onChange={this.handleGainChange} />
                 <div className="trackSettingsInteractable">
                     <p>Type:</p>
-                    <BoxSelect title={this.props.oscillatorType} options={OscillatorTrackSettingsBox.oscillatorOptions} selectedCallback={(value) => { this.props.oscillatorTypeChanged(this.props.index, OscillatorTrackSettingsBox.oscillatorOptions[value]) }} />
+                    <BoxSelect boxSelectTitle={this.props.oscillatorType} options={OscillatorTrackSettingsBox.oscillatorOptions} selectedCallback={(value) => { this.props.oscillatorTypeChanged(this.props.index, OscillatorTrackSettingsBox.oscillatorOptions[value]) }} />
                 </div>
                 <OscillatorEnvelope enabled={es.enabled} enabledChanged={(value) => { es.enabledChanged(this.props.index, value) }}
                     attack={es.attack} attackChanged={(value) => { es.attackChanged(this.props.index, value) }}
                     release={es.release} releaseChanged={(value) => { es.releaseChanged(this.props.index, value) }} />
-                <BoxSelect className={"trackSettingsBoxSelect"} title={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
+                <BoxSelect className={"trackSettingsBoxSelect"} boxSelectTitle={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.handleConnectionChanged} />
             </div>
         </div>
     }

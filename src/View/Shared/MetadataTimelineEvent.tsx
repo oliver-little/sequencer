@@ -7,6 +7,7 @@ import { MouseClickType } from "../Settings/Enums";
 import { UIColors, UIPositioning } from "../Settings/UITheme";
 import { ScrollableTimeline } from "./ScrollableTimeline";
 import { MetadataEditBox } from "./MetadataEditBox";
+import { ClickOutsideWatcher } from "../SharedReact/BasicElements";
 
 
 /**
@@ -23,18 +24,17 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
 
   private _graphics: PIXI.Graphics;
   private _editDiv: HTMLDivElement;
-  private _editDivMounted : boolean;
+  private _editDivMounted: boolean;
 
   private _showingEditBox: boolean = false;
   private _active: boolean;
-  private _timelineListenerActive = false;
 
   constructor(timeline: ScrollableTimeline) {
     super();
     this.timeline = timeline;
 
     this._eventEdited = this._eventEdited.bind(this);
-    this._hideEditMenu = this._hideEditMenu.bind(this);
+    this._hideEditBox = this._hideEditBox.bind(this);
 
     this._graphics = new PIXI.Graphics();
     this._graphics.beginFill(UIColors.metadataEventColor).drawRect(0, 0, 4, UIPositioning.timelineHeaderHeight).endFill();
@@ -69,11 +69,6 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
       this.event = closestEvent;
       this.alpha = 1;
 
-      if (!this._timelineListenerActive) {
-        this.timeline.timelineViewChange.addListener(this._hideEditMenu);
-        this._timelineListenerActive = true;
-      }
-
       this._mountEditDiv();
     }
     else {
@@ -101,22 +96,17 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
       if (!this.active) {
         this.active = true;
         this.event = this.timeline.metadata.addMetadataEvent(this.event.startPosition, this.event.bpm, this.event.timeSignature);
-        this.timeline.timelineViewChange.addListener(this._hideEditMenu);
-        this._timelineListenerActive = true;
         this._mountEditDiv();
       }
       this._editDiv.style.left = (this.getGlobalPosition().x + 2).toString() + "px";
       // Render the edit box at the position of the MetadataTimelineEvent
-      render(<MetadataEditBox numerator={this.event.timeSignature[0]} denominator={this.event.timeSignature[1]} bpm={this.event.bpm} onSubmit={this._eventEdited} />, this._editDiv);
-      this._showingEditBox = true;
+      this._showEditBox();
     }
     else if (this.active && this._mouseClickType == MouseClickType.RightClick && this.event.startPosition != 0) {
       // Delete this metadata event
       this.active = false;
       this.timeline.metadata.removeMetadataEvent(this.event.startPosition);
-      this._hideEditMenu();
-      this.timeline.timelineViewChange.removeListener(this._hideEditMenu);
-      this._timelineListenerActive = false;
+      this._hideEditBox();
       let oldStartPosition = this.event.startPosition;
       // Setup the event for the next time the user left clicks on this object
       let closestEvent = this.timeline.metadata.events[this.timeline.metadata.events.binarySearch(this.event.startPosition, true)];
@@ -129,19 +119,10 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
 
   public setVisible(value: boolean) {
     this.visible = value;
-
-    if (value && !this._timelineListenerActive) {
-      this.timeline.timelineViewChange.addListener(this._hideEditMenu);
-      this._timelineListenerActive = true;
-    }
-    else if (!value && this._timelineListenerActive) {
-      this.timeline.timelineViewChange.removeListener(this._hideEditMenu);
-      this._timelineListenerActive = false;
-    }
   }
 
   public destroy() {
-    this._hideEditMenu();
+    this._hideEditBox();
     this._unmountEditDiv();
     this._editDiv = null;
     super.destroy();
@@ -175,10 +156,15 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
    * @private
    * @memberof MetadataTimelineEvent
    */
-  private _hideEditMenu() {
+  private _hideEditBox() {
     if (this._showingEditBox) {
       unmountComponentAtNode(this._editDiv);
       this._showingEditBox = false;
     }
+  }
+
+  private _showEditBox() {
+    render(<ClickOutsideWatcher callback={this._hideEditBox}><MetadataEditBox numerator={this.event.timeSignature[0]} denominator={this.event.timeSignature[1]} bpm={this.event.bpm} onSubmit={this._eventEdited} /></ClickOutsideWatcher>, this._editDiv);
+    this._showingEditBox = true;
   }
 }

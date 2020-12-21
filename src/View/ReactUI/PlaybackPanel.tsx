@@ -48,7 +48,7 @@ export class PlaybackPanel extends React.Component<PlaybackPanelProps, PlaybackP
         return <div className={"playbackPanel"}>
             <div className={"playbackButtons"}>
                 <PlayPauseButton className={c} playing={this.state.playing} playFunction={() => { this.props.songManager.start();}} pauseFunction={() => { this.props.songManager.stop(); }} />
-                <FAButton className={c} iconName={"fa fa-stop"} onClick={() => { this.props.songManager.stopToBeginning(); this.setState({ playing: this.props.songManager.playing }) }} />
+                <FAButton className={c} title="Stop" iconName={"fa fa-stop"} onClick={() => { this.props.songManager.stopToBeginning(); this.setState({ playing: this.props.songManager.playing }) }} />
             </div>
             <button className={"recentreButton buttonAnim"} onClick={() => { editType.markerCentered = true }} style={{ visibility: ((!this.state.markerCentred && this.props.songManager.playing) ? "visible" : "hidden") }}>Recentre Marker</button>
         </div>
@@ -70,15 +70,18 @@ class PlayPauseButton extends React.Component<PlayPauseButtonProps> {
     render() {
         let icon = null;
         let func = null;
+        let title = "";
         if (this.props.playing) {
+            title = "Pause";
             icon = "fa fa-pause";
             func = this.props.pauseFunction;
         }
         else {
+            title = "Play";
             icon = "fa fa-play";
             func = this.props.playFunction;
         }
 
-        return <FAButton className={this.props.className} iconName={icon} onClick={func} />
+        return <FAButton title={title} className={this.props.className} iconName={icon} onClick={func} />
     }
 }

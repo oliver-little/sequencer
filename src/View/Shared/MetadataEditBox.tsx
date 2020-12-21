@@ -109,7 +109,7 @@ class TimeSignatureEditBox extends React.Component<TimeSignatureProps> {
         return <div className="metadataTimeSignature" style={containerStyle}>
             <input className="metadataNumerator" type="text" value={this.props.numerator} onBlur={(event) => {this.props.onNumeratorBlur(event.target.value)}} onChange={(event) => { this.props.onNumeratorChange(event.target.value) }} />
             <div className="metadataDivider"></div>
-            <BoxSelect mainButtonClassName="metadataDenominator buttonAnim" title={this.props.denominator.toString()} options={TimeSignatureEditBox.timeSignatureStrings} selectedCallback={(value) => {this.props.onDenominatorChange(TimeSignatureEditBox.timeSignatureNumbers[value])}}/>
+            <BoxSelect mainButtonClassName="metadataDenominator buttonAnim" boxSelectTitle={this.props.denominator.toString()} options={TimeSignatureEditBox.timeSignatureStrings} selectedCallback={(value) => {this.props.onDenominatorChange(TimeSignatureEditBox.timeSignatureNumbers[value])}}/>
         </div>
     }
 }

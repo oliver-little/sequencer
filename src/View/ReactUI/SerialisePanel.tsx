@@ -138,8 +138,8 @@ export class SerialisePanel extends React.Component<SerialisePanelProps, { modal
     render() {
         let c = "panelButton buttonAnim"
         return <div className="serialisePanel">
-            <FAButton className={c} title="Save File..." iconName="fa fa-save" onClick={this._serialise} />
-            <FAButton className={c} title="Open File..." iconName="fa fa-folder-open" onClick={this._deserialise} />
+            <FAButton className={c} title="Save File" iconName="fa fa-save" onClick={this._serialise} />
+            <FAButton className={c} title="Open File" iconName="fa fa-folder-open" onClick={this._deserialise} />
             <FAButton className={c} title="Download as WAV" iconName="fa fa-music" onClick={this._saveToWAV} />
             {this.state.modalShown && <LoadingErrorModal loading={this.state.modalLoading} title={this.state.modalText} onClose={this._modalCloseFunc} />}
             <input type="file" ref={this._inputRef} accept=".sqn" style={{ position: "absolute", top: "-9999px" }} />

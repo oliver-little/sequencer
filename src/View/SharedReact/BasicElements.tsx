@@ -60,6 +60,7 @@ export class FileInput extends React.PureComponent<FileInputProps> {
 }
 
 interface IconFileInputProps extends FileInputProps {
+    title?: string,
     iconName: string,
 }
 
@@ -73,7 +74,7 @@ export class IconFileInput extends React.PureComponent<IconFileInputProps> {
 
     render() {
         return <div>
-            <button className={this.props.className} onClick={this.handleClick.bind(this)}><i className={this.props.iconName}></i></button>
+            <button className={this.props.className} title={this.props.title} onClick={this.handleClick.bind(this)}><i className={this.props.iconName}></i></button>
             <input style={{ position: "absolute", zIndex: -1, opacity: 0 }} type="file" ref={(ref) => { this._inputRef = ref }} onChange={(event) => this.props.onChange(event.target.files)} accept={this.props.accept} />
         </div>
     }
@@ -111,7 +112,8 @@ export class FAButton extends React.PureComponent<FAButtonProps> {
 }
 
 interface DropdownProps {
-    title: string,
+    title?: string,
+    iconName: string,
     buttonClassName?: string,
     optionsDivClassName?: string,
     optionClassName?: string,
@@ -148,7 +150,7 @@ export class Dropdown extends React.PureComponent<DropdownProps, DropdownState> 
     render() {
         const objDivClasses = "dropdown" + (this.props.optionsDivClassName == undefined ? "" : " " + this.props.optionsDivClassName);
         return <div>
-            <button className={this.props.buttonClassName} onClick={() => { this._handleDropdownClick(); }}>{this.props.title}</button>
+            <FAButton className={this.props.buttonClassName} iconName={this.props.iconName} onClick={() => { this._handleDropdownClick(); }} />
 
             {this.state.dropdownVisible && <ClickOutsideWatcher callback={() => this.setState({ dropdownVisible: false })}>
                 <div className={objDivClasses}>
@@ -181,9 +183,9 @@ interface BoxSelectProps {
     overlayClassName?: string,
     mainButtonClassName?: string,
     selectButtonClassName?: string,
-    tooltip?: string,
+    title?: string,
     selected?: number, // Selected by index
-    title?: string, // Just show a string
+    boxSelectTitle?: string, // Just show a string
     options: string[],
     selectedCallback: Function,
 }
@@ -218,7 +220,7 @@ export class BoxSelect extends React.PureComponent<BoxSelectProps, BoxSelectStat
 
         return <div className={this.props.className} style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
             <div>
-                <button className={(this.props.mainButtonClassName ? this.props.mainButtonClassName : "mainBoxSelectButton")} title={this.props.tooltip} ref={this._selectButton} onClick={() => { this.setState({ selectVisible: !this.state.selectVisible }) }} >{this.props.selected !== undefined ? this.props.options[this.props.selected] : (this.props.title ? this.props.title : this.props.children)}</button>
+                <button className={(this.props.mainButtonClassName ? this.props.mainButtonClassName : "mainBoxSelectButton")} title={this.props.title} ref={this._selectButton} onClick={() => { this.setState({ selectVisible: !this.state.selectVisible }) }} >{this.props.selected !== undefined ? this.props.options[this.props.selected] : (this.props.boxSelectTitle ? this.props.boxSelectTitle : this.props.children)}</button>
             </div>
             {this.state.selectVisible && <ClickOutsideWatcher className={"boxSelectWatcher"} callback={() => { this.setState({ selectVisible: false }) }}>
                 <BoxSelectOverlay buttonClassName={buttonClassName} selectButton={this._selectButton} options={this.props.options} selectOptionClickedCallback={this._selectOptionClicked} />

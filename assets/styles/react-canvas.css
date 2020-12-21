@@ -407,7 +407,7 @@ input[type=checkbox] {
 }
 
 .effectContent > *:last-child {
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 .effectProperty {
@@ -479,8 +479,6 @@ input[type=checkbox] {
 
     height: 30px;
     width: 30px;
-    font-size: 1.25em;
-    font-weight: bold;
     background-color: white;
 }
 
@@ -709,24 +707,16 @@ input[type=checkbox] {
 .trackSettingsIconInput {
     border-radius: 5px;
     border-width: 2px;
-    border-style: solid;
-    border-color: var(--t-h);
     height: 35px;
     width: 35px;
-    background-color: var(--t-bg);
-    transition: transform 0.3s ease-in-out, filter 0.3s ease, border-color 0.3s ease;
     margin: 5px 0;
+    background-color: white;
 }
 
-.trackSettingsIconInput:hover {
-    transform: translateY(-0.2em) scale(1.1, 1.1);
-    border-color: var(--t-bg);
-    filter: invert();
-}
 
 .trackSettingsIconInput > i {
     font-size: 1.2em;
-    color: var(--t-h);
+    color: black;
 }
 
 .trackSettingsInteractable {

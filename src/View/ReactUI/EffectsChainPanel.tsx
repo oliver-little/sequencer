@@ -132,8 +132,8 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
             <FAButton title={this.state.hidden ? "Show Effects" : "Hide Effects"} className="effectsChainHideShowButton" iconName={this.state.hidden ? "fa fa-caret-left" : "fa fa-caret-right"} onClick={() => { this._hidePanel() }} />
             <div className={"effectsChainContent"} >
                 <div className={"effectsChainPanelTitle"}>
-                    <BoxSelect mainButtonClassName={"effectsChainTitleButton"} selectButtonClassName={"effectsChainSelectButton"} selected={this.state.currentChainNumber} options={options} selectedCallback={this._selectedChainChanged} />
-                    <FAButton className="effectsChainButton buttonColorAnim size title" iconName="fa fa-close" onClick={this._deleteCurrentChain} disabled={curChain.chainName === "Bus"} />
+                    <BoxSelect title="New Chain" mainButtonClassName={"effectsChainTitleButton"} selectButtonClassName={"effectsChainSelectButton"} selected={this.state.currentChainNumber} options={options} selectedCallback={this._selectedChainChanged} />
+                    <FAButton title="Delete Chain" className="effectsChainButton buttonColorAnim size title" iconName="fa fa-close" onClick={this._deleteCurrentChain} disabled={curChain.chainName === "Bus"} />
                 </div>
                 <EffectsChainInfo
                     effectsChain={curChain.effects}
@@ -205,7 +205,7 @@ class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
             </div>
             <div className="effectProperty list">
                 <p className={"effectTitleText"}>Output:</p>
-                <BoxSelect mainButtonClassName="" title={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.props.connectionChangedCallback} />
+                <BoxSelect mainButtonClassName="" boxSelectTitle={this.props.connection} options={this.props.connectionOptions} selectedCallback={this.props.connectionChangedCallback} />
             </div>
             <div className={"effectsListDivider"} />
             <p className={"effectTitleText"}>Effects:</p>
@@ -219,7 +219,7 @@ class EffectsChainInfo extends React.Component<EffectsChainInfoProps> {
                     )}
                 </Droppable>
             </DragDropContext>
-            <BoxSelect mainButtonClassName={"effectsChainButton buttonColorAnim dropdownButton"} title="" options={EffectsChainInfo.effectTitles} selectedCallback={this.props.newEffect}>
+            <BoxSelect mainButtonClassName={"effectsChainButton buttonColorAnim dropdownButton"} title="New Effect" options={EffectsChainInfo.effectTitles} selectedCallback={this.props.newEffect}>
                 <i className={"fa fa-plus"} />
             </BoxSelect>
         </div >;

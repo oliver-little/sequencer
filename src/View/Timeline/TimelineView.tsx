@@ -157,7 +157,11 @@ export class TimelineView extends VerticalScrollView {
     }
 
     private _renderNewTrackObject() {
-        render(<Dropdown title={"+"} optionTitles={["New Oscillator Track", "New Sound File Track"]} buttonClassName={"addTrackButton"} optionsDivClassName={"addTrackOptionsDiv"} optionClassName={"addTrackItem"}
+        let buttonClassName = "addTrackButton";
+        if (UITrackStore.getState().tracks.length == 0) {
+            buttonClassName += " highlight";
+        }
+        render(<Dropdown title="New Track" iconName="fa fa-plus" optionTitles={["New Oscillator Track", "New Sound File Track"]} buttonClassName={buttonClassName} optionsDivClassName={"addTrackOptionsDiv"} optionClassName={"addTrackItem"}
             optionClickCallback={async (index) => {
                 if (index == 0) {
                     this.addOscillatorTrack();
