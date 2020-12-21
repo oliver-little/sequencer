@@ -1,6 +1,7 @@
 import SongMetadata from "../SongManagement/SongMetadata.js";
 import NoteHelper from "../../HelperModules/NoteHelper.js";
 import {v4 as uuid} from "uuid";
+import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 
 export interface ISongEvent {
     "eventType" : string,
@@ -12,14 +13,18 @@ export class BaseEvent {
 
     public startPosition: number;
     public id : string;
+    public removed : SimpleEvent;
 
     // Basic duration, has a different meaning for different kinds of events.
     protected _duration = 0; 
 
-    constructor (startPosition: number, duration = 0) {
+    constructor (startPosition: number, duration? : number) {
         this.startPosition = startPosition;
-        this.duration = duration;
+        if (duration != undefined) {
+            this.duration = duration;
+        }
         this.id = uuid();
+        this.removed = new SimpleEvent();
     }
 
     /**
@@ -33,6 +38,14 @@ export class BaseEvent {
 
     public set duration(value: number) {
         this._duration = value;
+    }
+
+    public get endPosition() : number {
+        return this.startPosition + this.duration;
+    }
+
+    public eventRemoved() {
+        this.removed.emit();
     }
 
     public serialise() : ISongEvent {
@@ -91,7 +104,7 @@ export class SecondsBaseEvent extends BaseEvent {
      * @memberof SecondsBaseEvent
      */
     public set duration(value : number) {
-        this._duration = this._metadata.positionQuarterNoteToSeconds(this._duration);
+        this._duration = this._metadata.positionQuarterNoteToSeconds(value);
     }
 
     /**
@@ -141,15 +154,11 @@ export class NoteEvent extends BaseEvent {
      * @param {string} duration The duration of the note (1-64 n*(ote)* / t*(riplet)* /. *(dotted)* or a number of quarter notes)
      * @memberof NoteEvent
      */
-    constructor (startPosition: number, pitch : number|string, duration: number|string) {
+    constructor (startPosition: number, pitch : string, duration: number|string) {
         super(startPosition);
     
-        if (typeof(pitch) ==="string") {
-            this.pitchString = pitch;
-        }
-        else {
-            this.pitch = pitch;
-        }
+        this.pitchString = pitch;
+        
         if(typeof(duration) === "string") {
             this.duration = this._parseQuarterNoteLength(duration)
         }
@@ -212,6 +221,7 @@ export class NoteEvent extends BaseEvent {
         let obj = super.serialise();
         obj.eventType = "NoteEvent";
         obj["pitch"] = this.pitch;
+        obj["pitchString"] = this.pitchString;
         return obj;
     }
 
@@ -240,7 +250,13 @@ export class NoteEvent extends BaseEvent {
 
 export class MetadataEvent {
 
+    // The current start position of this metadataEvent
+    // This can and will be adjusted by SongMetadata so this event starts at the beginning of a bar
     public startPosition : number;
+
+    // The original start position of this metadataEvent
+    // SongMetadata uses this so the position of the event doesn't drift too far from the original place.
+    public originalStartPosition : number;
 
     private _bpm : number;
     private _secondsPerBeat : number;
@@ -249,6 +265,7 @@ export class MetadataEvent {
 
     constructor(startPosition : number, bpm : number, timeSignature : number[]) {
         this.startPosition = startPosition;
+        this.originalStartPosition = startPosition;
         this.bpm = bpm;
         this.timeSignature = timeSignature
     }

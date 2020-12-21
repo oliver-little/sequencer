@@ -33,9 +33,45 @@ interface IChainSettings {
     "connections": Array<string>,
 }
 
-interface IEffect {
-    "effectType" : string,
-    "properties" : {[key: string] :any},
+interface IEffectProperty {
+    type : string
+    "propertyName" : string,
+    "displayName"? : string,
+    "value" : any,
+    "editable" : boolean
 }
 
-export {IOscillatorSettings, ISoundFileSettings, IInstrumentSettings, IAmplitudeEnvelope, IChainSettings};
+interface IEffectNumberProperty extends IEffectProperty {
+    type : "number"
+    "value" : number
+    "step" : number
+}
+
+interface IEffectNumberRange extends IEffectNumberProperty {
+    "min" : number,
+    "max" : number,
+}
+
+interface IEffectBooleanProperty extends IEffectProperty {
+    type : "boolean",
+    "value" : boolean
+}
+
+interface IEffectStringProperty extends IEffectProperty {
+    type : "string",
+    "value" : string,
+}
+
+interface IEffectListProperty extends IEffectProperty {
+    type : "list"
+    "value" : string,
+    "options" : string[]
+}
+
+interface IEffect {
+    "id" : string,
+    "effectType" : string,
+    "properties" : IEffectProperty[],
+}
+
+export {IOscillatorSettings, ISoundFileSettings, IInstrumentSettings, IAmplitudeEnvelope, IChainSettings, IEffect, IEffectProperty, IEffectNumberProperty, IEffectNumberRange, IEffectBooleanProperty, IEffectStringProperty, IEffectListProperty};

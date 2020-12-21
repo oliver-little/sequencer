@@ -30,7 +30,7 @@ export class SoundFileInstrument implements IInstrument {
      * @returns
      * @memberof SoundFileInstrument
      */
-    static async create(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings = SoundFileInstrument.defaults) {
+    static async create(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings = SoundFileInstrument.createDefaults()) {
         const o = new SoundFileInstrument(context, settings);
         await o.initialise();
         return o;
@@ -42,7 +42,7 @@ export class SoundFileInstrument implements IInstrument {
      * @param {IMP3Settings} settings
      * @memberof MP3Instrument
      */
-    constructor(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings = SoundFileInstrument.defaults) {
+    constructor(context : AudioContext|OfflineAudioContext, settings : ISoundFileSettings = SoundFileInstrument.createDefaults()) {
         this._settings = settings;
         this.id = uuid();
 
@@ -84,7 +84,7 @@ export class SoundFileInstrument implements IInstrument {
             throw new RangeError("Invalid Gain Value");
         }
         this._settings.gain = value;
-        this._masterGain.gain.value;
+        this._masterGain.gain.setValueAtTime(value, this._context.currentTime);
     }
 
 
@@ -139,6 +139,11 @@ export class SoundFileInstrument implements IInstrument {
         else {
             bufferSource.connect(this._masterGain);
         }
+        if (offset < 0) {
+            offset = 0;
+        }
+
+        startTime = Math.max(0, startTime);
         bufferSource.start(startTime, offset);
     }
 
@@ -162,6 +167,12 @@ export class SoundFileInstrument implements IInstrument {
 
     public serialise() : ISoundFileSettings {
         return this._settings;
+    }
+
+    public destroy() {
+        this._masterGain = null;
+        this._playingNodes = [];
+        this._audioBuffer = null;
     }
 
     private static createBufferSource(context : AudioContext|OfflineAudioContext, buffer : AudioBuffer) : AudioBufferSourceNode {
@@ -210,10 +221,12 @@ export class SoundFileInstrument implements IInstrument {
     }
 
     
-    public static defaults : ISoundFileSettings = {
-        "type": "soundFile",
-        "gain": 1,
-        "soundData": ""
+    public static createDefaults() : ISoundFileSettings {
+        return {
+            "type": "soundFile",
+            "gain": 1,
+            "soundData": ""
+        };
     }
 }
 

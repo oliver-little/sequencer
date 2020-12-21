@@ -18,10 +18,10 @@ export class SimpleEvent{
 
     public removeListener(callback : Function) : void {
         let index = this._callbacks.indexOf(callback);
-        if (index == -1) {
-            throw new Error("Element not found");
+        if (index != -1) {
+            this._callbacks.splice(index, 1);
         }
-        this._callbacks.splice(index, 1);
+        
     }
 
     public hasListener(callback : Function) : boolean {
@@ -36,9 +36,13 @@ export class SimpleEvent{
         this._callbacks.splice(index, 1);
     }
 
-    public emit(...args : any[]) : void {
+    public removeAllListeners() {
+        this._callbacks = [];
+    }
+
+    public emit(...args : any) : void {
         this._callbacks.forEach(element => {
-            element(args);
+            element(...args);
         });
     }
 }

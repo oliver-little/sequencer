@@ -1,12 +1,10 @@
 import {v4 as uuid} from "uuid";
 
 export class ObjectPool<T>{
-    private _creatable : {new () : T};
     private _availableObjects : Array<T>;
 
 
-    constructor(pooledObject : (new () => T)) {
-        this._creatable = pooledObject;
+    constructor() {
         this._availableObjects = [];
     }
 

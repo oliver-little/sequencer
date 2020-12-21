@@ -3,8 +3,9 @@ import {SimpleEvent} from "../../HelperModules/SimpleEvent.js";
 import {EventTimeline} from "../Notation/EventTimeline.js";
 import {BaseEvent, ISongEvent} from "../Notation/SongEvents.js";
 import {IInstrument} from "../Interfaces/IInstrument.js";
-import { IInstrumentSettings } from "../Interfaces/IInstrumentSettings.js";
+import { IInstrumentSettings, IOscillatorSettings, ISoundFileSettings } from "../Interfaces/IInstrumentSettings.js";
 import {v4 as uuid} from "uuid";
+import { ConnectionManager } from "../SongManagement/ConnectionManager.js";
 
 /**
  * Interface describing a serialised track
@@ -17,6 +18,15 @@ export interface ITrackSettings {
     "source" : IInstrumentSettings,
     "events" : ISongEvent[],
     "connections" : Array<string>
+}
+
+export interface IOscillatorTrackSettings extends ITrackSettings {
+    "source" : IOscillatorSettings
+}
+
+export interface ISoundFileTrackSettings extends ITrackSettings {
+    "source" : ISoundFileSettings
+    "allowOverlaps" : boolean
 }
 
 /**
@@ -33,10 +43,12 @@ export abstract class BaseTrack {
     protected _timeline : EventTimeline;
     protected _metadata : SongMetadata;
     protected _context : AudioContext|OfflineAudioContext;
+    protected _connectionManager : ConnectionManager;
     protected _scheduleEvent : SimpleEvent; // Stores the event which fires every time song events should be scheduled.
     protected _startTime = 0; // Stores the AudioContext time at which playback was started.
     protected _playing = false;
 
+    private _scheduleEventFunc : Function;
 
     /**
      *Creates an instance of BaseTrack.
@@ -47,19 +59,38 @@ export abstract class BaseTrack {
      * @param {string} [id] An optional uuid to represent this track (used in deserialisation). This is generated if not provided.
      * @memberof BaseTrack
      */
-    constructor (metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, audioSource : IInstrument, id? : string) {
+    constructor (metadata : SongMetadata, context : AudioContext|OfflineAudioContext, scheduleEvent : SimpleEvent, audioSource : IInstrument, connectionManager : ConnectionManager, settings? : ITrackSettings) {
         this._timeline = new EventTimeline();
         this._context = context;
         this._metadata = metadata;
         this._scheduleEvent = scheduleEvent;
-        this._scheduleEvent.addListener(function(quarterNotePosition : number) {this.scheduleSongEvents(quarterNotePosition)}.bind(this));
-
+        this._connectionManager = connectionManager;
+        this._scheduleEventFunc = function(quarterNotePosition : number) {this.scheduleSongEvents(quarterNotePosition)}.bind(this)
+        this._scheduleEvent.addListener(this._scheduleEventFunc);
         this.audioSource = audioSource;
-        this.id = id === undefined ? uuid() : id;
+        if (settings != undefined) {
+            this.id = settings.id;
+            this._timeline.deserialise(settings.events, this._metadata);
+            this._connectionManager.createConnections(this.audioSource, settings.connections);
+        }
+        else {
+            this.id = uuid();
+            this._connectionManager.createConnections(this.audioSource, ["Context"]);
+        }
     }
 
     get timeline() {
         return this._timeline;
+    }
+
+    get connection() {
+        // This enforces that tracks can only ever output to one connection
+        // Change this code if this becomes an issue
+        return this._connectionManager.getConnections(this.audioSource)[0];
+    }
+
+    get possibleConnections() {
+        return this._connectionManager.possibleConnectionStrings;
     }
 
     /**
@@ -70,6 +101,7 @@ export abstract class BaseTrack {
      * @memberof BaseTrack
      */
     public start(startPosition) : void {
+        this.stop();
         if (startPosition == 0) {
             this._startTime = this._context.currentTime;
         }
@@ -127,12 +159,31 @@ export abstract class BaseTrack {
      */
     protected abstract songEventHandler(event: BaseEvent) : void;
 
+    /**
+     * Connects this track to a different output (disconnects from the existing connection)
+     *
+     * @memberof BaseTrack
+     */
+    public connectTo(connectionString : string) {
+        if (connectionString in this._connectionManager.possibleConnections) {
+            this._connectionManager.removeAllConnections(this.audioSource);
+            this._connectionManager.addConnection(this.audioSource, connectionString);
+        }
+    }
+
     public serialise() : ITrackSettings {
         return {
             "id" : this.id,
             "source" : this.audioSource.serialise(),
             "events" : this.timeline.serialise(),
-            "connections" : [],
+            "connections" : this._connectionManager.getConnections(this.audioSource),
         }
+    }
+
+    public destroy() {
+        this.stop();
+        this.audioSource.destroy();
+        this._scheduleEvent.removeListener(this._scheduleEventFunc);
+        this.audioSource = null;
     }
 }

@@ -1,11 +1,145 @@
+<!DOCTYPE html>
 <html>
-    <head>
-        <script type="module" src="build/bundle.js"></script>
-    </head>
-    <body>
-    <button id="startButton">Start</button>
-    <button id="restartButton">Restart</button>
-    <button id="saveButton">Save To WAV</button>
-    <input id="soundFile" type="file">
-    </body>
+
+<head>
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+        }
+
+        .sequencerLoader {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #333333;
+            transition: opacity 0.4s ease;
+            transform: none;
+            z-index: 100;
+        }
+
+        .sequencerLoader.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .noscriptWarning {
+            position: absolute;
+            top: 75%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            color: white;
+        }
+
+        .loadDetails {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loadTitle {
+            margin: 0;
+            color: white;
+        }
+
+        .sequencerSpinner {
+            position: relative;
+            width: 50px;
+        }
+
+        .sequencerSpinner>span {
+            position: absolute;
+            top: 10px;
+            left: 50px;
+            color: white;
+            opacity: 0;
+            font-size: 50px;
+            line-height: 70%;
+        }
+
+        .sequencerSpinner>span:nth-child(1) {
+            animation: sequencerNoteAnim 6s infinite ease-in-out;
+        }
+
+        .sequencerSpinner>span:nth-child(2) {
+            animation: sequencerNoteAnim 6s 1.5s infinite ease-in-out;
+        }
+
+        .sequencerSpinner>span:nth-child(3) {
+            animation: sequencerNoteAnim 6s 3s infinite ease-in-out;
+        }
+
+        .sequencerSpinner>span:nth-child(4) {
+            animation: sequencerNoteAnim 6s 4.5s infinite ease-in-out;
+        }
+
+        @keyframes sequencerNoteAnim {
+            0% {
+                opacity: 0;
+                left: 39px;
+            }
+
+            5% {
+                opacity: 1;
+                left: 9px;
+            }
+
+            20% {
+                opacity: 1;
+                left: 9px;
+            }
+
+            25% {
+                opacity: 0;
+                left: -21px;
+            }
+        }
+    </style>
+    <!-- Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="manifest" href="/icons/site.webmanifest">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#00367c">
+    <link rel="shortcut icon" href="/icons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#ff0000">
+    <meta name="msapplication-config" content="/icons/browserconfig.xml">
+    <meta name="theme-color" content="#00367c">
+    <!-- Bundle dependencies - change to minified production on release -->
+    <script crossorigin src="https://unpkg.com/react@17.0.1/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17.0.1/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-beautiful-dnd@13.0.0/dist/react-beautiful-dnd.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.3.5/pixi.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/styles/main.min.css">
+    <script type="module" src="assets/scripts/bundle.js"></script>
+</head>
+
+<body>
+    <div id="root">
+    </div>
+    <div class="sequencerLoader" id="loader">
+        <!-- Place the loader inside root as react will replace it when it renders -->
+        <div class="loadDetails">
+            <p class="loadTitle">Loading Sequencer...</p>
+            <div class="sequencerSpinner">
+                <span>&#119133;</span>
+                <span>&#119134;</span>
+                <span>&#119135;</span>
+                <span>&#119136;</span>
+            </div>
+        </div>
+        <noscript>
+            <div class="noscriptWarning">
+                <p>Sequencer doesn't work without JavaScript! Please enable JavaScript to use this tool.</p>
+            </div>
+        </noscript>
+    </div>
+</body>
+
 </html>

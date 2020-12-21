@@ -1,0 +1,839 @@
+:root {
+    --t-d: #222;
+    --t-bg: #303030;
+    --t-fg: #5F5F5F;
+    --t-h: #999999;
+    --t-h2: #DDDDDD;
+    --t-acc: #00367c;
+    font-family: "Heebo", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
+button {
+    border: none;
+    user-select: none;
+    font-family: inherit;
+    font-size: 13.3333px;
+    color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+button:disabled {
+    color: var(--t-bg);
+}
+
+button:focus {
+    outline: none;
+}
+
+button:hover:enabled {
+    cursor: pointer;
+}
+
+input {
+    font-family: "Heebo", Arial, Helvetica, sans-serif;
+}
+
+input[type=number] {
+    width: 50px;
+}
+
+input[type=checkbox] {
+    cursor: pointer;
+}
+
+.pointer {
+    cursor: pointer;
+}
+
+/* Main App */
+
+.fullScreen {
+    position: absolute;
+    overflow: hidden;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.sequencerAppTopBar {
+    box-sizing: border-box;
+    display: flex;
+    background-color: var(--t-bg);
+    border-bottom: 2px solid var(--t-fg);
+    width: 100%;
+    min-height: 150px;
+    height: 20%;
+}
+
+.sequencerAppMainPanel {
+    display: flex;
+    position: relative;
+    width: 100%;
+    height: 80%;
+}
+
+.sequencerAppMainPanelLeft {
+    position: relative;
+    flex: 1 1 auto;
+    height: 100%;
+}
+
+#applicationContainer {
+    position: absolute;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+.buttonAnim {
+    background-color: white;
+    transition: background-color 0.1s ease, box-shadow 0.1s ease;
+}
+
+.buttonAnim:hover:enabled {
+    box-shadow: 0 0 0 2px var(--t-h);
+}
+
+.buttonAnim:active:enabled {
+    background-color: var(--t-h);
+}
+
+.buttonAnim:disabled {
+    background-color: var(--t-fg);
+}
+
+.buttonColorAnim {
+    background-color: white;
+    transition: background-color 0.1s ease;
+}
+
+.buttonColorAnim:hover:enabled {
+    background-color: var(--t-h2);
+}
+
+.buttonColorAnim:active:enabled {
+    background-color: var(--t-fg);
+}
+
+.modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    background-color: rgba(48, 48, 48, 0.7);
+    opacity: 1;
+    animation: 0.2s ease-out 0s 1 opacityAnim; 
+    transition: opacity 0.5s ease;
+}
+
+.modal.hide {
+    opacity: 0;
+}
+
+.errorModal {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.errorModalClose {
+    background-color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 2px;
+    position: absolute;
+    top: 25px;
+    right: 25px;
+}
+
+.errorModalTitle {
+    justify-self: flex-start;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.errorModalTitle > i {
+    color: red;
+    font-size: 30px;
+}
+
+.errorModalContent {
+    max-width: 400px;
+    margin: 20px 20px;
+    text-align: center;
+    align-self: center;
+}
+
+/* Playback Panel */
+.playbackPanel {
+    position: relative;
+    display: flex;
+    flex-direction: column; 
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.playbackButtons {
+    display: flex;
+    flex-direction: row;
+}
+
+.recentreButton {
+    position: absolute;
+    top: 75%;
+    border-radius: 2px;
+    padding: 3px 8px;
+}
+
+.panelButton {
+    border: none;
+    border-radius: 2px;
+    width: 50px;
+    height: 50px;
+    margin-left: 5px;
+    margin-right: 5px;
+    
+}
+
+/* Edit Panel*/
+.editPanel {
+    border-left: 2px solid var(--t-fg);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+}
+
+.snapTypeGroup, .lengthTypeGroup {
+    display: flex;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.noteButton {
+    font-size: 2em;
+}
+
+.noteButton > span {
+    line-height: 50%;
+}
+
+.selectionGroup {
+    position: relative;
+}
+
+.selectionGroupTitle {
+    position: absolute;
+    top: -50%;
+    color: white;
+    margin: 0 0 5px 15px;
+}
+
+.selectionButton.selected:enabled {
+    transition: box-shadow 0.1s ease;
+    box-shadow: 0 0 0 2px #0075FF;
+}
+
+/* Serialise Panel */
+.serialisePanel {
+    display: flex;
+    align-items: center;
+    border-left: 2px solid var(--t-fg);
+    padding-left: 10px;
+}
+
+/* Effects Chain Panel */
+
+.effectsChainPanel {
+    flex: 0 1 auto;
+    width: 400px;
+    height: 100%;
+    transform: none;
+    transition: transform 0.5s ease-in-out;
+    z-index: 1;
+}
+
+.effectsChainPanel.hidden {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    transform: translateX(100%);
+}
+
+.effectsChainHideShowButton {
+    top: 4px;
+    transition: transform 0.5s ease-in-out, left 0.3s ease;
+
+    width: 30px;
+    height: 30px;
+    font-size: 28px;
+    background-color: transparent;
+    border: none;
+    position: absolute;
+    
+}
+
+.effectsChainHideShowButton:hover {
+    filter: brightness(1.2);
+}
+
+.effectsChainHideShowButton > i {
+    color: var(--t-h2);
+}
+
+.effectsChainPanel.hidden > .effectsChainHideShowButton { 
+    transform: translateX(-100%);
+    left: 5px;
+}
+
+.effectsChainContent {
+    border-left: 2px solid var(--t-fg);
+    height: 100%;
+    color: white;
+    background-color: var(--t-bg);
+    overflow: hidden;
+}
+
+.effectsChainPanelTitle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 3px;
+    padding-bottom: 4px;
+}
+
+.effectsChainTitleButton {
+    background-color: transparent;
+    color: white;
+    font-size: 17px;
+    border-radius: 5px;
+    transition: border 0.15s ease;
+    border: 2px solid var(--t-fg);
+    padding: 2px 10px 2px 10px;
+}
+
+.effectsChainTitleButton:hover {
+    border-color: var(--t-h2);
+}
+
+.effectsChainTitleButton:active {
+    background-color: var(--t-fg);
+}
+
+.effectsChainButton {
+    border-radius: 2px;
+}
+
+.effectsChainButton.title {
+    position: absolute;
+    right: 0px;
+    margin-right: 22px;
+}
+
+.effectsChainButton:disabled {
+    background-color: var(--t-fg);
+}
+
+.effectsChainButton.size {
+    width: 25px;
+    height: 25px;
+}
+
+.effectTitleText {
+    margin: 0 0 0px 10px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.effectsListDivider {
+    border-top: 2px solid;
+    border-color: var(--t-fg);
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.effectsList {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.effectsList > *:last-child {
+    margin-bottom: 60px;
+}
+
+.effectsListDroppable {
+    padding: 5px 0 0 0;
+    margin-bottom: 5px;
+    border-top: 2px solid;
+    border-bottom: 2px solid;
+    border-color: transparent;
+    transition: background-color 0.15s linear, border-color 0.15s ease;
+}
+
+.effectsListDroppable.dragging {
+    border-color: var(--t-fg);
+    background-color: #222;
+}
+
+.chainEffect {
+    display: flex;
+    flex-direction: column;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-bottom: 10px;
+
+    border-radius: 10px;
+    background-color: var(--t-bg);
+    border: 2px solid white;
+    transition: background-color 0.15s linear;
+}
+
+.chainEffect:focus {
+    outline: none;
+}
+
+.chainEffect.dragging {
+    border-color: white;
+    background-color: #3F3F3F;
+}
+
+.chainEffectTitle {
+    display: flex;
+    padding: 10px 10px;
+    border-radius: 8px;
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+.chainEffectTitle:hover {
+    background-color: #3F3F3F; 
+}
+
+.chainEffectTitle:focus {
+    outline: none;
+}
+
+.effectContent {
+    max-height: 0;
+    transition: max-height 0.5s ease;
+    overflow: hidden;
+}
+
+.effectContent > *:last-child {
+    margin-bottom: 8px;
+}
+
+.effectProperty {
+    margin: 3px 0;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.effectProperty.boolean, .effectProperty.list {
+    margin-top: 12px;
+}
+
+.effectProperty > *:first-child {
+    margin-left: 20px;   
+}
+
+.effectProperty > *:last-child {
+    margin-right: 20px;
+}
+
+.effectProperty > p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.effectsChainButton.dropdownButton {
+    width: 26px;
+    height: 26px;
+}
+
+/* Dropdown box */
+.dropdown {
+    position: absolute;
+
+    display: flex;
+    align-items: center;
+    justify-content:center;
+    flex-direction: column;;
+
+    animation: dropdownAnim;
+}
+
+@keyframes dropdownAnim {
+    0% {
+
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+    100% {
+        transform: none;
+        opacity: 1;
+    }
+}
+
+.dropdownItem {
+    width: 100%;
+    border-radius: 5px;
+    background: none;
+    border: none;
+    padding: 5px 0;
+}
+
+.addTrackButton {
+    margin-bottom: 2px;
+    border-radius: 2px;
+
+    height: 30px;
+    width: 30px;
+    background-color: white;
+}
+
+.addTrackButton.highlight {
+    animation: addTrackHighlight 1.5s infinite;
+}
+
+@keyframes addTrackHighlight {
+    0% {
+        box-shadow: 0 0 0 0px rgba(255, 255, 255, 0);
+    }
+    50% {
+        box-shadow: 0 0 0 2.5px rgba(255, 255, 255, 1);
+    }
+    100% {
+        box-shadow: 0 0 0 0px rgba(255, 255, 255, 0);
+    }
+}
+
+.addTrackOptionsDiv {
+    background-color: white;
+    border-radius: 5px;
+    width: 150px;
+}
+
+/* Box Select */
+.boxSelectWatcher {
+    display: flex;
+    justify-content: center;
+}
+
+.boxSelectOverlayContainer {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: visible;
+    z-index: 10;
+}
+
+@keyframes opacityAnim {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.boxSelectOverlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 5px;
+    overflow: hidden;
+    background-color: white;
+    animation: 0.2s ease-out 0s 1 opacityAnim;
+}
+
+.boxSelectOverlayArrow {
+    width: 0px;
+    height: 0px;
+    animation: 0.2s ease-out 0s 1 opacityAnim;
+}
+
+.boxSelectOverlayArrow.top {
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 8px solid white;
+}
+
+.boxSelectOverlayArrow.bottom {
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 8px solid white;
+}
+
+.boxSelectOverlayArrow.left {
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 8px solid white;
+}
+
+.boxSelectButton {
+    align-self: center;
+    outline: none;
+    border:none;
+    background-color: transparent;
+    white-space: nowrap;
+    width: 100%;
+    padding: 2px 10px 2px 10px;
+}
+
+.boxSelectButton:hover:enabled {
+    background-color: var(--t-h);
+}
+
+.mainBoxSelectButton {
+    background-color: white;
+    padding: 2px 8px;
+    border-radius: 5px;
+}
+
+.mainBoxSelectButton:hover:enabled {
+    background-color: var(--t-h2);
+}
+
+.mainBoxSelectButton:active:enabled {
+    background-color: var(--t-fg);
+}
+
+/* Envelope Overlay */
+.envelopeOverlayOuterContainer {
+    position: absolute;
+    display: flex;
+    align-items: center;
+}
+
+.envelopeOverlayInnerContainer {
+    position: fixed;
+    flex-direction: row;
+    display: flex;
+    align-items: center;
+    z-index: 10;
+}
+
+.envelopeOverlayContent {
+    width: 175px;
+    padding: 10px 0;
+}
+
+.envelopeOverlayContent > div:not(:first-child):not(:last-child) {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+
+.oscillatorEnvelopeContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin: 5px 0 5px 0;
+}
+
+/* Metadata Edit Box */
+
+.metadataDiv {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateX(-50%);
+}
+
+.metadataInnerDiv {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 160px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: var(--t-h2);
+}
+
+.metadataNumerator {
+    width: 30px;
+    text-align: center;
+    border: 1px solid grey;
+    border-radius: 2px;
+    padding: 1px 0;
+}
+
+.metadataDenominator {
+    width: 30px;
+    background-color: white;
+    border: 1px solid grey;
+    border-radius: 2px;
+}
+
+.metadataDivider {
+    border: 1px solid #666;
+    background-color: #666;
+    width: auto;
+    height: 0px;
+    margin: 3px 0;
+}
+
+.metadataBPM {
+    width: 30px;
+    text-align: center;
+}
+
+.metadataSubmit {
+    background-color: white;
+    border: 1px solid grey;
+    border-radius: 2px;
+}
+
+.metadataProperty {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px 0px;
+}
+
+.metadataProperty > p {
+    font-weight: bold;
+    font-size: 14px;
+    margin: 0 0;
+    margin-right: 5px;
+}
+
+/* Track Settings Box */
+
+.trackSettingsDiv {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.trackSettingsName {
+    border: none;
+    text-align: center;
+    display: inline;
+    color: white;
+    background-color: var(--t-bg);
+    padding: none;
+    margin-top: 20px;
+    margin-bottom: 5px;
+}
+
+.trackSettingsDeleteButton {
+    position: absolute;
+    top: 7px;
+    left: 7px; 
+    width: 25px;
+    height: 25px;
+    border-radius: 2px;
+}
+
+.trackSettingsIconInput {
+    border-radius: 5px;
+    border-width: 2px;
+    height: 35px;
+    width: 35px;
+    margin: 5px 0;
+    background-color: white;
+}
+
+
+.trackSettingsIconInput > i {
+    font-size: 1.2em;
+    color: black;
+}
+
+.trackSettingsInteractable {
+    display: flex;
+    align-items: center;
+
+    border-radius: 5px;
+    padding: 1px 4px;
+    margin: 5px 0;
+}
+
+.trackSettingsInteractable > p {
+    margin: 0 8px 0 0;
+    font-family: "Heebo", Arial;
+    font-size: 13.3333px;
+    color: white;
+    user-select: none;
+}
+
+.trackSettingsInteractable > input[type=checkbox] {
+    margin: 0;
+}
+
+.trackSettingsBoxSelect {
+    margin: 5px 0;
+}
+
+/* Slider */
+.slider {
+    cursor: pointer;
+    position: relative;
+    width: 200px;
+    max-width: 80%;
+    height: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.sliderTrack {
+    height: 8px;
+    width: 200px;
+    background-color: white;
+    border-radius: 25px;
+}
+
+.sliderTrackActive {
+    height: 100%;
+    background-color: #0075ff;
+    border-radius: 25px;
+}
+
+
+.sliderHandle {
+    width: 18px;
+    height: 18px;
+    margin-left: -0.5rem;
+    margin-top: -0.95rem;
+    border-radius: 50%;
+    background-color: #0075ff;
+}
+
+.sliderValueLabel {
+    display: none;
+}
+
+.sliderMinLabel, .sliderMaxLabel {
+    color: white;
+    position: absolute;
+    top: 35px;
+}
+
+.sliderMaxLabel {
+    float: right;
+    left: 100%;
+}
+
+.sliderMaxLabel > span {
+    display: inline-block;
+    transform: translateX(-100%);
+}
