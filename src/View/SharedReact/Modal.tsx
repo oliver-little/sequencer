@@ -1,10 +1,10 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { FAButton } from "./BasicElements";
+import { ClickOutsideWatcher, FAButton } from "./BasicElements";
 
 const modalRoot = document.getElementById("root");
 
-export class BackgroundModal extends React.PureComponent<{ onClick?: () => void }> {
+export class BackgroundModal extends React.PureComponent<{ outsideClick?: () => void }> {
 
     private _modalRootChild: HTMLDivElement;
 
@@ -25,11 +25,14 @@ export class BackgroundModal extends React.PureComponent<{ onClick?: () => void 
     }
 
     render() {
-        this._modalRootChild.onclick = undefined;
-        if (this.props.onClick) {
-            this._modalRootChild.onclick = this.props.onClick;
+        if (this.props.outsideClick) {
+            return createPortal(<ClickOutsideWatcher callback={this.props.outsideClick}>
+                {this.props.children}
+            </ClickOutsideWatcher>, this._modalRootChild);
         }
-        return createPortal(this.props.children, this._modalRootChild);
+        else {
+            return createPortal(this.props.children, this._modalRootChild);
+        }
     }
 }
 
@@ -61,9 +64,14 @@ interface ErrorBoxProps {
 }
 
 function ErrorBox(props: ErrorBoxProps) {
-    return <div className="errorModal">
-        <FAButton className="buttonAnim" iconName="fa fa-close" onClick={props.onClose} />
-        <p>{props.error}</p>
+    return <div>
+        <FAButton className="errorModalClose buttonAnim" iconName="fa fa-close" onClick={props.onClose} />
+        <div className="errorModal">
+            <div className="errorModalTitle">
+                <i className="fa fa-exclamation-circle" />
+            </div>
+            <p className="errorModalContent">{props.error}</p>
+        </div>
     </div>;
 }
 
@@ -83,7 +91,7 @@ interface LoadingErrorModalProps {
 
 export class LoadingErrorModal extends React.Component<LoadingErrorModalProps> {
     render() {
-        return <BackgroundModal onClick={(!this.props.loading ? this.props.onClose : undefined)}>
+        return <BackgroundModal outsideClick={(!this.props.loading ? this.props.onClose : undefined)}>
             {this.props.loading ? <LoadingSpinner title={this.props.title} /> : <ErrorBox error={this.props.title} onClose={this.props.onClose} />}
         </BackgroundModal>;
     }

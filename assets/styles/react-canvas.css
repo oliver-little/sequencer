@@ -136,13 +136,14 @@ input[type=checkbox] {
 
 .errorModal {
     display: flex;
-    width: auto;
-    height: 100px;
+    flex-direction: column;
+    justify-content: center;
     background: white;
     border-radius: 10px;
+    padding: 15px;
 }
 
-.errorModal > button {
+.errorModalClose {
     background-color: white;
     width: 25px;
     height: 25px;
@@ -152,8 +153,20 @@ input[type=checkbox] {
     right: 25px;
 }
 
-.errorModal > p {
-    max-width: 250px;
+.errorModalTitle {
+    justify-self: flex-start;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.errorModalTitle > i {
+    color: red;
+    font-size: 30px;
+}
+
+.errorModalContent {
+    max-width: 400px;
     margin: 20px 20px;
     text-align: center;
     align-self: center;
