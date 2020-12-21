@@ -133,7 +133,7 @@ export class EffectsChainPanel extends React.Component<EffectsChainPanelProps, E
             <div className={"effectsChainContent"} >
                 <div className={"effectsChainPanelTitle"}>
                     <BoxSelect mainButtonClassName={"effectsChainTitleButton"} selectButtonClassName={"effectsChainSelectButton"} selected={this.state.currentChainNumber} options={options} selectedCallback={this._selectedChainChanged} />
-                    <FAButton className="effectsChainButton buttonColorAnim delete title" iconName="fa fa-close" onClick={this._deleteCurrentChain} disabled={curChain.chainName === "Bus"} />
+                    <FAButton className="effectsChainButton buttonColorAnim size title" iconName="fa fa-close" onClick={this._deleteCurrentChain} disabled={curChain.chainName === "Bus"} />
                 </div>
                 <EffectsChainInfo
                     effectsChain={curChain.effects}
@@ -161,9 +161,9 @@ interface EffectsChainInfoProps {
     newEffect: Function
     effectRemoved: Function
     preGainValue: number,
-    preGainValueChanged: (value : number) => void,
+    preGainValueChanged: (value: number) => void,
     postGainValue: number,
-    postGainValueChanged: (value : number) => void,
+    postGainValueChanged: (value: number) => void,
     connection: string,
     connectionOptions: string[],
     connectionChangedCallback: Function
@@ -232,39 +232,53 @@ interface ChainEffectProps extends IEffect {
     onDelete: Function
 }
 
-class ChainEffect extends React.Component<ChainEffectProps> {
+class ChainEffect extends React.Component<ChainEffectProps, { collapsed: boolean }> {
+
+    private _contentRef: React.RefObject<HTMLDivElement>;
+
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            collapsed: true
+        }
+
+        this._contentRef = React.createRef();
+    }
+
     render() {
         return <Draggable draggableId={this.props.id} index={this.props.effectIndex}>
             {(provided, snapshot) => (
                 <div className={"chainEffect" + (snapshot.isDragging ? " dragging" : "")} ref={provided.innerRef} {...provided.draggableProps}>
-                    <div>
-                        <div className={"chainEffectTitle"} {...provided.dragHandleProps}>
-                            <p className={"effectTitleText"} style={{ marginRight: "5px" }}>{this.props.effectType}</p>
-                            <FAButton className="effectsChainButton buttonColorAnim delete" iconName={"fa fa-close"} onClick={() => { this.props.onDelete(this.props.effectIndex) }} />
-                        </div>
+                    <div className={"chainEffectTitle"} {...provided.dragHandleProps}>
+                        <FAButton className="effectsChainButton buttonColorAnim size" title={this.state.collapsed? "Expand" : "Collapse"} iconName={"fa " + (this.state.collapsed ? "fa-chevron-right" : "fa-chevron-down")} onClick={() => this.setState({ collapsed: !this.state.collapsed })} />
+                        <p className={"effectTitleText"} style={{ marginRight: "5px" }}>{this.props.effectType}</p>
+                        <FAButton className="effectsChainButton buttonColorAnim size" title="Delete Effect" iconName={"fa fa-close"} onClick={() => { this.props.onDelete(this.props.effectIndex) }} />
                     </div>
-                    {this.props.properties.map((property, index) => {
-                        if (property.editable) {
-                            switch (property.type) {
-                                case "number":
-                                    if (property.hasOwnProperty("min")) {
-                                        return <RangeEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectNumberRange} onChange={this.props.onPropertyChange} />;
-                                    }
-                                    else {
-                                        return <NumberEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectNumberProperty} onChange={this.props.onPropertyChange} />;
-                                    }
-                                case "string":
-                                    return <StringEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectStringProperty} onChange={this.props.onPropertyChange} />;
-                                case "boolean":
-                                    return <BooleanEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectBooleanProperty} onChange={this.props.onPropertyChange} />;
-                                case "list":
-                                    return <ListEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectListProperty} onChange={this.props.onPropertyChange} />;
-                                default:
-                                    console.log("Unknown property type: " + property.type);
-                                    return null;
+                    <div ref={this._contentRef} className="effectContent" style={{ maxHeight: (this.state.collapsed ? undefined : (this._contentRef.current ? this._contentRef.current.scrollHeight + "px" : "initial")) }}>
+                        {this.props.properties.map((property, index) => {
+                            if (property.editable) {
+                                switch (property.type) {
+                                    case "number":
+                                        if (property.hasOwnProperty("min")) {
+                                            return <RangeEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectNumberRange} onChange={this.props.onPropertyChange} />;
+                                        }
+                                        else {
+                                            return <NumberEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectNumberProperty} onChange={this.props.onPropertyChange} />;
+                                        }
+                                    case "string":
+                                        return <StringEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectStringProperty} onChange={this.props.onPropertyChange} />;
+                                    case "boolean":
+                                        return <BooleanEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectBooleanProperty} onChange={this.props.onPropertyChange} />;
+                                    case "list":
+                                        return <ListEffectProperty key={index} effectIndex={this.props.effectIndex} propertyIndex={index} {...property as IEffectListProperty} onChange={this.props.onPropertyChange} />;
+                                    default:
+                                        console.log("Unknown property type: " + property.type);
+                                        return null;
+                                }
                             }
-                        }
-                    })}
+                        })}
+                    </div>
                 </div>)
             }
         </Draggable>
