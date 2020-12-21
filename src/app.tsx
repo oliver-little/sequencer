@@ -8,6 +8,8 @@ let hideLoader = () => {
     setTimeout(() => {loaderDiv.parentElement.removeChild(loaderDiv)}, 500);
 }
 
+document.title = "WebSequencer";
+
 render(
     <SequencerApp hideLoader={hideLoader} />,
     document.getElementById('root')
