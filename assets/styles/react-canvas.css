@@ -493,6 +493,22 @@ input[type=checkbox] {
     background-color: white;
 }
 
+.addTrackButton.highlight {
+    animation: addTrackHighlight 1.5s infinite;
+}
+
+@keyframes addTrackHighlight {
+    0% {
+        box-shadow: 0 0 0 0px rgba(255, 255, 255, 0);
+    }
+    50% {
+        box-shadow: 0 0 0 2.5px rgba(255, 255, 255, 1);
+    }
+    100% {
+        box-shadow: 0 0 0 0px rgba(255, 255, 255, 0);
+    }
+}
+
 .addTrackOptionsDiv {
     background-color: white;
     border-radius: 5px;

@@ -150,7 +150,7 @@ export class Dropdown extends React.PureComponent<DropdownProps, DropdownState> 
     render() {
         const objDivClasses = "dropdown" + (this.props.optionsDivClassName == undefined ? "" : " " + this.props.optionsDivClassName);
         return <div>
-            <FAButton className={this.props.buttonClassName} iconName={this.props.iconName} onClick={() => { this._handleDropdownClick(); }} />
+            <FAButton className={this.props.buttonClassName} title={this.props.title} iconName={this.props.iconName} onClick={() => { this._handleDropdownClick(); }} />
 
             {this.state.dropdownVisible && <ClickOutsideWatcher callback={() => this.setState({ dropdownVisible: false })}>
                 <div className={objDivClasses}>

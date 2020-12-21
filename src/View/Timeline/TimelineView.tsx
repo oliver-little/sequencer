@@ -154,6 +154,8 @@ export class TimelineView extends VerticalScrollView {
         else {
             this.verticalScrollPosition = 0;
         }
+
+        this._renderNewTrackObject();
     }
 
     private _renderNewTrackObject() {
