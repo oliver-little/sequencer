@@ -27,8 +27,8 @@
     "webpack-merge": "^5.7.2"
   },
   "scripts": {
-    "dev": "tsc -p ./tsconfig.json & webpack --config webpack.dev.js & postcss src/Styles/main.css > assets/styles/main.min.css",
-    "prod": "tsc -p ./tsconfig.json & webpack --config webpack.prod.js & postcss src/Styles/main.css > assets/styles/main.min.css",
+    "dev": "tsc -p ./tsconfig.json & webpack --config webpack.dev.js & postcss src/Styles/main.css -d assets/styles/",
+    "prod": "tsc -p ./tsconfig.json & webpack --config webpack.prod.js & postcss src/Styles/main.css -d assets/styles/",
     "start": "webpack-dev-server --mode development --open"
   },
   "repository": {
