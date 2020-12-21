@@ -170,7 +170,7 @@ interface DropdownItemProps {
 
 export class DropdownItem extends React.Component<DropdownItemProps> {
     render() {
-        const className = "dropdownItem" + (this.props.className == undefined ? "" : " " + this.props.className);
+        const className = "dropdownItem buttonColorAnim" + (this.props.className == undefined ? "" : " " + this.props.className);
         return <button className={className} onClick={() => { this.props.callback(this.props.index) }}>{this.props.title}</button>;
     }
 }

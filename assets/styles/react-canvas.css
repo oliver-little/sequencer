@@ -116,6 +116,45 @@ input[type=checkbox] {
     background-color: var(--t-fg);
 }
 
+.modal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    background-color: rgba(48, 48, 48, 0.7);
+    opacity: 1;
+    animation: 0.2s ease-out 0s 1 opacityAnim; 
+    transition: opacity 0.5s ease;
+}
+
+.modal.hide {
+    opacity: 0;
+}
+
+.errorModal {
+    display: flex;
+    width: auto;
+    height: 100px;
+    background: white;
+    border-radius: 10px;
+}
+
+.errorModal > button {
+    background-color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 2px;
+    position: absolute;
+    top: 25px;
+    right: 25px;
+}
+
+.errorModal > p {
+    max-width: 250px;
+    margin: 20px 20px;
+    text-align: center;
+    align-self: center;
+}
 
 /* Playback Panel */
 .playbackPanel {
@@ -392,7 +431,6 @@ input[type=checkbox] {
 
 /* Dropdown box */
 .dropdown {
-    /* Keeps the dropdown out of the way until it is clicked */
     position: absolute;
 
     display: flex;
@@ -416,10 +454,11 @@ input[type=checkbox] {
 }
 
 .dropdownItem {
-    background: none!important;
+    width: 100%;
+    border-radius: 5px;
+    background: none;
     border: none;
-    padding-top: 0.5em;
-    padding-bottom: 0.5em;
+    padding: 5px 0;
 }
 
 .addTrackButton {
@@ -436,6 +475,7 @@ input[type=checkbox] {
 .addTrackOptionsDiv {
     background-color: white;
     border-radius: 5px;
+    width: 150px;
 }
 
 /* Box Select */
@@ -453,7 +493,7 @@ input[type=checkbox] {
     z-index: 10;
 }
 
-@keyframes boxSelectOverlayAnim {
+@keyframes opacityAnim {
     0% {
         opacity: 0;
     }
@@ -469,13 +509,13 @@ input[type=checkbox] {
     border-radius: 5px;
     overflow: hidden;
     background-color: white;
-    animation: 0.2s ease-out 0s 1 boxSelectOverlayAnim;
+    animation: 0.2s ease-out 0s 1 opacityAnim;
 }
 
 .boxSelectOverlayArrow {
     width: 0px;
     height: 0px;
-    animation: 0.2s ease-out 0s 1 boxSelectOverlayAnim;
+    animation: 0.2s ease-out 0s 1 opacityAnim;
 }
 
 .boxSelectOverlayArrow.top {

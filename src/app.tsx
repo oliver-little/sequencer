@@ -5,7 +5,7 @@ import { SequencerApp } from "./View/ReactUI/SequencerApp";
 let loaderDiv = document.getElementById("loader");
 let hideLoader = () => {
     loaderDiv.className += " hide";
-    setTimeout(() => {loaderDiv.parentElement.removeChild(loaderDiv)}, 2000);
+    setTimeout(() => {loaderDiv.parentElement.removeChild(loaderDiv)}, 500);
 }
 
 render(

@@ -8,6 +8,9 @@ import { SoundFileTrack } from "../../Model/Tracks/SoundFileTrack.js";
 import { SimpleEvent } from "../../HelperModules/SimpleEvent.js";
 import { SongManager } from "../../Model/SongManagement/SongManager.js";
 import { UITrackStore } from "../ReactUI/UITrackStore.js";
+import { LoadingErrorModal } from "../SharedReact/Modal.js";
+
+const modalRoot = document.getElementById("root");
 
 /**
  * Container for a the settings of a list of tracks.
@@ -154,6 +157,11 @@ export class TrackList extends PIXI.Container {
     }
 
     private _soundFileChanged(index: number, files: FileList) {
+        // Modal
+        let modalDiv = document.createElement("div");
+        modalRoot.appendChild(modalDiv);
+        render(<LoadingErrorModal loading={true} title={"Loading Sound File..."} onClose={() => {unmountComponentAtNode(modalDiv)}} />, modalDiv);
+
         let file = files[0];
         const objecturl = URL.createObjectURL(file);
         var xhr = new XMLHttpRequest();
@@ -163,9 +171,11 @@ export class TrackList extends PIXI.Container {
         xhr.onload = function (e) {
             if (this.status == 200) {
                 onloadFunc(index, this.response);
+                unmountComponentAtNode(modalDiv);
+                modalRoot.removeChild(modalDiv);
             }
             else {
-                throw new Error("Loading failed, error code:" + this.status);
+                render(<LoadingErrorModal loading={false} title={"Unknown error. Please try again."} onClose={() => {unmountComponentAtNode(modalDiv); modalRoot.removeChild(modalDiv)}} />, modalDiv);
             }
         };
         xhr.send();
