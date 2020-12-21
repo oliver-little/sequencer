@@ -1,5 +1,5 @@
 {
-  "name": "sequencer",
+  "name": "web-sequencer",
   "version": "1.0.0",
   "description": "A web-based DAW and sequencer, built in TypeScript, using the Web Audio API.",
   "main": "index.js",
