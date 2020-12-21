@@ -35,6 +35,8 @@ export class EventTimeline {
      * @memberof EventTimeline
      */
     public updatePlaybackTime() {
+        // Possible efficiency improvement here, if it's guaranteed no event can be longer than 4 beats,
+        // work backwards from the end and stop looking when the start position of an event is > 4 beats before.
         this.longestEventIndex = null;
         this.longestEventValue = 0;
         for (let i = 0; i < this._events.length; i++) {
@@ -116,6 +118,9 @@ export class EventTimeline {
             else {
                 this.longestEventIndex = null;
             }
+        }
+        else if (index < this.longestEventIndex) { // Removing an event before the longest one will clearly
+            this.longestEventIndex -= 1;
         }
     }
 

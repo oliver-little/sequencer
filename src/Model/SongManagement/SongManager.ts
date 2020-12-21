@@ -32,7 +32,7 @@ export class SongManager {
 
     protected _boundQuarterNoteUpdateFunction: () => any;
 
-    private _stopTimeout: NodeJS.Timeout;
+    private _startSongLength : number;
 
     constructor(context?: AudioContext | OfflineAudioContext) {
         this.metadata = new SongMetadata();
@@ -53,7 +53,6 @@ export class SongManager {
     get quarterNotePosition() {
         return this._quarterNotePosition;
     }
-
 
     /**
      * Used for external setting of quarterNotePosition (forces the update function to use a new start time)
@@ -167,7 +166,8 @@ export class SongManager {
 
         this.connectionManager.outputGain.gain.setTargetAtTime(0.0001, this.context.currentTime, 0.03);
 
-        clearTimeout(this._stopTimeout);
+        this._startSongLength = null;
+
         clearInterval(this.playingIntervalIDs);
         this._tracks.forEach(element => {
             element.stop();
@@ -281,7 +281,7 @@ export class SongManager {
         let longestEvent = 0;
         let cachedEffectLengths: { [connectionName: string]: number } = {};
         this._tracks.forEach(track => {
-            let playbackTime = track.timeline.playbackTime;
+            let playbackTime = this.metadata.positionQuarterNoteToSeconds(track.timeline.playbackTime);
             let connection = this.connectionManager.getConnections(track.audioSource)[0];
             if (connection != "Context") {
                 if (connection in cachedEffectLengths) {
@@ -311,6 +311,9 @@ export class SongManager {
         if (this.playing) {
             let timeSinceStart = this.context.currentTime - this._startTime;
             this._internalQuarterNotePosition = this.metadata.positionSecondsToQuarterNote(timeSinceStart);
+            if (this._startSongLength && timeSinceStart > this._startSongLength) {
+                this.stopToBeginning();
+            }
             requestAnimationFrame(this._boundQuarterNoteUpdateFunction);
         }
     }
@@ -318,8 +321,10 @@ export class SongManager {
     private _scheduleStop() {
         let length = this.getPlaybackLength();
         if (length > 0) {
-            clearTimeout(this._stopTimeout);
-            this._stopTimeout = setTimeout(() => { this.stopToBeginning(); }, (length- this.metadata.positionQuarterNoteToSeconds(this._quarterNotePosition)) * 1000)
+            this._startSongLength = length;
+        }
+        else {
+            this._startSongLength = null;
         }
     }
 }

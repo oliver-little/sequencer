@@ -26,7 +26,6 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
   private _editDiv: HTMLDivElement;
   private _editDivMounted: boolean;
 
-  private _showingEditBox: boolean = false;
   private _active: boolean;
 
   constructor(timeline: ScrollableTimeline) {
@@ -34,7 +33,7 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
     this.timeline = timeline;
 
     this._eventEdited = this._eventEdited.bind(this);
-    this._hideEditBox = this._hideEditBox.bind(this);
+    this._unmountEditDiv = this._unmountEditDiv.bind(this);
 
     this._graphics = new PIXI.Graphics();
     this._graphics.beginFill(UIColors.metadataEventColor).drawRect(0, 0, 4, UIPositioning.timelineHeaderHeight).endFill();
@@ -68,11 +67,8 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
     if (active) {
       this.event = closestEvent;
       this.alpha = 1;
-
-      this._mountEditDiv();
     }
     else {
-      this._unmountEditDiv();
       this.event = new MetadataEvent(quarterNotePosition, closestEvent.bpm, closestEvent.timeSignature);
     }
   }
@@ -96,17 +92,16 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
       if (!this.active) {
         this.active = true;
         this.event = this.timeline.metadata.addMetadataEvent(this.event.startPosition, this.event.bpm, this.event.timeSignature);
-        this._mountEditDiv();
       }
       this._editDiv.style.left = (this.getGlobalPosition().x + 2).toString() + "px";
       // Render the edit box at the position of the MetadataTimelineEvent
-      this._showEditBox();
+      this._mountEditDiv();
     }
     else if (this.active && this._mouseClickType == MouseClickType.RightClick && this.event.startPosition != 0) {
       // Delete this metadata event
       this.active = false;
       this.timeline.metadata.removeMetadataEvent(this.event.startPosition);
-      this._hideEditBox();
+      this._unmountEditDiv();
       let oldStartPosition = this.event.startPosition;
       // Setup the event for the next time the user left clicks on this object
       let closestEvent = this.timeline.metadata.events[this.timeline.metadata.events.binarySearch(this.event.startPosition, true)];
@@ -119,10 +114,12 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
 
   public setVisible(value: boolean) {
     this.visible = value;
+    if (!value) {
+      this._unmountEditDiv();
+    }
   }
 
   public destroy() {
-    this._hideEditBox();
     this._unmountEditDiv();
     this._editDiv = null;
     super.destroy();
@@ -130,41 +127,23 @@ export class MetadataTimelineEvent extends MouseTypeContainer {
 
   private _eventEdited(timeSigNumerator: number, timeSigDenominator: number, bpm: number) {
     this.event = this.timeline.metadata.addMetadataEvent(this.event.startPosition, bpm, [timeSigNumerator, timeSigDenominator]);
+    this._unmountEditDiv();
     this.timeline.regenerateAroundPosition(this.timeline.metadata.positionQuarterNoteToBars(this.event.startPosition));
-    // The event was edited, so regenerate the box at the same position (no difference in the user's view) to update it's props
-    render(<MetadataEditBox numerator={this.event.timeSignature[0]} denominator={this.event.timeSignature[1]} bpm={this.event.bpm} onSubmit={this._eventEdited} />, this._editDiv);
   }
 
   private _mountEditDiv() {
     if (!this._editDivMounted) {
       document.getElementById("applicationContainer").appendChild(this._editDiv);
       this._editDivMounted = true;
+      render(<ClickOutsideWatcher callback={this._unmountEditDiv}><MetadataEditBox numerator={this.event.timeSignature[0]} denominator={this.event.timeSignature[1]} bpm={this.event.bpm} onSubmit={this._eventEdited} /></ClickOutsideWatcher>, this._editDiv);
     }
   }
 
   private _unmountEditDiv() {
     if (this._editDivMounted) {
+      unmountComponentAtNode(this._editDiv);
       document.getElementById("applicationContainer").removeChild(this._editDiv);
       this._editDivMounted = false;
     }
-  }
-
-  /**
-   * Called when the timeline view is changed in any way to hide the metadata edit box
-   * (this prevents the need to add code to move the edit box with the timeline)
-   *
-   * @private
-   * @memberof MetadataTimelineEvent
-   */
-  private _hideEditBox() {
-    if (this._showingEditBox) {
-      unmountComponentAtNode(this._editDiv);
-      this._showingEditBox = false;
-    }
-  }
-
-  private _showEditBox() {
-    render(<ClickOutsideWatcher callback={this._hideEditBox}><MetadataEditBox numerator={this.event.timeSignature[0]} denominator={this.event.timeSignature[1]} bpm={this.event.bpm} onSubmit={this._eventEdited} /></ClickOutsideWatcher>, this._editDiv);
-    this._showingEditBox = true;
   }
 }
