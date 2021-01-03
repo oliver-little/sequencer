@@ -3,13 +3,13 @@
 	
   <p align="center">
     <a href="LICENSE" alt="Licence">
-		<img src="https://img.shields.io/github/license/mdawsonuk/sequencer?style=flat-square" /></a>
+		<img src="https://img.shields.io/github/license/oliver-little/sequencer?style=flat-square" /></a>
 	<a alt="Releases">
 		<img src="https://img.shields.io/github/v/release/oliver-little/sequencer?include_prereleases&style=flat-square&color=blue" /></a>
 	<a href="https://github.com/oliver-little/sequencer/issues" alt="Issues">
 		<img src="https://img.shields.io/github/issues/oliver-little/sequencer?style=flat-square" /></a>
 	<a href="https://github.com/oliver-little/sequencer/pulse" alt="Maintenance">
-		<img src="https://img.shields.io/maintenance/yes/2020?style=flat-square" /></a>
+		<img src="https://img.shields.io/maintenance/yes/2021?style=flat-square" /></a>
   </p>
   <p align="center">
     A web-based DAW and sequencer built in TypeScript using the Web Audio API
