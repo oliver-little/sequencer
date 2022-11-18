@@ -33,7 +33,7 @@ export class MetadataEditBox extends React.Component<MetadataProps> {
 
     handleNumeratorBlur(value: string) {
         let newNumerator = parseInt(value, 10);
-        if (newNumerator === NaN || newNumerator <= 0 || newNumerator > 32) {
+        if (Number.isNaN(newNumerator) || newNumerator <= 0 || newNumerator > 32) {
             this.setState({ numerator: this.props.numerator, modalShown: true, errorString: "Invalid numerator value - please enter a number between 1 and 32." });
         }
         else {
@@ -52,7 +52,7 @@ export class MetadataEditBox extends React.Component<MetadataProps> {
 
     handleBPMBlur(value: string) {
         let newBpm = parseInt(value, 10);
-        if (newBpm === NaN || newBpm <= 0 || newBpm > 300) {
+        if (Number.isNaN(newBpm) || newBpm <= 0 || newBpm > 300) {
             this.setState({ bpm: this.props.bpm, modalShown: true, errorString: "Invalid BPM value - please enter a number between 1 and 300." });
         }
         else {
