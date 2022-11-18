@@ -20,7 +20,7 @@ export class EffectsChain implements ICustomInputAudioNode, ICustomOutputAudioNo
 
         this._context = context;
         this._settings = settings;
-        this._tuna = new Tuna(context);
+        this._tuna = Tuna(context);
         this._preGain = this._context.createGain();
         this._preGain.gain.value = this._settings.preGain;
         this._postGain = this._context.createGain();

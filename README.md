@@ -9,7 +9,7 @@
 	<a href="https://github.com/oliver-little/sequencer/issues" alt="Issues">
 		<img src="https://img.shields.io/github/issues/oliver-little/sequencer?style=flat-square" /></a>
 	<a href="https://github.com/oliver-little/sequencer/pulse" alt="Maintenance">
-		<img src="https://img.shields.io/maintenance/yes/2021?style=flat-square" /></a>
+		<img src="https://img.shields.io/maintenance/yes/2022?style=flat-square" /></a>
   </p>
   <p align="center">
     A web-based DAW and sequencer built in TypeScript using the Web Audio API

@@ -223,7 +223,7 @@ export default class SongMetadata {
                 this.precalculateLengths();
             }
         }
-        if (indicesToRemove != []) {
+        if (indicesToRemove.length > 0) {
             indicesToRemove.forEach(index => {this._metaEvents.removeAt(index)});
             this.precalculateLengths();
         }
